@@ -1,0 +1,5 @@
+slow_conv2d_cpu" not implemented for 'Half'
+when dtype=float16
+apparently this is caused by not using GPU:
+https://stackoverflow.com/questions/74725439/runtimeerror-slow-conv2d-cpu-not-implemented-for-half
+solution: do BLIP but not with fp16
