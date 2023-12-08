@@ -45,10 +45,3 @@ def make_ds(limit=5):
                     limit-=1
 
     return Dataset.from_dict(src_dict).train_test_split(SPLIT_FRACTION)
-
-if __name__=='__main__':
-    name_list=["jlbaker361/wikiart20", "jlbaker361/wikiart"]
-    for name,limit in zip (name_list, [20,1000000]):
-        make_ds(limit=limit).push_to_hub(name)
-    for name in name_list:
-        load_dataset(name)
