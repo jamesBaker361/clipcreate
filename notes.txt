@@ -32,3 +32,5 @@ https://huggingface.co/docs/diffusers/tutorials/basic_training
 
 heres a script for DDPO:
 https://github.com/huggingface/trl/blob/main/examples/scripts/ddpo.py
+
+For the DDPO scheduler, you can't set cache_dir normally?

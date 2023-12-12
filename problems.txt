@@ -3,3 +3,16 @@ when dtype=float16
 apparently this is caused by not using GPU:
 https://stackoverflow.com/questions/74725439/runtimeerror-slow-conv2d-cpu-not-implemented-for-half
 solution: do BLIP but not with fp16
+
+Dec 12
+RuntimeError: "LayerNormKernelImpl" not implemented for 'Half'
+
+possibly caused by use mixed precision when it should be full precision
+
+problem:
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+
+solution:
+might be a problem with adamW optimizer
+/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/trl/trainer/ddpo_trainer.py L398 
+change to adam optimizer
