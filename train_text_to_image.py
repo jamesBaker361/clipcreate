@@ -17,7 +17,7 @@ import argparse
 import logging
 import math
 import os
-import os
+import sys
 cache_dir="/scratch/jlb638/trans_cache"
 os.environ["TRANSFORMERS_CACHE"]=cache_dir
 os.environ["HF_HOME"]=cache_dir
@@ -1076,4 +1076,5 @@ def main():
 
 
 if __name__ == "__main__":
+    print(sys.argv)
     main()
