@@ -110,8 +110,8 @@ def save_model_card(repo_id: str, images=None, base_model=str, dataset_name=str,
     - lora
     inference: true
     ---
-        """
-        model_card = f"""
+    """
+    model_card = f"""
     # LoRA text2image fine-tuning - {repo_id}
     These are LoRA adaption weights for {base_model}. The weights were fine-tuned on the {dataset_name} dataset. You can find some example images in the following. \n
     {img_str}
