@@ -52,6 +52,7 @@ from diffusers.training_utils import EMAModel, compute_snr
 from diffusers.utils import check_min_version, deprecate, is_wandb_available, make_image_grid
 from diffusers.utils.import_utils import is_xformers_available
 
+from static_globals import *
 
 if is_wandb_available():
     import wandb
@@ -61,11 +62,6 @@ if is_wandb_available():
 check_min_version("0.25.0.dev0")
 
 logger = get_logger(__name__, log_level="INFO")
-
-DATASET_NAME_MAPPING = {
-    "lambdalabs/pokemon-blip-captions": ("image", "text"),
-    "jlbaker361/sd-wikiart20": ("image", "text")
-}
 
 
 def save_model_card(
