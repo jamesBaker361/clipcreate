@@ -10,6 +10,7 @@ from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
+from diffusers import DiffusionPipeline, StableDiffusionPipeline
 from torch.nn import Softmax
 import torch
 from creative_loss import clip_scorer_ddpo
@@ -22,7 +23,11 @@ def prompt_fn():
 clip_reward_fn=clip_scorer_ddpo(["baroque", "cubism"])
 aesthetic_reward_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
 
-def train_test(mixed_precision="no", reward_fn=clip_reward_fn):
+def train_test(mixed_precision="no", 
+               reward_fn=clip_reward_fn,
+               src_hub_model_id="jlbaker361/sd-wikiart20",
+               hub_model_id="jlbaker361/sd-ddpo-wikiart20",
+               save_directory="/scratch/jlb638/sd-ddpo-test"):
 
     config=DDPOConfig(
         num_epochs=1,
@@ -35,7 +40,7 @@ def train_test(mixed_precision="no", reward_fn=clip_reward_fn):
     )
 
     pipeline = DefaultDDPOStableDiffusionPipeline(
-            "jlbaker361/sd-wikiart20",  use_lora=True
+            src_hub_model_id,  use_lora=True
         )
 
     trainer = DDPOTrainer(
@@ -46,6 +51,35 @@ def train_test(mixed_precision="no", reward_fn=clip_reward_fn):
         )
     trainer.train()
     print("successful training boys :)))")
+    trainer._save_pretrained(save_directory)
+    repo_id = create_repo(repo_id=hub_model_id, exist_ok=True).repo_id
+    upload_folder(
+        repo_id=repo_id,
+        folder_path=save_directory,
+        commit_message="End of training",
+        ignore_patterns=["step_*", "epoch_*"],
+    )
+    print("successful saving boys :)))")
+    try:
+        pipeline = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
+        pipeline.load_lora_weights(repo_id, weight_name="pytorch_lora_weights.safetensors", adapter_name="wikiart20")
+        prompt = "painting"
+        image = pipeline(prompt).images[0]
+        image.save("ddpo_test_lora.png")
+        print("success for pipeline.load_lora_weights(repo_id")
+    except Exception as exc:
+        print(exc)
+        print("failure for pipeline.load_lora_weights(repo_id")
+    try:
+        pipeline = DefaultDDPOStableDiffusionPipeline(repo_id, use_lora=True)
+        prompt = "painting"
+        image = pipeline(prompt).images[0]
+        image.save("ddpo_test.png")
+        print("success for DefaultDDPOStableDiffusionPipeline(repo_id")
+    except Exception as exc:
+        print(exc)
+        print("failed for DefaultDDPOStableDiffusionPipeline(repo_id")
+    
 
 if __name__=='__main__':
     print(sys.argv)
