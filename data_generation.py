@@ -69,3 +69,29 @@ def make_ds(limit=5):
                         return Dataset.from_dict(src_dict).train_test_split(SPLIT_FRACTION)
 
     return Dataset.from_dict(src_dict).train_test_split(SPLIT_FRACTION)
+
+def make_ds_balanced(limit=10):
+    for style in os.listdir(IMG_DIR):
+        sub_dir=IMG_DIR+style
+        if os.path.isdir(sub_dir):
+            print(style)
+            count=0
+            for img_name in os.listdir(sub_dir):
+                if img_name.endswith("jpg") and count<limit:
+                    raw_image=Image.open(sub_dir+"/"+img_name)
+                    src_dict[IMAGE_STR].append(raw_image)
+                    caption_inputs = processor(images=raw_image, return_tensors="pt",padding=True).to(device)
+                    caption_ids = caption_model.generate(**caption_inputs, max_new_tokens=50)
+                    caption_text = processor.batch_decode(caption_ids, skip_special_tokens=True)[0].strip()
+                    src_dict[TEXT_STR].append(caption_text)
+
+                    qa_inputs=processor(images=raw_image, text=GEN_QUESTION, return_tensors="pt").to(device)
+                    qa_ids = qa_model.generate(**qa_inputs)
+                    qa_text=processor.batch_decode(qa_ids, skip_special_tokens=True)[0].strip()
+                    src_dict[GEN_STYLE_STR].append(qa_text)
+
+                    src_dict[STYLE_STR].append(style)
+                    src_dict[NAME_STR].append(re.sub('.jpg!Blog.jpg',"",img_name))
+                    count+=1
+
+    return Dataset.from_dict(src_dict).train_test_split(SPLIT_FRACTION)
