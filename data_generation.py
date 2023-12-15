@@ -1,5 +1,10 @@
 import os
 import sys
+cache_dir="/scratch/jlb638/trans_cache"
+os.environ["TRANSFORMERS_CACHE"]=cache_dir
+os.environ["HF_HOME"]=cache_dir
+os.environ["HF_HUB_CACHE"]=cache_dir
+import sys
 import re
 from PIL import Image
 from datasets import Dataset,load_dataset
@@ -44,8 +49,6 @@ def make_ds(limit=5):
         if os.path.isdir(sub_dir):
             print(style)
             for img_name in os.listdir(sub_dir):
-                if limit<0:
-                    break
                 if img_name.endswith("jpg"):
                     raw_image=Image.open(sub_dir+"/"+img_name)
                     src_dict[IMAGE_STR].append(raw_image)
@@ -62,5 +65,7 @@ def make_ds(limit=5):
                     src_dict[STYLE_STR].append(style)
                     src_dict[NAME_STR].append(re.sub('.jpg!Blog.jpg',"",img_name))
                     limit-=1
+                    if limit<0:
+                        return Dataset.from_dict(src_dict).train_test_split(SPLIT_FRACTION)
 
     return Dataset.from_dict(src_dict).train_test_split(SPLIT_FRACTION)
