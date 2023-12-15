@@ -26,15 +26,15 @@ def train_test(mixed_precision="no", reward_fn=clip_reward_fn):
     config=DDPOConfig(
         num_epochs=1,
                 train_gradient_accumulation_steps=1,
-                sample_num_steps=10,
-                sample_batch_size=1,
+                sample_num_steps=2,
+                sample_batch_size=2,
                 train_batch_size=1,
                 sample_num_batches_per_epoch=2,
                 mixed_precision=mixed_precision
     )
 
     pipeline = DefaultDDPOStableDiffusionPipeline(
-            "runwayml/stable-diffusion-v1-5",  use_lora=True
+            "jlbaker361/sd-wikiart20",  use_lora=True
         )
 
     trainer = DDPOTrainer(
@@ -44,6 +44,7 @@ def train_test(mixed_precision="no", reward_fn=clip_reward_fn):
             pipeline
         )
     trainer.train()
+    print("successful training boys :)))")
 
 if __name__=='__main__':
     print(sys.argv)

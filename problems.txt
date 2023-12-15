@@ -16,3 +16,139 @@ solution:
 might be a problem with adamW optimizer
 /home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/trl/trainer/ddpo_trainer.py L398 
 change to adam optimizer
+
+12/13
+
+DDPO with creativity: 
+
+['ddpo_test.py', 'no']
+images.shape  torch.Size([1, 3, 512, 512])
+images.shape  torch.Size([1, 3, 512, 512])
+line 233 rewards  (tensor([-0.9994], device='cuda:0'), tensor([-0.9993], device='cuda:0'))
+line 244 rewards  [-0.9993682 -0.9993267]
+line 263 advantages  [-0.9995181  0.9995181]
+line 272 samples["advantages"] tensor([-0.9995,  0.9995], device='cuda:0')
+line 273 samples["advantages"].requires_grad False
+line 521 sample["advantages"] tensor([0.9995], device='cuda:0')
+line 343 advantages False torch.Size([1])
+line 377 advantages False torch.Size([1])
+line 397 advantages.requires_grad False
+line 398 advantages.size() torch.Size([1])
+line 385 loss.requires_grad False
+line 386 loss.size() torch.Size([])
+line 537 loss.requires_grad False
+line 538 loss.shape torch.Size([])
+
+DDPO with aesthetic:
+['ddpo_test.py', 'no', 'aesthetic']
+line 233 rewards  (tensor([6.6416], device='cuda:0'), tensor([4.2934], device='cuda:0'))
+line 244 rewards  [6.6416025 4.293413 ]
+line 263 advantages  [ 1. -1.]
+line 272 samples["advantages"] tensor([ 1., -1.], device='cuda:0')
+line 273 samples["advantages"].requires_grad False
+line 521 sample["advantages"] tensor([-1.], device='cuda:0')
+line 343 advantages False torch.Size([1])
+line 377 advantages False torch.Size([1])
+line 397 advantages.requires_grad False
+line 398 advantages.size() torch.Size([1])
+line 385 loss.requires_grad False
+line 386 loss.size() torch.Size([])
+line 537 loss.requires_grad False
+line 538 loss.shape torch.Size([])
+
+maybe try running it on ONE GPU???
+
+Soluton:
+unsqueeze line 412???
+
+images.shape  torch.Size([1, 3, 512, 512])
+images.shape  torch.Size([1, 3, 512, 512])
+line 233 rewards  (tensor([-9.9937], device='cuda:0'), tensor([-9.9933], device='cuda:0'))
+line 244 rewards  [-9.993682 -9.993267]
+line 263 advantages  [-0.9976504  1.0022479]
+line 272 samples["advantages"] tensor([-0.9977,  1.0022], device='cuda:0')
+line 273 samples["advantages"].requires_grad False
+line 521 sample["advantages"] tensor([1.0022], device='cuda:0')
+line 343 advantages False torch.Size([1])
+line 377 advantages False torch.Size([1])
+line 400 advantages.requires_grad False
+line 401 advantages.size() torch.Size([1])
+line 408 unclipped_loss  tensor([-1.0022], device='cuda:0')
+line 409 clipped_loss tensor([-1.0022], device='cuda:0')
+line 410 torch.maximum(unclipped_loss, clipped_loss) tensor([-1.0022], device='cuda:0')
+line 411 torch.mean(torch.maximum(unclipped_loss, clipped_loss)) tensor(-1.0022, device='cuda:0')
+line 385 loss tensor(-1.0022, device='cuda:0')
+line 386fi loss.size() torch.Size([])
+line 537 loss.requires_grad False
+line 538 loss.shape torch.Size([])
+
+Same problem
+So I tried getting rid of the no gradient decorator
+result:
+  File "/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/trl/trainer/ddpo_trainer.py", line 242, in step
+    rewards = self.accelerator.gather(rewards).cpu().numpy()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Can't call numpy() on Tensor that requires grad. Use tensor.detach().numpy() instead.
+
+next step:
+get rid of the .cpu().numpy() let that shit gather + torch.no_grad() rempved 
+result: 
+RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.
+
+next step:
+line 263 
++ advantages=torch.tensor(advantages, requires_grad=True)
+and still torch.no_grad() removed
+result:
+    rewards = self.accelerator.gather(rewards).cpu().numpy()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Can't call numpy() on Tensor that requires grad. Use tensor.detach().numpy() instead.
+srun: error: gpu018: task 0: Exited with exit code 1
+
+next step:
+line 263 
++ advantages=torch.tensor(advantages, requires_grad=True)
+result:
+RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.
+
+next step:
+get rid of the .cpu().numpy() let that shit gather
+result:
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+
+change nothign but 
+    sample_batch_size=2,
+    train_batch_size=2,
+result:
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+srun: error: gpu018: task 0: Exited with exit code 1
+
+change nothign but 
+    sample_batch_size=1,
+    train_batch_size=2,
+result:
+ValueError: Sample batch size (1) must be greater than or equal to the train batch size (2)
+
+try:
+    sample_batch_size=2,
+    train_batch_size=1,
+result:
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+
+try:
++ advantages=torch.tensor(advantages, requires_grad=True)
+results:
+RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.
+srun: error: gpu018: task 0: Exited with exit code 1
+
+try:
+try:
++ advantages=torch.tensor(advantages, requires_grad=True)
+sample_num_steps=1
+result: RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.
+
+try:
++ advantages=torch.tensor(advantages, requires_grad=True)
+sample_num_steps=1
++ self.accelerator.backward(loss,retain_graph=True)
+THAT WORKED...I think...???

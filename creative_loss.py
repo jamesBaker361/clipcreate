@@ -24,10 +24,12 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         n_text=len(style_list)
         n_image=images.shape[0]
         uniform=torch.full((n_image, n_text), fill_value=1.0/n_text)
+        #uniform=torch.normal(0, 5, size=(n_image, n_text))
 
         cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores = -1*cosine(uniform,probs)
+        scores = -10*cosine(uniform,probs)
+        #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
 
     return _fn
