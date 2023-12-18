@@ -81,6 +81,7 @@ def train_test(mixed_precision="no",
         print("failed for DefaultDDPOStableDiffusionPipeline(repo_id")
     
 
+    #both of these ways to load work btw
 if __name__=='__main__':
     print(sys.argv)
     if "aesthetic" in sys.argv:
