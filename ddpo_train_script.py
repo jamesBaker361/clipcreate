@@ -66,11 +66,11 @@ parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
 
 if __name__=='__main__':
     args = parser.parse_args()
-    style_list=len(args.style_list)
-    if len(style_list)<2:
+    style_list=args.style_list
+    if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
     reward_fn=clip_scorer_ddpo(style_list)
-    prompt_fn=get_prompt_fn(args.dataset_name)
+    prompt_fn=get_prompt_fn(args.dataset_name, "train")
 
     config=DDPOConfig(
         num_epochs=args.num_epochs,
@@ -79,7 +79,14 @@ if __name__=='__main__':
         sample_batch_size=args.sample_batch_size,
         train_batch_size=args.train_batch_size,
         sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
-        mixed_precision="no"
+        mixed_precision="no",
+        accelerator_kwargs={
+            "project_dir":args.output_dir
+        },
+        project_kwargs={
+            "project_dir":args.output_dir,
+            'automatic_checkpoint_naming':True
+        }
     )
 
     pipeline = DefaultDDPOStableDiffusionPipeline(
