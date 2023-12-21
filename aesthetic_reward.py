@@ -74,6 +74,8 @@ def aesthetic_scorer(hub_model_id, model_filename):
     #scorer = scorer.xpu() if is_xpu_available() else scorer.cuda() #disabled because running on cpu
 
     def _fn(images, prompts, metadata):
+        images=np.array(images)
+        print(images)
         images = (images * 255).round().clamp(0, 255).to(torch.uint8)
         scores = scorer(images)
         return scores, {}
