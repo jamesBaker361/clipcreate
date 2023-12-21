@@ -52,7 +52,7 @@ if __name__=='__main__':
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
             src_dict["model"].append(model)
-            score=aesthetic_fn(image)
+            score=aesthetic_fn(image,{},{})
             table_data.append([wandb.Image(image), model, prompt, score])
 
     run = wandb.init(project="creative_clip")
