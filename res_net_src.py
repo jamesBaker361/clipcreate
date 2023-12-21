@@ -13,6 +13,21 @@ from datasets import Dataset,load_dataset
 
 class ResNet(torch.nn.Module):
     def __init__(self,pretrained_version,n_classes):
+        '''The `__init__` function initializes a ResNet model with a specified pretrained version and number of
+        classes, and sets up the model's layers and softmax activation.
+        
+        Parameters
+        ----------
+        pretrained_version
+            The `pretrained_version` parameter is the version of the ResNet model that you want to load. It
+        should be a string that specifies the ResNet architecture, such as "resnet18", "resnet[34,50,101,152]",
+        "resnet50", etc. These architectures are available in the torchvision library
+        n_classes
+            The parameter `n_classes` represents the number of classes in the classification task. It is used
+        to determine the number of output units in the final fully connected layer (`self.head`) of the
+        ResNet model.
+        
+        '''
         super(ResNet, self).__init__()
         model = torch.hub.load('pytorch/vision:v0.10.0', pretrained_version, pretrained=True)
         pretrained_layer_list=[m for m in model.children()][:-1]
