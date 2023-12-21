@@ -15,7 +15,6 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
-        print("images.shape ", images.shape)
         inputs = processor(text=style_list, images=images, return_tensors="pt", padding=True)
         outputs = model(**inputs)
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
