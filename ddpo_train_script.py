@@ -33,19 +33,9 @@ def get_prompt_fn(dataset_name,split):
     return _fn
 def get_image_sample_hook(image_dir):
     def _fn(prompt_image_data, global_step, tracker):
-        print(len(prompt_image_data))
         for row in prompt_image_data:
-            print(len(row))
             images=row[0]
-            try:
-                print("len images",len(images))
-            except Exception:
-                print(images.size())
             prompts=row[1]
-            try:
-                print("len prompts",len(prompts))
-            except Exception:
-                print(prompts.size())
             for img,pmpt in zip(images, prompts):
                 path=image_dir+pmpt.replace(" ", "_")+str(global_step)+".png"
                 print("saving at ",path)
