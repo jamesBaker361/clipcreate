@@ -30,8 +30,15 @@ parser.add_argument(
     help="The name of the Dataset (from the HuggingFace hub) to train on"
 )
 
+parser.add_argument(
+    "--num_inference_steps",
+    type=int,
+    default=20
+)
+
 if __name__=='__main__':
     args = parser.parse_args()
+    print(args)
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     src_dict={
         "prompt":[],
@@ -48,7 +55,7 @@ if __name__=='__main__':
     columns=["image","model","prompt","score"]
     for prompt in prompt_list:
         for model,pipeline in model_dict.items():
-            image = pipeline(prompt).images[0]
+            image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
             src_dict["model"].append(model)
