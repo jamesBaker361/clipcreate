@@ -6,6 +6,7 @@ os.environ["HF_HOME"]=cache_dir
 os.environ["HF_HUB_CACHE"]=cache_dir
 #os.symlink("~/.cache/huggingface/", cache_dir)
 from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
+from huggingface_hub.utils import EntryNotFoundError
 from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
@@ -29,6 +30,17 @@ def get_prompt_fn(dataset_name,split):
         return random.choice(prompt_list),{}
     
     return _fn
+def get_image_sample_hook(output_dir):
+    save_dir=output_dir+"/images/"
+    os.makedirs(save_dir, exist_ok=True)
+    def image_sample_hook(prompt_image_data, global_step, tracker):
+        for [images, prompts, prompt_metadata] in prompt_image_data:
+            for img,pmpt in zip(images, prompts):
+                path=save_dir+pmpt.replace(" ", "_")+str(global_step)
+                img.save(path)
+                
+
+
 
 parser = argparse.ArgumentParser(description="ddpo training")
 parser.add_argument(
@@ -63,9 +75,11 @@ parser.add_argument("--sample_batch_size",type=int,default=4, help="batch size")
 parser.add_argument("--train_gradient_accumulation_steps", type=int, default=1)
 parser.add_argument("--style_list",nargs="*",help="styles to be used")
 parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
+parser.add_argument("--use_lora",type=bool,default=True)
 
 if __name__=='__main__':
     args = parser.parse_args()
+    print(args)
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
@@ -88,10 +102,15 @@ if __name__=='__main__':
             'automatic_checkpoint_naming':True
         }
     )
+    try:
+        pipeline = DefaultDDPOStableDiffusionPipeline(
+            args.pretrained_model_name_or_path,  use_lora=args.use_lora
+        )
+    except EntryNotFoundError:
+        print("EntryNotFoundError using pipeline.sd_pipeline.load_lora_weights")
+        pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
+        pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
 
-    pipeline = DefaultDDPOStableDiffusionPipeline(
-        args.pretrained_model_name_or_path,  use_lora=True
-    )
 
     trainer = DDPOTrainer(
             config,
