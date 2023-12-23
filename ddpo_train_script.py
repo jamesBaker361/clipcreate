@@ -7,6 +7,7 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 #os.symlink("~/.cache/huggingface/", cache_dir)
 from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 from huggingface_hub.utils import EntryNotFoundError
+from torchvision.transforms.functional import to_pil_image
 from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
@@ -30,17 +31,29 @@ def get_prompt_fn(dataset_name,split):
         return random.choice(prompt_list),{}
     
     return _fn
-def get_image_sample_hook(output_dir):
-    save_dir=output_dir+"/images/"
-    os.makedirs(save_dir, exist_ok=True)
-    def image_sample_hook(prompt_image_data, global_step, tracker):
-        for [images, prompts, prompt_metadata] in prompt_image_data:
+def get_image_sample_hook(image_dir):
+    def _fn(prompt_image_data, global_step, tracker):
+        print(len(prompt_image_data))
+        for row in prompt_image_data:
+            print(len(row))
+            images=row[0]
+            try:
+                print("len images",len(images))
+            except Exception:
+                print(images.size())
+            prompts=row[1]
+            try:
+                print("len prompts",len(prompts))
+            except Exception:
+                print(prompts.size())
             for img,pmpt in zip(images, prompts):
-                path=save_dir+pmpt.replace(" ", "_")+str(global_step)
-                img.save(path)
-                
-
-
+                path=image_dir+pmpt.replace(" ", "_")+str(global_step)+".png"
+                print("saving at ",path)
+                print(type(img))
+                print(img.size())
+                pil_img=to_pil_image(img)
+                pil_img.save(path)
+    return _fn
 
 parser = argparse.ArgumentParser(description="ddpo training")
 parser.add_argument(
@@ -61,6 +74,8 @@ parser.add_argument(
         default="/scratch/jlb638/sd-ddpo",
         help="The output directory where the model predictions and checkpoints will be written.",
 )
+
+parser.add_argument("--image_dir",type=str,default=None)
 parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
 parser.add_argument(
     "--hub_model_id",
@@ -111,12 +126,19 @@ if __name__=='__main__':
         pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
         pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
 
-
+    if args.image_dir==None:
+        last_slash=args.output_dir.rfind("/")
+        scratch_path=args.output_dir[:last_slash]
+        model_path=args.output_dir[last_slash:]
+        args.image_dir=scratch_path+"/images"+model_path+"/"
+        os.makedirs(args.image_dir, exist_ok=True)
+    image_samples_hook=get_image_sample_hook(args.image_dir)
     trainer = DDPOTrainer(
             config,
             reward_fn,
             prompt_fn,
-            pipeline
+            pipeline,
+            image_samples_hook
     )
     start=time.time()
     trainer.train()
