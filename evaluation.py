@@ -36,6 +36,8 @@ parser.add_argument(
     default=20
 )
 
+parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/evaluation_images/")
+
 if __name__=='__main__':
     args = parser.parse_args()
     print(args)
