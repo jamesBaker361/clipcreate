@@ -39,8 +39,6 @@ def get_image_sample_hook(image_dir):
             for img,pmpt in zip(images, prompts):
                 path=image_dir+pmpt.replace(" ", "_")+str(global_step)+".png"
                 print("saving at ",path)
-                print(type(img))
-                print(img.size())
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
     return _fn
