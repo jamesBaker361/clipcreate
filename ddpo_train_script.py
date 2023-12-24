@@ -129,7 +129,14 @@ if __name__=='__main__':
             image_samples_hook
     )
     start=time.time()
-    trainer.train()
+    torch.cuda.memory._record_memory_history()
+    try:
+        trainer.train()
+    except Exception as exc:
+        print(exc)
+        torch.cuda.memory._dump_snapshot("failure.pickle")
+        exit()
+    torch.cuda.memory._dump_snapshot("success.pickle")
     end=time.time()
     seconds=end-start
     hours=seconds/(60*60)
