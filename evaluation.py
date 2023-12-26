@@ -4,6 +4,7 @@ cache_dir="/scratch/jlb638/trans_cache"
 os.environ["TRANSFORMERS_CACHE"]=cache_dir
 os.environ["HF_HOME"]=cache_dir
 os.environ["HF_HUB_CACHE"]=cache_dir
+from huggingface_hub.utils import EntryNotFoundError
 #os.symlink("~/.cache/huggingface/", cache_dir)
 from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 import torch
@@ -50,9 +51,14 @@ if __name__=='__main__':
 
     hf_dataset=load_dataset(args.dataset_name,split="test")
     prompt_list=[t for t in hf_dataset["text"]]
-    model_dict={
-        model: DefaultDDPOStableDiffusionPipeline(model, use_lora=True) for model in args.model_list
-    }
+    model_dict={}
+    for model in args.model_list:
+        try:
+            pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
+        except EntryNotFoundError:
+            pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
+            pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
+
     table_data=[]
     columns=["image","model","prompt","score"]
     for prompt in prompt_list:
