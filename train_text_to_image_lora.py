@@ -726,7 +726,7 @@ def main():
         # Only show the progress bar once on each machine.
         disable=not accelerator.is_local_main_process,
     )
-
+    images=[]
     for epoch in range(first_epoch, args.num_train_epochs):
         unet.train()
         train_loss = 0.0
