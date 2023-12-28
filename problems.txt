@@ -152,3 +152,115 @@ try:
 sample_num_steps=1
 + self.accelerator.backward(loss,retain_graph=True)
 THAT WORKED...I think...???
+
+Problem, when running LORA wikiart100 ddpo, we get
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 GiB. GPU 0 has a total capacty of 11.92 GiB of which 1.53 GiB is free. Including non-PyTorch memory, this process has 10.39 GiB memory in use. Of the allocated memory 7.94 GiB is allocated by PyTorch, and 2.32 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+
+Possible solution(s):
+calling torch.cuda.empty_cache()
+smaller batch size
+train_gradient_accumulation_steps increase/decrease???
+max_split_size_mb https://stackoverflow.com/questions/73747731/runtimeerror-cuda-out-of-memory-how-setting-max-split-size-mb 
+
+try:
+sbatch runpygpu.sh ddpo_train_script.py --pretrained_model_name_or_path "jlbaker361/sd-wikiart-lora-balanced100" --output_dir "/scratch/jlb638/sd-wiki100-ddpo" --hub_model_id "jlbaker361/sd-wiki100-ddpo" --train_gradient_accumulation_steps 8 --train_batch_size 1 --num_epochs 10 --sample_num_steps 20 --sample_batch_size 1  --sample_num_batches_per_epoch 64
+result:
+this might have made it worse (~60 images) but also smaller # of samples per batch so maybe the problem is just at the end of the epoch it shits itself??
+
+try:
+even bigger train_gradient_accumulation_steps
+
+result:
+nothing
+
+try:
+only 2 gpus? but more 128 RAM
+
+result:
+same issue
+
+try:
+train_gradient_accumulation_steps=samples per epoch=64
+
+result:
+
+CUDA out of memory. Tried to allocate 1024.00 MiB. GPU 0 has a total capacty of 23.69 GiB of which 954.81 MiB is free
+
+try:
+sample_num_batches_per_epoch = train_gradient_accumulation_steps=1
+
+result:
+CUDA out of memory. Tried to allocate 1024.00 MiB. GPU 0 has a total capacty of 11.92 GiB of which 205.19 MiB is free.
+So the gpu has a lower capacity for some reason now???
+
+try: sampling steps = 4
+
+result:
+same problem
+
+theory:
+different gpus have different sizes???
+
+try:
+test ddpo-test like 20 times and see if theres any variance
+
+result:
+
+observation:
+doubled train batch size and sample batch size and allocated memory doubles
+
+try:
+train_batch_size=4 sample_batch_size=1
+
+ValueError: Sample batch size (1) must be greater than or equal to the train batch size (4)
+
+try:
+train_batch_size=1 sample_batch_size=4
+
+result:
+CUDA out of memory. Tried to allocate 4.00 GiB. GPU 0 has a total capacty of 11.92 GiB of which 3.43 GiB is free. Including non-PyTorch memory, this process has 8.48 GiB memory in use. Of the allocated memory 8.29 GiB is allocated by PyTorch, and 65.77 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+
+observation: there IS some variance based on the gpu being used
+
+I do think it has to do with the gpu BUT there might be other ways to reduce memory
+
+try:
+using only one gpu
+
+result:
+same problem
+
+try:
+adding
+gc.collect()
+torch.cuda.empty_cache()
+self.accelerator.free_memory()
+before we do the self.accelerator.backward()
+
+result:
+same problem
+
+try:
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:64
+
+PROBLEM
+ddpo_train_script.py --train_batch_size 8 --num_epochs 10 --sample_num_steps 20 --sample_batch_size 8 --sample_num_batches_per_epoch 64
+IMMEDIATELY OOM- can't generate shit
+job 33640873
+
+try:
+might be a fluke; just run again but with use_lora=False
+
+result:
+same problem
+
+try: only 2 gpus not 4 ??? but 128 RAM
+
+result: same issue
+
+try: train lora for 0 epochs and then load that
+
+result:
+worked :)))
+
+next step: try big gpu
