@@ -133,7 +133,7 @@ if __name__=='__main__':
         print("torch.cuda.memory_reserved: %fGB"%(torch.cuda.memory_reserved(0)/1024/1024/1024))
         print("torch.cuda.max_memory_reserved: %fGB"%(torch.cuda.max_memory_reserved(0)/1024/1024/1024))
         print(torch.cuda.memory_summary())
-        exit()
+        raise exc
     torch.cuda.memory._dump_snapshot("success.pickle")
     end=time.time()
     seconds=end-start
