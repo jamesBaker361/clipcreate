@@ -111,10 +111,7 @@ if __name__=='__main__':
         pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
 
     if args.image_dir==None:
-        last_slash=args.output_dir.rfind("/")
-        scratch_path=args.output_dir[:last_slash]
-        model_path=args.output_dir[last_slash:]
-        args.image_dir=scratch_path+"/images"+model_path+"/"
+        args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
     trainer = DDPOTrainer(
