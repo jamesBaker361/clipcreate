@@ -1,7 +1,7 @@
 
 
 
-python3 ddpo_train_script.py --pretrained_model_name_or_path "jlbaker361/sd-wikiart-lora-0epoch" \
+python3 ddpo_train_script.py --pretrained_model_name_or_path "jlbaker361/sd-wikiart-lora-balanced100" \
   --output_dir "/scratch/jlb638/sd-lora0" \
   --hub_model_id "jlbaker361/sd-lora0" \
   --train_gradient_accumulation_steps 2 \
