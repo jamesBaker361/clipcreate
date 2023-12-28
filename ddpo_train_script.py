@@ -41,11 +41,6 @@ def get_image_sample_hook(image_dir):
                 print("saving at ",path)
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
-        print("torch.cuda.memory_allocated: %fGB"%(torch.cuda.memory_allocated(0)/1024/1024/1024))
-        print("torch.cuda.max_memory_allocated: %fGB"%(torch.cuda.max_memory_allocated(0)/1024/1024/1024))
-        print("torch.cuda.memory_reserved: %fGB"%(torch.cuda.memory_reserved(0)/1024/1024/1024))
-        print("torch.cuda.max_memory_reserved: %fGB"%(torch.cuda.max_memory_reserved(0)/1024/1024/1024))
-        print(torch.cuda.memory_summary())
     return _fn
 
 parser = argparse.ArgumentParser(description="ddpo training")
