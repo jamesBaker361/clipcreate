@@ -41,6 +41,11 @@ def get_image_sample_hook(image_dir):
                 print("saving at ",path)
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
+        print("torch.cuda.memory_allocated: %fGB"%(torch.cuda.memory_allocated(0)/1024/1024/1024))
+        print("torch.cuda.max_memory_allocated: %fGB"%(torch.cuda.max_memory_allocated(0)/1024/1024/1024))
+        print("torch.cuda.memory_reserved: %fGB"%(torch.cuda.memory_reserved(0)/1024/1024/1024))
+        print("torch.cuda.max_memory_reserved: %fGB"%(torch.cuda.max_memory_reserved(0)/1024/1024/1024))
+        print(torch.cuda.memory_summary())
     return _fn
 
 parser = argparse.ArgumentParser(description="ddpo training")
@@ -114,12 +119,6 @@ if __name__=='__main__':
         pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
         pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
 
-    print("torch.cuda.memory_allocated: %fGB"%(torch.cuda.memory_allocated(0)/1024/1024/1024))
-    print("torch.cuda.max_memory_allocated: %fGB"%(torch.cuda.max_memory_allocated(0)/1024/1024/1024))
-    print("torch.cuda.memory_reserved: %fGB"%(torch.cuda.memory_reserved(0)/1024/1024/1024))
-    print("torch.cuda.max_memory_reserved: %fGB"%(torch.cuda.max_memory_reserved(0)/1024/1024/1024))
-    print(torch.cuda.memory_summary())
-
     if args.image_dir==None:
         last_slash=args.output_dir.rfind("/")
         scratch_path=args.output_dir[:last_slash]
@@ -141,6 +140,11 @@ if __name__=='__main__':
     except Exception as exc:
         print(exc)
         torch.cuda.memory._dump_snapshot("failure.pickle")
+        print("torch.cuda.memory_allocated: %fGB"%(torch.cuda.memory_allocated(0)/1024/1024/1024))
+        print("torch.cuda.max_memory_allocated: %fGB"%(torch.cuda.max_memory_allocated(0)/1024/1024/1024))
+        print("torch.cuda.memory_reserved: %fGB"%(torch.cuda.memory_reserved(0)/1024/1024/1024))
+        print("torch.cuda.max_memory_reserved: %fGB"%(torch.cuda.max_memory_reserved(0)/1024/1024/1024))
+        print(torch.cuda.memory_summary())
         exit()
     torch.cuda.memory._dump_snapshot("success.pickle")
     end=time.time()
