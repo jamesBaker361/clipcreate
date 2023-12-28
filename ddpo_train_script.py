@@ -1,10 +1,5 @@
 import os
 import sys
-cache_dir="/scratch/jlb638/trans_cache"
-os.environ["TRANSFORMERS_CACHE"]=cache_dir
-os.environ["HF_HOME"]=cache_dir
-os.environ["HF_HUB_CACHE"]=cache_dir
-os.environ["PYTORCH_CUDA_ALLOC_CONF"]="max_split_size_mb:64"
 #os.symlink("~/.cache/huggingface/", cache_dir)
 from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 from huggingface_hub.utils import EntryNotFoundError

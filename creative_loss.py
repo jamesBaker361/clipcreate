@@ -1,6 +1,4 @@
 import os
-cache_dir="/scratch/jlb638/trans_cache"
-os.environ["TRANSFORMERS_CACHE"]=cache_dir
 from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
@@ -10,8 +8,8 @@ import torch
 cache_dir="/scratch/jlb638/trans_cache"
 
 def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/examples/scripts/ddpo.py#L126
-    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14",cache_dir=cache_dir)
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",cache_dir=cache_dir)
+    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
