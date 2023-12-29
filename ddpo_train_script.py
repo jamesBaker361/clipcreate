@@ -75,6 +75,7 @@ parser.add_argument("--train_gradient_accumulation_steps", type=int, default=1)
 parser.add_argument("--style_list",nargs="*",help="styles to be used")
 parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
 parser.add_argument("--use_lora",type=bool,default=True)
+parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
 
 if __name__=='__main__':
     args = parser.parse_args()
@@ -92,7 +93,7 @@ if __name__=='__main__':
         sample_batch_size=args.sample_batch_size,
         train_batch_size=args.train_batch_size,
         sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
-        mixed_precision="no",
+        mixed_precision=args.mixed_precision,
         accelerator_kwargs={
             "project_dir":args.output_dir
         },
