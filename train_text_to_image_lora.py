@@ -100,7 +100,7 @@ def save_model_card(repo_id: str,
                     dataset_name=str, 
                     repo_folder=None,
                     epochs=1,
-                    inference_steps=20):
+                    num_train_timesteps=1000):
     img_str = ""
     for i, image in enumerate(images):
         image.save(os.path.join(repo_folder, f"image_{i}.png"))
@@ -123,7 +123,7 @@ def save_model_card(repo_id: str,
     # LoRA text2image fine-tuning - {repo_id}
     These are LoRA adaption weights for {base_model}. The weights were fine-tuned on the {dataset_name} dataset. \n
     Training epochs = {epochs} \n
-    inference steps = {inference_steps} \n
+    num_train_timesteps = {num_train_timesteps} \n
     You can find some example images in the following. \n
     {img_str}
     """
@@ -922,6 +922,8 @@ def main():
                 base_model=args.pretrained_model_name_or_path,
                 dataset_name=args.dataset_name,
                 repo_folder=args.output_dir,
+                epochs=args.num_train_epochs,
+                num_train_timesteps=noise_scheduler.config.num_train_timesteps
             )
             upload_folder(
                 repo_id=repo_id,
