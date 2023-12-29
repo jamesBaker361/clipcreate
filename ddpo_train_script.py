@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument("--train_batch_size", type=int, default=4, help="Batch size (per device) for the training dataloader.")
 parser.add_argument("--num_epochs", type=int, default=10)
 parser.add_argument("--sample_num_steps",type=int,default=10, help="Number of sampler inference steps per image")
-parser.add_argument("--sample_batch_size",type=int,default=4, help="batch size")
+parser.add_argument("--sample_batch_size",type=int,default=4, help="batch size for all gpus, must be >= train_batch_size")
 parser.add_argument("--train_gradient_accumulation_steps", type=int, default=1)
 parser.add_argument("--style_list",nargs="*",help="styles to be used")
 parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
@@ -148,4 +148,14 @@ if __name__=='__main__':
         commit_message="End of training",
         ignore_patterns=["step_*", "epoch_*"],
     )
+    model_card_content=f"""
+    # DDPO trained model
+    num_epochs={args.num_epochs} \n
+    train_gradient_accumulation_steps={args.train_gradient_accumulation_steps} \n
+    sample_num_steps={args.sample_num_steps} \n
+    sample_batch_size={args.sample_batch_size} \n 
+    train_batch_size={args.train_batch_size} \n
+    sample_num_batches_per_epoch={args.sample_num_batches_per_epoch} \n
+
+    """
     print("successful saving :)")
