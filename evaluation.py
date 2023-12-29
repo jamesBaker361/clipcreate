@@ -55,9 +55,11 @@ if __name__=='__main__':
     for model in args.model_list:
         try:
             pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
-        except EntryNotFoundError:
+        except (EntryNotFoundError,ValueError) as error:
+            print(error)
             pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
             pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
+        model_dict[model]=pipeline
 
     table_data=[]
     columns=["image","model","prompt","score"]
@@ -72,5 +74,5 @@ if __name__=='__main__':
 
     run = wandb.init(project="creative_clip")
     table=wandb.Table(columns=columns,data=table_data)
-    run.log(table)
+    run.log({"table":table})
     Dataset.from_dict(src_dict).push_to_hub(args.dataset_name+"-evaluation")
