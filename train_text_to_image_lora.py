@@ -94,7 +94,13 @@ def text_encoder_lora_state_dict(text_encoder):
     return state_dict
 
 
-def save_model_card(repo_id: str, images=None, base_model=str, dataset_name=str, repo_folder=None):
+def save_model_card(repo_id: str, 
+                    images=None, 
+                    base_model=str, 
+                    dataset_name=str, 
+                    repo_folder=None,
+                    epochs=1,
+                    inference_steps=20):
     img_str = ""
     for i, image in enumerate(images):
         image.save(os.path.join(repo_folder, f"image_{i}.png"))
@@ -115,7 +121,10 @@ def save_model_card(repo_id: str, images=None, base_model=str, dataset_name=str,
     """
     model_card = f"""
     # LoRA text2image fine-tuning - {repo_id}
-    These are LoRA adaption weights for {base_model}. The weights were fine-tuned on the {dataset_name} dataset. You can find some example images in the following. \n
+    These are LoRA adaption weights for {base_model}. The weights were fine-tuned on the {dataset_name} dataset. \n
+    Training epochs = {epochs} \n
+    inference steps = {inference_steps} \n
+    You can find some example images in the following. \n
     {img_str}
     """
     with open(os.path.join(repo_folder, "README.md"), "w") as f:
