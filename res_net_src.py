@@ -46,27 +46,36 @@ class ResNet(torch.nn.Module):
         return x
 
 class HFDataset(torch.utils.data.Dataset):
-    def __init__(self, hf_dataset_src="jlbaker361/wikiart",split="train",center_crop_dim=224):
+    def __init__(self, hf_dataset_src="jlbaker361/wikiart",split="train",center_crop_dim=224,batch_size=4):
+
         hf_dataset=load_dataset(hf_dataset_src,split=split)
-        self.data = [img for img in hf_dataset["image"]]
-        style_set=set([style for style in hf_dataset["style"]])
-        encoding_dict={
-            style:[0.0 for _ in range(len(style_set))] for style in style_set
-        }
-        for i,style in enumerate(style_set):
-            encoding_dict[style][i]=1.0
-        targets=[encoding_dict[style] for style in hf_dataset["style"]]
-        self.targets = torch.LongTensor(targets)
         self.transform = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(center_crop_dim),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
+        self.data = [img for img in hf_dataset["image"]]
+        self.data=[self.transform(img) for img in self.data]
+        self.batch_size=batch_size
+        limit=(len(self.data) // batch_size) *batch_size
+        self.data=self.data[:limit]
+        style_set=set([style for style in hf_dataset["style"]])
+        encoding_dict={
+            style:[0.0 for _ in range(len(style_set))] for style in style_set
+        }
+        for i,style in enumerate(style_set):
+            encoding_dict[style][i]=1.0
+        targets=[encoding_dict[style] for style in hf_dataset["style"]][:limit]
+        self.targets = torch.LongTensor(targets)
         
     def __getitem__(self, index):
+
         x = self.data[index]
-        x = self.transform(x)
+        try:
+            x = self.transform(x)
+        except RuntimeError:
+            print(f"runtime error for index {index}  {len(self.data)}")
         y = self.targets[index]
         
         return x, y
