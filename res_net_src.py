@@ -55,8 +55,14 @@ class HFDataset(torch.utils.data.Dataset):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-        self.data = [img for img in hf_dataset["image"]]
-        self.data=[self.transform(img) for img in self.data]
+        self.data = []
+        for i,img in enumerate(hf_dataset["image"]):
+            try:
+                trans_img=self.transform(img)
+                del trans_img
+                self.data.append(img)
+            except RuntimeError:
+                print(f"runtime error for image {i} / {len(self.data)}")
         self.batch_size=batch_size
         limit=(len(self.data) // batch_size) *batch_size
         self.data=self.data[:limit]
@@ -72,6 +78,7 @@ class HFDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
 
         x = self.data[index]
+        x=self.transform(x)
         y = self.targets[index]
         
         return x, y
