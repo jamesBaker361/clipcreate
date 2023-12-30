@@ -73,7 +73,7 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
                 ignore_patterns=["step_*", "epoch_*"],
     )
     model_card_content=f"""
-    trained to classify images
+    trained to classify images \n
     epochs: {args.epochs} \n
     dataset {args.dataset_name} \n
     n classes {n_classes} \n
