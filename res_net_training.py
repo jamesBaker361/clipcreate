@@ -14,7 +14,7 @@ import torch.optim as optim
 import argparse
 import time
 
-parser = argparse.ArgumentParser(description="ddpo training")
+parser = argparse.ArgumentParser(description="classifier training")
 parser.add_argument("--epochs", type=int,default=100)
 parser.add_argument("--dataset_name",type=str,default="jlbaker361/wikiart")
 parser.add_argument("--pretrained_version",type=str, default="resnet18")
