@@ -46,7 +46,7 @@ class ResNet(torch.nn.Module):
         return x
 
 class HFDataset(torch.utils.data.Dataset):
-    def __init__(self, hf_dataset_src="jlbaker361/wikiart",split="train"):
+    def __init__(self, hf_dataset_src="jlbaker361/wikiart",split="train",center_crop_dim=224):
         hf_dataset=load_dataset(hf_dataset_src,split=split)
         self.data = [img for img in hf_dataset["image"]]
         style_set=set([style for style in hf_dataset["style"]])
@@ -59,7 +59,7 @@ class HFDataset(torch.utils.data.Dataset):
         self.targets = torch.LongTensor(targets)
         self.transform = transforms.Compose([
             transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.CenterCrop(center_crop_dim),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
