@@ -87,6 +87,7 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
 
 if __name__=="__main__":
     args=parser.parse_args()
+    print(args)
     training_loop(args.epochs, 
                   args.dataset_name,
                   args.pretrained_version,
