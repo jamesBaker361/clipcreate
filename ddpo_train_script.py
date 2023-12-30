@@ -119,8 +119,7 @@ if __name__=='__main__':
             config,
             reward_fn,
             prompt_fn,
-            pipeline,
-            image_samples_hook
+            pipeline
     )
     start=time.time()
     torch.cuda.memory._record_memory_history()
