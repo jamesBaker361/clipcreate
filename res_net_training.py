@@ -21,8 +21,10 @@ parser.add_argument("--pretrained_version",type=str, default="resnet18")
 parser.add_argument("--batch_size",type=int, default=4)
 parser.add_argument("--repo_id",type=str,default="jlbaker361/resnet-wikiart")
 parser.add_argument("--output_dir",type=str,default="/scratch/jlb638/resnet-wikiart")
+parser.add_argument("--center_crop_dim",type=int,default=224)
+
 def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_size:int):
-    hf_dataset=HFDataset(dataset_name,"train")
+    hf_dataset=HFDataset(dataset_name,"train",center_crop_dim=args.center_crop_dim)
     for x,y in hf_dataset:
         break
     print(y.size())
@@ -71,10 +73,11 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
                 ignore_patterns=["step_*", "epoch_*"],
     )
     model_card_content=f"""
-    trained to classify
+    trained to classify images
     epochs: {args.epochs} \n
     dataset {args.dataset_name} \n
     n classes {n_classes} \n
+    image dim {args.center_crop_dim} \n
     pretrained version {args.pretrained_version} \n
     batch_size {args.batch_size}
     """
