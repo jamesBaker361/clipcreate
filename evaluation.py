@@ -37,6 +37,8 @@ parser.add_argument(
     default=20
 )
 
+parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation",help="hf dir to push to")
+
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/evaluation_images/")
 
 if __name__=='__main__':
@@ -79,4 +81,4 @@ if __name__=='__main__':
     run = wandb.init(project="creative_clip")
     table=wandb.Table(columns=columns,data=table_data)
     run.log({"table":table})
-    Dataset.from_dict(src_dict).push_to_hub(args.dataset_name+"-evaluation")
+    Dataset.from_dict(src_dict).push_to_hub(args.hf_dir)
