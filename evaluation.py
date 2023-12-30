@@ -63,14 +63,18 @@ if __name__=='__main__':
 
     table_data=[]
     columns=["image","model","prompt","score"]
-    for prompt in prompt_list:
-        for model,pipeline in model_dict.items():
+    
+    for model,pipeline in model_dict.items():
+        total_score=0.0
+        for prompt in prompt_list:
             image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
             src_dict["model"].append(model)
             score=aesthetic_fn(image,{},{})[0].numpy()[0]
             table_data.append([wandb.Image(image), model, prompt, score])
+            total_score+=score
+        print(f"total score {model} {total_score}")
 
     run = wandb.init(project="creative_clip")
     table=wandb.Table(columns=columns,data=table_data)
