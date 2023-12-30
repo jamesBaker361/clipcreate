@@ -13,7 +13,7 @@ import torch
 import time
 from creative_loss import clip_scorer_ddpo
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
-from huggingface_hub import create_repo, upload_folde, ModelCard
+from huggingface_hub import create_repo, upload_folder, ModelCard
 from datasets import load_dataset
 import random
 import argparse
