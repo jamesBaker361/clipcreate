@@ -72,10 +72,6 @@ class HFDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
 
         x = self.data[index]
-        try:
-            x = self.transform(x)
-        except RuntimeError:
-            print(f"runtime error for index {index}  {len(self.data)}")
         y = self.targets[index]
         
         return x, y
