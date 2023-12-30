@@ -2,6 +2,8 @@ import os
 from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
+from res_net_src import ResNet
+from torchvision import transforms
 from torch.nn import Softmax
 import torch
 
@@ -18,9 +20,9 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         probs = logits_per_image.softmax(dim=1)
 
-        n_text=len(style_list)
+        n_classes=len(style_list)
         n_image=images.shape[0]
-        uniform=torch.full((n_image, n_text), fill_value=1.0/n_text)
+        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
         #uniform=torch.normal(0, 5, size=(n_image, n_text))
 
         cosine = torch.nn.CosineSimilarity(dim=1) 
@@ -31,3 +33,29 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 
     return _fn
 
+def elgammal_scorer_ddpo(style_list, center_crop_dim):
+    n_classes=len(style_list)
+    model=ResNet("resnet18", n_classes)
+
+    transform_composition=transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(center_crop_dim),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+    @torch.no_grad()
+    def _fn(images, prompts, metadata):
+        images=transform_composition(images)
+        probs=model(images)
+        n_image=images.shape[0]
+        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
+        #uniform=torch.normal(0, 5, size=(n_image, n_text))
+
+        cosine = torch.nn.CosineSimilarity(dim=1) 
+
+        scores = -10*cosine(uniform,probs)
+
+        return scores, {}
+    
+    return _fn
