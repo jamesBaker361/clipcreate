@@ -4,15 +4,9 @@ import sys
 from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 from huggingface_hub.utils import EntryNotFoundError
 from torchvision.transforms.functional import to_pil_image
-from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
-from PIL import Image
-from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
-from diffusers import DiffusionPipeline, StableDiffusionPipeline
-from torch.nn import Softmax
 import torch
 import time
 from creative_loss import clip_scorer_ddpo
-from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 from huggingface_hub import create_repo, upload_folder, ModelCard
 from datasets import load_dataset
 import random
@@ -77,6 +71,7 @@ parser.add_argument("--style_list",nargs="*",help="styles to be used")
 parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
 parser.add_argument("--use_lora",type=bool,default=True)
 parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
+parser.add_argument("--cache_dir",type=str, default=None)
 
 if __name__=='__main__':
     args = parser.parse_args()
