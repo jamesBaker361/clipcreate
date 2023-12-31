@@ -62,6 +62,7 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds with total loss {total_loss}")
+    os.makedirs(args.output_dir,exist_ok=True)
     torch.save(model.state_dict(),args.output_dir+"/resnet-weights.pickle")
     repo_id=create_repo(repo_id=args.repo_id).repo_id
     upload_folder(
