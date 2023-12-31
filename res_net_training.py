@@ -23,7 +23,7 @@ parser.add_argument("--repo_id",type=str,default="jlbaker361/resnet-wikiart")
 parser.add_argument("--output_dir",type=str,default="/scratch/jlb638/resnet-wikiart")
 parser.add_argument("--center_crop_dim",type=int,default=224)
 
-def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_size:int):
+def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_size:int,args):
     hf_dataset=HFDataset(dataset_name,"train",center_crop_dim=args.center_crop_dim)
     for x,y in hf_dataset:
         break
@@ -36,9 +36,7 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
     training_dataloader=DataLoader(hf_dataset, batch_size=batch_size,drop_last=True)
 
     accelerator = Accelerator()
-    model, optimizer, training_dataloader, scheduler = accelerator.prepare(
-        model, optimizer, training_dataloader, scheduler
-    )
+    model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
     criterion=torch.nn.CrossEntropyLoss()
     for e in range(epochs):
         total_loss=0.0
@@ -91,4 +89,4 @@ if __name__=="__main__":
     training_loop(args.epochs, 
                   args.dataset_name,
                   args.pretrained_version,
-                  args.batch_size)
+                  args.batch_size,args)
