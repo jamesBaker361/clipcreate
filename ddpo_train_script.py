@@ -1,15 +1,5 @@
 import os
 import sys
-#os.symlink("~/.cache/huggingface/", cache_dir)
-from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
-from huggingface_hub.utils import EntryNotFoundError
-from torchvision.transforms.functional import to_pil_image
-import torch
-import time
-from creative_loss import clip_scorer_ddpo
-from huggingface_hub import create_repo, upload_folder, ModelCard
-from datasets import load_dataset
-import random
 import argparse
 from static_globals import *
 
@@ -72,10 +62,25 @@ parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
 parser.add_argument("--use_lora",type=bool,default=True)
 parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
 parser.add_argument("--cache_dir",type=str, default=None)
+parser.add_argument("--resume_from",type=str,default=None)
 
 if __name__=='__main__':
     args = parser.parse_args()
     print(args)
+    if args.cache_dir is not None:
+        os.environ["TRANSFORMERS_CACHE"]=args.cache_dir
+        os.environ["HF_HOME"]=args.cache_dir
+        os.environ["HF_HUB_CACHE"]=args.cache_dir
+    #os.symlink("~/.cache/huggingface/", cache_dir)
+    from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
+    from huggingface_hub.utils import EntryNotFoundError
+    from torchvision.transforms.functional import to_pil_image
+    import torch
+    import time
+    from creative_loss import clip_scorer_ddpo
+    from huggingface_hub import create_repo, upload_folder, ModelCard
+    from datasets import load_dataset
+    import random
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
@@ -90,6 +95,7 @@ if __name__=='__main__':
         train_batch_size=args.train_batch_size,
         sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
         mixed_precision=args.mixed_precision,
+        resume_from=args.resume_from,
         accelerator_kwargs={
             "project_dir":args.output_dir
         },
