@@ -87,23 +87,11 @@ if __name__=='__main__':
     reward_fn=clip_scorer_ddpo(style_list)
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
 
-    config=DDPOConfig(
-        num_epochs=args.num_epochs,
-        train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
-        sample_num_steps=args.sample_num_steps,
-        sample_batch_size=args.sample_batch_size,
-        train_batch_size=args.train_batch_size,
-        sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
-        mixed_precision=args.mixed_precision,
-        resume_from=args.resume_from,
-        accelerator_kwargs={
-            "project_dir":args.output_dir
-        },
-        project_kwargs={
+
+    project_kwargs={
             "project_dir":args.output_dir,
             'automatic_checkpoint_naming':True
         }
-    )
     try:
         pipeline = DefaultDDPOStableDiffusionPipeline(
             args.pretrained_model_name_or_path,  use_lora=args.use_lora
@@ -112,6 +100,40 @@ if __name__=='__main__':
         print("EntryNotFoundError using pipeline.sd_pipeline.load_lora_weights")
         pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
         pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
+
+    if args.resume_from:
+        resume_from = os.path.normpath(os.path.expanduser(args.resume_from))
+        if os.path.exists(resume_from):
+            checkpoints = list(
+                filter(
+                    lambda x: "checkpoint_" in x,
+                    os.listdir(resume_from),
+                )
+            )
+            if len(checkpoints) == 0:
+                raise ValueError(f"No checkpoints found in {resume_from}")
+            checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
+            resume_from = os.path.join(
+                resume_from,
+                f"checkpoint_{checkpoint_numbers[-1]}",
+            )
+
+            project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
+
+    config=DDPOConfig(
+        num_epochs=args.num_epochs,
+        train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
+        sample_num_steps=args.sample_num_steps,
+        sample_batch_size=args.sample_batch_size,
+        train_batch_size=args.train_batch_size,
+        sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
+        mixed_precision=args.mixed_precision,
+        #resume_from=args.resume_from,
+        accelerator_kwargs={
+            "project_dir":args.output_dir
+        },
+        project_kwargs=project_kwargs
+    )
 
     if args.image_dir==None:
         args.image_dir="images"
@@ -123,6 +145,11 @@ if __name__=='__main__':
             prompt_fn,
             pipeline
     )
+    if args.resume_from:
+        print(f"Resuming from {resume_from}")
+        pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
+        trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
+
     start=time.time()
     torch.cuda.memory._record_memory_history()
     try:
