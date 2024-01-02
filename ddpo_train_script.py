@@ -81,6 +81,13 @@ if __name__=='__main__':
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
+
+    #sanity check to make sure we are logged in to huggingface
+    os.makedirs("test",exist_ok=True)
+    test_repo_id=create_repo("jlbaker361/test", exist_ok=True).repo_id
+    upload_folder(repo_id=test_repo_id, folder_path="test")
+
+
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
@@ -101,6 +108,7 @@ if __name__=='__main__':
         pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
         pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
 
+    resume_from=None
     if args.resume_from:
         resume_from = os.path.normpath(os.path.expanduser(args.resume_from))
         if os.path.exists(resume_from):
@@ -145,7 +153,7 @@ if __name__=='__main__':
             prompt_fn,
             pipeline
     )
-    if args.resume_from:
+    if resume_from:
         print(f"Resuming from {resume_from}")
         pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
         trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
