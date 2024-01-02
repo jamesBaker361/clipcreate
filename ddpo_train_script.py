@@ -68,9 +68,14 @@ if __name__=='__main__':
     args = parser.parse_args()
     print(args)
     if args.cache_dir is not None:
+        os.makedirs(args.cache_dir,exist_ok=True)
         os.environ["TRANSFORMERS_CACHE"]=args.cache_dir
         os.environ["HF_HOME"]=args.cache_dir
         os.environ["HF_HUB_CACHE"]=args.cache_dir
+        torch_cache_dir=args.cache_dir+"/torch"
+        os.makedirs(torch_cache_dir)
+        import torch
+        torch.hub.set_dir(torch_cache_dir)
     #os.symlink("~/.cache/huggingface/", cache_dir)
     from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
     from huggingface_hub.utils import EntryNotFoundError
