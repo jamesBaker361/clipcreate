@@ -37,7 +37,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 def elgammal_scorer_ddpo(style_list, center_crop_dim):
     n_classes=len(style_list)
     model=ResNet("resnet18", n_classes)
-    weights_location=hf_hub_download(repo_id="jlbaker361/restest", filename="resnet-weights.pickle")
+    weights_location=hf_hub_download(repo_id="jlbaker361/resnet-wikiart", filename="resnet-weights.pickle")
     if torch.cuda.is_available():
         state_dict=torch.load(weights_location)
     else:
