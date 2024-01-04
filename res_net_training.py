@@ -15,7 +15,7 @@ import argparse
 import time
 
 parser = argparse.ArgumentParser(description="classifier training")
-parser.add_argument("--epochs", type=int,default=100)
+parser.add_argument("--epochs", type=int,default=50)
 parser.add_argument("--dataset_name",type=str,default="jlbaker361/wikiart")
 parser.add_argument("--pretrained_version",type=str, default="resnet18")
 parser.add_argument("--batch_size",type=int, default=4)
