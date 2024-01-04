@@ -4,6 +4,7 @@ from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
 from res_net_src import ResNet
 from torchvision import transforms
+from huggingface_hub import hf_hub_download
 from torch.nn import Softmax
 import torch
 
@@ -36,11 +37,18 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 def elgammal_scorer_ddpo(style_list, center_crop_dim):
     n_classes=len(style_list)
     model=ResNet("resnet18", n_classes)
+    weights_location=hf_hub_download(repo_id="jlbaker361/restest", filename="resnet-weights.pickle")
+    if torch.cuda.is_available():
+        state_dict=torch.load(weights_location)
+    else:
+        state_dict=torch.load(weights_location, map_location=torch.device("cpu"))
+    model.load_state_dict(state_dict)
+
 
     transform_composition=transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(center_crop_dim),
-            transforms.ToTensor(),
+            #transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
