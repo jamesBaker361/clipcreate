@@ -28,7 +28,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 
         cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores = -10*cosine(uniform,probs)
+        scores = cosine(uniform,probs)
         #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
 
@@ -62,7 +62,7 @@ def elgammal_scorer_ddpo(style_list, center_crop_dim):
 
         cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores = -10*cosine(uniform,probs)
+        scores = cosine(uniform,probs)
 
         return scores, {}
     
