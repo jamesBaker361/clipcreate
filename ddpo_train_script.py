@@ -63,6 +63,8 @@ parser.add_argument("--use_lora",type=bool,default=True)
 parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
 parser.add_argument("--cache_dir",type=str, default=None)
 parser.add_argument("--resume_from",type=str,default=None)
+parser.add_argument("--reward_function",default="clip",type=str,help="reward function: elgammal or clip")
+
 
 if __name__=='__main__':
     args = parser.parse_args()
@@ -82,7 +84,7 @@ if __name__=='__main__':
     from torchvision.transforms.functional import to_pil_image
     import torch
     import time
-    from creative_loss import clip_scorer_ddpo
+    from creative_loss import clip_scorer_ddpo, elgammal_scorer_ddpo
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
@@ -96,7 +98,12 @@ if __name__=='__main__':
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
-    reward_fn=clip_scorer_ddpo(style_list)
+    if args.reward_function == "clip":
+        reward_fn=clip_scorer_ddpo(style_list)
+    elif args.reward_function == "elgammal":
+        reward_fn=elgammal_scorer_ddpo(style_list,224)
+    else:
+        raise Exception("unknown reward function; should be one of clip or elgammal")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
 
 
