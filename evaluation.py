@@ -15,6 +15,8 @@ import random
 import argparse
 from static_globals import *
 
+random.seed(1234)
+
 parser = argparse.ArgumentParser(description="evaluation")
 
 parser.add_argument(
@@ -40,6 +42,7 @@ parser.add_argument(
 parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation",help="hf dir to push to")
 
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/evaluation_images/")
+parser.add_argument("--limit",type=int,default=1000000,  help="how many samples to make")
 
 if __name__=='__main__':
     args = parser.parse_args()
@@ -53,6 +56,8 @@ if __name__=='__main__':
 
     hf_dataset=load_dataset(args.dataset_name,split="test")
     prompt_list=[t for t in hf_dataset["text"]]
+    random.shuffle(prompt_list)
+    prompt_list=prompt_list[:args.limit]
     model_dict={}
     for model in args.model_list:
         try:
