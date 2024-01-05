@@ -34,7 +34,7 @@ parser.add_argument(
 parser.add_argument(
     "--num_inference_steps",
     type=int,
-    default=20
+    default=30
 )
 
 parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation",help="hf dir to push to")
