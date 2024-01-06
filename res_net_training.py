@@ -51,7 +51,7 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
             #print('outputs',outputs.dtype, outputs.size())
             #print('labels',labels.dtype,labels.size())
             loss = criterion(outputs, labels)
-            loss.backward()
+            accelerator.backward(loss)
             optimizer.step()
             scheduler.step()
 
@@ -64,7 +64,7 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
         print(f"epoch {e} elapsed {end-start} seconds with total loss {total_loss}")
     os.makedirs(args.output_dir,exist_ok=True)
     torch.save(model.state_dict(),args.output_dir+"/resnet-weights.pickle")
-    repo_id=create_repo(repo_id=args.repo_id).repo_id
+    repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
     upload_folder(
                 repo_id=repo_id,
                 folder_path=args.output_dir,
