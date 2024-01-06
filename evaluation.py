@@ -42,7 +42,7 @@ parser.add_argument(
 parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation",help="hf dir to push to")
 
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/evaluation_images/")
-parser.add_argument("--limit",type=int,default=1000000,  help="how many samples to make")
+parser.add_argument("--limit",type=int,default=150,  help="how many samples to make")
 
 if __name__=='__main__':
     args = parser.parse_args()
