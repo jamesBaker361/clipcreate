@@ -62,11 +62,12 @@ if __name__=='__main__':
     for model in args.model_list:
         try:
             pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
+            print(f"loaded weights for {model}")
         except (EntryNotFoundError,ValueError) as error:
             print(error)
-            print("loading lora weights spearately")
             pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
             pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
+            print(f"loaded lora weights spearately for {model}")
         model_dict[model]=pipeline
 
     table_data=[]
