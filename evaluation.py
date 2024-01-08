@@ -51,7 +51,8 @@ if __name__=='__main__':
     src_dict={
         "prompt":[],
         "image":[],
-        "model":[]
+        "model":[],
+        "score":[]
     }
 
     hf_dataset=load_dataset(args.dataset_name,split="test")
@@ -81,11 +82,14 @@ if __name__=='__main__':
             src_dict["image"].append(image)
             src_dict["model"].append(model)
             score=aesthetic_fn(image,{},{})[0].numpy()[0]
+            src_dict["score"].append(score)
             table_data.append([wandb.Image(image), model, prompt, score])
             total_score+=score
+            print(prompt,score)
         print(f"total score {model} {total_score}")
 
-    run = wandb.init(project="creative_clip")
-    table=wandb.Table(columns=columns,data=table_data)
-    run.log({"table":table})
+    #run = wandb.init(project="creative_clip")
+    #table=wandb.Table(columns=columns,data=table_data)
+    #run.log({"table":table})
     Dataset.from_dict(src_dict).push_to_hub(args.hf_dir)
+    print("all done :)))")
