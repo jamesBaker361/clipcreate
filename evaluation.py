@@ -67,8 +67,17 @@ if __name__=='__main__':
         except (EntryNotFoundError,ValueError) as error:
             print(error)
             pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
-            pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
-            print(f"loaded lora weights spearately for {model}")
+            try:
+                pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
+            except Exception as error:
+                print(error)
+            try:
+                slurm_job_id=os.environ["SLURM_JOB_ID"]
+                with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
+                    print(f"\nloaded lora weights spearately for {model} SLURM_JOB_ID={slurm_job_id}",file=file)
+            except:
+                print(f"loaded lora weights spearately for {model}")
+        #pipeline.set_progress_bar_config(disable=True)
         model_dict[model]=pipeline
 
     table_data=[]
@@ -83,13 +92,28 @@ if __name__=='__main__':
             src_dict["model"].append(model)
             score=aesthetic_fn(image,{},{})[0].numpy()[0]
             src_dict["score"].append(score)
-            table_data.append([wandb.Image(image), model, prompt, score])
+            #table_data.append([wandb.Image(image), model, prompt, score])
             total_score+=score
-            print(prompt,score)
-        print(f"total score {model} {total_score}")
+            try:
+                slurm_job_id=os.environ["SLURM_JOB_ID"]
+                with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
+                    print("\n",prompt,score,file=file)
+            except:
+                print(prompt,score)
+        try:
+            slurm_job_id=os.environ["SLURM_JOB_ID"]
+            with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
+                print(f"\ntotal score {model} {total_score}",file=file)
+        except:
+            print(f"total score {model} {total_score}")
 
     #run = wandb.init(project="creative_clip")
     #table=wandb.Table(columns=columns,data=table_data)
     #run.log({"table":table})
     Dataset.from_dict(src_dict).push_to_hub(args.hf_dir)
-    print("all done :)))")
+    try:
+        slurm_job_id=os.environ["SLURM_JOB_ID"]
+        with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
+            print("all done :)))",file=file)
+    except:
+        print("all done :)))")
