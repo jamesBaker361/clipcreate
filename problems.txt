@@ -284,3 +284,10 @@ IndexError: list index out of range
 
 solution:
 use ur own branch of trl diffusers
+
+resnet training bus error- is this OOM related???
+
+try: runpymain 256GB memory
+
+result:
+???
