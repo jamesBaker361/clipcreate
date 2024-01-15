@@ -52,11 +52,12 @@ if __name__=='__main__':
         "prompt":[],
         "image":[],
         "model":[],
-        "score":[]
+        "score":[],
+        "name":[]
     }
 
     hf_dataset=load_dataset(args.dataset_name,split="test")
-    prompt_list=[t for t in hf_dataset["text"]]
+    prompt_list=[[t,n] for t,n in zip(hf_dataset["text"], hf_dataset["name"])]
     random.shuffle(prompt_list)
     prompt_list=prompt_list[:args.limit]
     model_dict={}
@@ -85,13 +86,14 @@ if __name__=='__main__':
     
     for model,pipeline in model_dict.items():
         total_score=0.0
-        for prompt in prompt_list:
+        for [prompt,name] in prompt_list:
             image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
             src_dict["model"].append(model)
             score=aesthetic_fn(image,{},{})[0].numpy()[0]
             src_dict["score"].append(score)
+            src_dict["name"].append(name)
             #table_data.append([wandb.Image(image), model, prompt, score])
             total_score+=score
             try:
