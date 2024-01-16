@@ -6,9 +6,20 @@ from res_net_src import ResNet
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
 from torch.nn import Softmax
+import numpy as np
 import torch
 
 cache_dir="/scratch/jlb638/trans_cache"
+
+def cross_entropy_per_sample(y_pred, y_true):
+    loss = 0
+    # Doing cross entropy Loss
+    for i in range(len(y_pred)):
+        loss = loss + (-1 * y_true[i]*np.log(y_pred[i]))
+    return loss
+
+def cross_entropy(pred,true):
+    return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
 
 def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/examples/scripts/ddpo.py#L126
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
