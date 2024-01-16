@@ -922,6 +922,7 @@ def main():
                 commit_message="End of training",
                 ignore_patterns=["step_*", "epoch_*"],
             )
+            print(f"successfully pushed {repo_id} to hub")
 
     # Final inference
     # Load previous pipeline
