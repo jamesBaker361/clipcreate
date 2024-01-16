@@ -479,6 +479,7 @@ def parse_args():
             " more information see https://huggingface.co/docs/accelerate/v0.17.0/en/package_reference/accelerator#accelerate.Accelerator"
         ),
     )
+    parser.add_argument("--noise_steps_per_image",type=int,default=30, help="how many denoising steps to take for each image x_0, x_1,x_2,,,x_T, this is T")
 
     args = parser.parse_args()
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
@@ -550,7 +551,8 @@ def main():
             ).repo_id
 
     # Load scheduler, tokenizer and models.
-    noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+    noise_scheduler = DDPMScheduler(num_train_timesteps=args.noise_steps_per_image,clip_sample=False)
+    noise_scheduler.set_timesteps(args.noise_steps_per_image)
     tokenizer = CLIPTokenizer.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
     )
@@ -1057,7 +1059,7 @@ def main():
 
             for i in range(len(args.validation_prompts)):
                 with torch.autocast("cuda"):
-                    image = pipeline(args.validation_prompts[i], num_inference_steps=20, generator=generator).images[0]
+                    image = pipeline(args.validation_prompts[i], num_inference_steps=args.noise_steps_per_image, generator=generator).images[0]
                 images.append(image)
 
         if args.push_to_hub:
