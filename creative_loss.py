@@ -16,7 +16,7 @@ def cross_entropy_per_sample(y_pred, y_true):
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
         loss = loss + (-1 * y_true[i]*np.log(y_pred[i]))
-    return loss
+    return torch.tensor(loss)
 
 def cross_entropy(pred,true):
     return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
@@ -37,9 +37,9 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
         #uniform=torch.normal(0, 5, size=(n_image, n_text))
 
-        cosine = torch.nn.CosineSimilarity(dim=1) 
+        #cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores = cosine(uniform,probs)
+        scores = -1 * cross_entropy(probs,uniform)
         #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
 
@@ -71,9 +71,9 @@ def elgammal_scorer_ddpo(style_list, center_crop_dim):
         uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
         #uniform=torch.normal(0, 5, size=(n_image, n_text))
 
-        cosine = torch.nn.CosineSimilarity(dim=1) 
+        #cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores = cosine(uniform,probs)
+        scores = -1 * cross_entropy(probs,uniform)
 
         return scores, {}
     
