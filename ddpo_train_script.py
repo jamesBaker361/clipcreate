@@ -167,8 +167,11 @@ if __name__=='__main__':
     )
     if resume_from:
         print(f"Resuming from {resume_from}")
-        pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
-        trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
+        try:
+            pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
+            trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
+        except:
+            print(f"could not resume from {resume_from}")
 
     start=time.time()
     torch.cuda.memory._record_memory_history()
