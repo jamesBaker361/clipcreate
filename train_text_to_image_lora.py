@@ -466,7 +466,7 @@ def main():
                 repo_id=args.hub_model_id or Path(args.output_dir).name, exist_ok=True, token=args.hub_token
             ).repo_id
     # Load scheduler, tokenizer and models.
-    noise_scheduler = DDPMScheduler(num_train_timesteps=args.num_train_timesteps_per_image)
+    noise_scheduler = DDPMScheduler(num_train_timesteps=args.num_train_timesteps_per_image,clip_sample=False)
     tokenizer = CLIPTokenizer.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
     )
