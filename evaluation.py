@@ -112,7 +112,7 @@ if __name__=='__main__':
             with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
                 print(f"\ntotal score {model} {total_score} std {score_std}",file=file)
         except:
-            print(f"total score {model} {total_score}")
+            print(f"total score {model} {total_score} std {score_std}")
 
     #run = wandb.init(project="creative_clip")
     #table=wandb.Table(columns=columns,data=table_data)
