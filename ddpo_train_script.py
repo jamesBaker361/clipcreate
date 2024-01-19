@@ -115,7 +115,7 @@ if __name__=='__main__':
         pipeline = DefaultDDPOStableDiffusionPipeline(
             args.pretrained_model_name_or_path,  use_lora=args.use_lora
         )
-    except EntryNotFoundError:
+    except (EntryNotFoundError,ValueError) as error:
         print("EntryNotFoundError using pipeline.sd_pipeline.load_lora_weights")
         pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
         pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
