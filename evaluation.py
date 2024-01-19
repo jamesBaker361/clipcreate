@@ -69,10 +69,7 @@ if __name__=='__main__':
         except (EntryNotFoundError,ValueError) as error:
             print(error)
             pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
-            try:
-                pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
-            except Exception as error:
-                print(error)
+            pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
             try:
                 slurm_job_id=os.environ["SLURM_JOB_ID"]
                 with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
