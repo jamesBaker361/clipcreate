@@ -14,6 +14,7 @@ from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_a
 import random
 import argparse
 from static_globals import *
+import numpy as np
 
 random.seed(1234)
 
@@ -85,7 +86,9 @@ if __name__=='__main__':
     columns=["image","model","prompt","score"]
     
     for model,pipeline in model_dict.items():
+        
         total_score=0.0
+        score_list=[]
         for [prompt,name] in prompt_list:
             image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
             src_dict["prompt"].append(prompt)
@@ -96,16 +99,18 @@ if __name__=='__main__':
             src_dict["name"].append(name)
             #table_data.append([wandb.Image(image), model, prompt, score])
             total_score+=score
+            score_list.append(score)
             try:
                 slurm_job_id=os.environ["SLURM_JOB_ID"]
                 with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
                     print("\n",prompt,score,file=file)
             except:
                 print(prompt,score)
+        score_std=np.std(score_list)
         try:
             slurm_job_id=os.environ["SLURM_JOB_ID"]
             with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
-                print(f"\ntotal score {model} {total_score}",file=file)
+                print(f"\ntotal score {model} {total_score} std {score_std}",file=file)
         except:
             print(f"total score {model} {total_score}")
 
