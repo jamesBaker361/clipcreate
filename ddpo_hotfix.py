@@ -23,6 +23,8 @@ if __name__=='__main__':
     test_repo_id=create_repo("jlbaker361/test", exist_ok=True).repo_id
     upload_folder(repo_id=test_repo_id, folder_path="test")
 
-    pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
+    pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5",use_lora=True)
     resume_from="vanilla-ddpo25/checkpoints/checkpoint_13"
+    print("loading???")
     pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
+    print("loaded :)")
