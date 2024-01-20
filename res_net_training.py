@@ -32,11 +32,12 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
     n_classes=y.size()[-1]
     model=ResNet(pretrained_version, n_classes)
     optimizer=optim.Adam(model.parameters())
-    scheduler=optim.lr_scheduler.LinearLR(optimizer)
+    #scheduler=optim.lr_scheduler.LinearLR(optimizer)
     training_dataloader=DataLoader(hf_dataset, batch_size=batch_size,drop_last=True)
 
     accelerator = Accelerator()
-    model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
+    #model, optimizer, training_dataloader, scheduler = accelerator.prepare(model, optimizer, training_dataloader, scheduler)
+    model, optimizer, training_dataloader = accelerator.prepare(model, optimizer, training_dataloader)
     criterion=torch.nn.CrossEntropyLoss()
     for e in range(epochs):
         total_loss=0.0
@@ -53,7 +54,7 @@ def training_loop(epochs:int, dataset_name:str, pretrained_version:str,batch_siz
             loss = criterion(outputs, labels)
             accelerator.backward(loss)
             optimizer.step()
-            scheduler.step()
+            #scheduler.step()
 
             flat_loss=torch.flatten(loss)
             for fl in flat_loss:
