@@ -24,5 +24,5 @@ if __name__=='__main__':
     upload_folder(repo_id=test_repo_id, folder_path="test")
 
     pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
-    resume_from="~/clipcreat/vanilla-ddpo25/checkpoints/checkpoint_13"
+    resume_from="~/clipcreate/vanilla-ddpo25/checkpoints/checkpoint_13"
     pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
