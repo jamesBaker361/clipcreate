@@ -54,7 +54,7 @@ if __name__=='__main__':
     repo_id = create_repo(repo_id="jlbaker361/vanilla-ddpo25", exist_ok=True).repo_id
     upload_folder(
         repo_id=repo_id,
-        folder_path=args.output_dir,
+        folder_path="vanilla-ddpo25",
         commit_message="End of training",
         ignore_patterns=["step_*", "epoch_*"],
     )
