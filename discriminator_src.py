@@ -45,7 +45,8 @@ class Discriminator(nn.Module):
         self.style_layers=nn.Sequential(
             nn.Linear(init_dim*image_dim*image_dim//4,1024),
             nn.Linear(1024,512),
-            nn.Linear(512, len(style_list))
+            nn.Linear(512, len(style_list)),
+            nn.Softmax(dim=-1)
         )
 
     def forward(self, input):
