@@ -13,6 +13,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from IPython.display import HTML
+from PIL import Image
+from torchvision import transforms
+from torch.utils.data import Dataset, DataLoader
+from datasets import Dataset,load_dataset
 
 class Discriminator(nn.Module):
     def __init__(self, image_dim,init_dim,final_dim,style_list):
@@ -47,3 +51,45 @@ class Discriminator(nn.Module):
     def forward(self, input):
         main_output = self.main(input)
         return self.binary_layers(main_output), self.style_layers(main_output)
+    
+
+class GANDataset(torch.utils.data.Dataset):
+    def __init__(self, hf_dataset_src,image_dim,resize_dim,batch_size,split):
+
+        hf_dataset=load_dataset(hf_dataset_src,split=split)
+
+        self.transform = transforms.Compose([
+            transforms.Resize(resize_dim),
+            transforms.CenterCrop(image_dim),
+            transforms.ToTensor()
+        ])
+        self.data = []
+        for i,img in enumerate(hf_dataset["image"]):
+            try:
+                trans_img=self.transform(img)
+                del trans_img
+                self.data.append(img)
+            except RuntimeError:
+                print(f"runtime error for image {i} / {len(self.data)}")
+        self.batch_size=batch_size
+        limit=(len(self.data) // batch_size) *batch_size
+        self.data=self.data[:limit]
+        style_set=set([style for style in hf_dataset["style"]])
+        encoding_dict={
+            style:[0.0 for _ in range(len(style_set))] for style in style_set
+        }
+        for i,style in enumerate(style_set):
+            encoding_dict[style][i]=1.0
+        targets=[encoding_dict[style] for style in hf_dataset["style"]][:limit]
+        self.targets = torch.LongTensor(targets)
+        
+    def __getitem__(self, index):
+
+        x = self.data[index]
+        x=self.transform(x)
+        y = self.targets[index]
+        
+        return x, y
+    
+    def __len__(self):
+        return len(self.data)
