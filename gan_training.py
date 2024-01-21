@@ -10,6 +10,7 @@ from generator_src import Generator
 from discriminator_src import Discriminator,GANDataset
 
 from huggingface_hub import create_repo, upload_folder, ModelCard
+from transformers import CLIPProcessor, CLIPModel
 from accelerate import Accelerator
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -23,6 +24,7 @@ parser.add_argument("--dataset_name",type=str,default="jlbaker361/wikiart")
 parser.add_argument("--batch_size",type=int, default=4)
 parser.add_argument("--repo_id",type=str,default="jlbaker361/dcgan-wikiart")
 parser.add_argument("--output_dir",type=str,default="/scratch/jlb638/dcgan-wikiart")
+parser.add_argument("--use_clip",type=bool,default=False)
 
 parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise for generator")
 parser.add_argument("--image_dim", type=int,default=512)
@@ -31,6 +33,8 @@ parser.add_argument("--disc_final_dim",type=int,default=512)
 
 parser.add_argument("--style_list",nargs="+",default=WIKIART_STYLES)
 parser.add_argument("--resize_dim",type=int,default=512)
+
+
 
 def training_loop(args):
 
@@ -44,6 +48,18 @@ def training_loop(args):
     print(y.size()[-1])
     n_classes=y.size()[-1]
 
+    if args.use_clip:
+        print("using clip classifier")
+        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+
+        def clip_classifier(images):
+            images=images/255
+            inputs = processor(text=args.style_list, images=images, return_tensors="pt", padding=True)
+            outputs = model(**inputs)
+            logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+            return logits_per_image.softmax(dim=1)
+    
     gen_optimizer=optim.Adam(gen.parameters())
     disc_optimizer=optim.Adam(disc.parameters())
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
@@ -76,17 +92,20 @@ def training_loop(args):
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
-            style_classification_loss=cross_entropy(real_style,real_labels)
-            style_ambiguity_loss=cross_entropy(fake_style, uniform)
+            if args.use_clip:
+                fake_clip_style=clip_classifier(fake_images)
+                style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
+                style_classification_loss=0.
+            else:
+                style_classification_loss=cross_entropy(real_style,real_labels)
+                style_ambiguity_loss=cross_entropy(fake_style, uniform)
 
-            gen_loss=None
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
             accelerator.backward(gen_loss, retain_graph=True)
             accelerator.backward(disc_loss)
             gen_optimizer.step()
             disc_optimizer.step()
-            break
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
@@ -108,6 +127,7 @@ def training_loop(args):
     batch_size {args.batch_size}
     images where resized to {args.resize_dim}
      and then center cropped to: {args.image_dim}
+    used clip={args.use_clip}
 
     discriminator parameters:
     init_dim: {args.disc_init_dim}
