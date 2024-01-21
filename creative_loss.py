@@ -48,10 +48,10 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
     return _fn
 
 
-def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,disc_final_dim):
+def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,disc_final_dim,repo_id):
     n_classes=len(style_list)
     model=Discriminator(image_dim,disc_init_dim,disc_final_dim,style_list)
-    weights_location=hf_hub_download(repo_id="jlbaker361/dcgan-wikiart", filename="disc-weights.pickle")
+    weights_location=hf_hub_download(repo_id, filename="disc-weights.pickle")
     if torch.cuda.is_available():
         state_dict=torch.load(weights_location)
     else:
