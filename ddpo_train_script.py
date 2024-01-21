@@ -63,7 +63,12 @@ parser.add_argument("--use_lora",type=bool,default=True)
 parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
 parser.add_argument("--cache_dir",type=str, default=None)
 parser.add_argument("--resume_from",type=str,default=None)
-parser.add_argument("--reward_function",default="clip",type=str,help="reward function: elgammal or clip")
+parser.add_argument("--reward_function",default="clip",type=str,help="reward function: resnet dcgan or clip")
+
+parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-wikiart")
+parser.add_argument("--disc_init_dim",type=int,default=32, help="initial layer # of channels in discriminator")
+parser.add_argument("--disc_final_dim",type=int, default=512, help="final layer # of channels in discriminator")
+parser.add_argument("--resize_dim",type=int,default=512,help="dim to resize images to before cropping (for dcgan)")
 
 
 if __name__=='__main__':
@@ -84,7 +89,7 @@ if __name__=='__main__':
     from torchvision.transforms.functional import to_pil_image
     import torch
     import time
-    from creative_loss import clip_scorer_ddpo, elgammal_resnet_scorer_ddpo
+    from creative_loss import clip_scorer_ddpo, elgammal_resnet_scorer_ddpo, elgammal_dcgan_scorer_ddpo
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
@@ -100,10 +105,12 @@ if __name__=='__main__':
         style_list=WIKIART_STYLES
     if args.reward_function == "clip":
         reward_fn=clip_scorer_ddpo(style_list)
-    elif args.reward_function == "elgammal":
+    elif args.reward_function == "resnet":
         reward_fn=elgammal_resnet_scorer_ddpo(style_list,224)
+    elif args.reward_function=="dcgan":
+        reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
     else:
-        raise Exception("unknown reward function; should be one of clip or elgammal")
+        raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
 
 
