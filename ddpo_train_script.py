@@ -84,7 +84,7 @@ if __name__=='__main__':
     from torchvision.transforms.functional import to_pil_image
     import torch
     import time
-    from creative_loss import clip_scorer_ddpo, elgammal_scorer_ddpo
+    from creative_loss import clip_scorer_ddpo, elgammal_resnet_scorer_ddpo
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
@@ -101,7 +101,7 @@ if __name__=='__main__':
     if args.reward_function == "clip":
         reward_fn=clip_scorer_ddpo(style_list)
     elif args.reward_function == "elgammal":
-        reward_fn=elgammal_scorer_ddpo(style_list,224)
+        reward_fn=elgammal_resnet_scorer_ddpo(style_list,224)
     else:
         raise Exception("unknown reward function; should be one of clip or elgammal")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
