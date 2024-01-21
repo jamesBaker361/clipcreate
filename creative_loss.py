@@ -3,9 +3,11 @@ from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
 from res_net_src import ResNet
+from discriminator_src import Discriminator
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
 from torch.nn import Softmax
+import torch
 import numpy as np
 import torch
 
@@ -15,7 +17,7 @@ def cross_entropy_per_sample(y_pred, y_true):
     loss = 0
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
-        loss = loss + (-1 * y_true[i]*np.log(y_pred[i]))
+        loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
     return torch.tensor(loss)
 
 def cross_entropy(pred,true):
@@ -45,7 +47,37 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 
     return _fn
 
-def elgammal_scorer_ddpo(style_list, center_crop_dim):
+
+def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,disc_final_dim):
+    n_classes=len(style_list)
+    model=Discriminator(image_dim,disc_init_dim,disc_final_dim,style_list)
+    weights_location=hf_hub_download(repo_id="jlbaker361/dcgan-wikiart", filename="disc-weights.pickle")
+    if torch.cuda.is_available():
+        state_dict=torch.load(weights_location)
+    else:
+        state_dict=torch.load(weights_location, map_location=torch.device("cpu"))
+    model.load_state_dict(state_dict)
+    
+    transform_composition=transforms.Compose([
+            transforms.Resize(resize_dim),
+            transforms.CenterCrop(image_dim)
+    ])
+
+    @torch.no_grad()
+    def _fn(images, prompts, metadata):
+        images=transform_composition(images)
+        _,probs=model(images)
+        n_image=images.shape[0]
+        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
+
+        scores = -1 * cross_entropy(probs,uniform)
+
+        return scores, {}
+    
+    return _fn
+
+
+def elgammal_resnet_scorer_ddpo(style_list, center_crop_dim):
     n_classes=len(style_list)
     model=ResNet("resnet18", n_classes)
     weights_location=hf_hub_download(repo_id="jlbaker361/resnet-wikiart", filename="resnet-weights.pickle")
