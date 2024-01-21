@@ -86,10 +86,38 @@ def training_loop(args):
             accelerator.backward(disc_loss)
             gen_optimizer.step()
             disc_optimizer.step()
-            print("batch has been batched")
+            break
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
+    
+    torch.save(gen.state_dict(),args.output_dir+"/gen-weights.pickle")
+    torch.save(disc.state_dict(),args.output_dir+"/disc-weights.pickle")
+    repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
+    upload_folder(
+                repo_id=repo_id,
+                folder_path=args.output_dir,
+                commit_message="End of training",
+                ignore_patterns=["step_*", "epoch_*"],
+    )
+    model_card_content=f"""
+    Creative Adversarial Network \n
+    epochs: {args.epochs} 
+    dataset {args.dataset_name}
+    n classes {n_classes}
+    batch_size {args.batch_size}
+    images where resized to {args.resize_dim}
+     and then center cropped to: {args.image_dim}
+
+    discriminator parameters:
+    init_dim: {args.disc_init_dim}
+    final_dim {args.disc_final_dim}
+
+    generator parameters:
+    input noise_dim: {args.gen_z_dim}
+    """
+    card=ModelCard(model_card_content)
+    card.push_to_hub(repo_id)
     print("all done :)))")
 
 if __name__=='__main__':
