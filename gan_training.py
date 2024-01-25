@@ -68,7 +68,8 @@ def training_loop(args):
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
     training_dataloader=DataLoader(dataset, batch_size=args.batch_size,drop_last=True)
 
-    accelerator = Accelerator()
+    accelerator = Accelerator(log_with="wandb")
+    accelerator.init_trackers(project_name="creativity")
     gen, gen_optimizer, disc, disc_optimizer, training_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader)
     cross_entropy=torch.nn.CrossEntropyLoss()
     binary_cross_entropy = torch.nn.BCELoss()
@@ -76,7 +77,11 @@ def training_loop(args):
     real_label_int = 1.
     fake_label_int = 0.
     for e in range(args.epochs):
-        total_loss=0.0
+        style_classification_loss_sum=0.
+        fake_binary_loss_sum=0.
+        real_binary_loss_sum=0.
+        style_ambiguity_loss_sum=0.
+        reverse_fake_binary_loss_sum=0.
         start=time.time()
         for batch in training_dataloader:
             real_images, real_labels = batch
@@ -106,12 +111,25 @@ def training_loop(args):
                 style_classification_loss=cross_entropy(real_style,real_labels)
                 style_ambiguity_loss=cross_entropy(fake_style, uniform)
 
+            style_classification_loss_sum+=torch.sum(style_classification_loss)
+            fake_binary_loss_sum+=torch.sum(fake_binary_loss)
+            real_binary_loss_sum+=torch.sum(real_binary_loss)
+            style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
+            reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)
+
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
             accelerator.backward(gen_loss, retain_graph=True)
             accelerator.backward(disc_loss)
             gen_optimizer.step()
             disc_optimizer.step()
+        accelerator.log({
+            "style_classification":style_classification_loss_sum,
+            "fake_binary": fake_binary_loss_sum,
+            "real_binary":real_binary_loss_sum,
+            "style_ambiguity":style_ambiguity_loss_sum,
+            "reverse_fake_binary":reverse_fake_binary_loss_sum
+        })
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
@@ -127,7 +145,7 @@ def training_loop(args):
                 ignore_patterns=["step_*", "epoch_*"],
             )
 
-    
+    accelerator.end_training()
     torch.save(gen.state_dict(),args.output_dir+"/gen-weights.pickle")
     torch.save(disc.state_dict(),args.output_dir+"/disc-weights.pickle")
     
