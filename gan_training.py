@@ -113,18 +113,18 @@ def training_loop(args):
             #noise.to(device)
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
-
-            for thing in [real_binary,real_style,fake_binary,fake_style,disc,gen,noise]:
-                print(f"{thing.__name__} {thing.device}")
+            fake_images=gen(noise)
 
             real_binary,real_style=disc(real_images)
             fake_binary,fake_style=disc(fake_images)
+
+            for name,thing in zip(['real_binary','real_style','fake_binary','fake_style','disc','gen','noise','fake_images'],[real_binary,real_style,fake_binary,fake_style,disc,gen,noise,fake_images]):
+                print(f"{name} {thing.device}")
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
 
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
             if args.use_clip:
-                fake_images=gen(noise)
                 fake_clip_style=clip_classifier(fake_images)
                 #fake_clip_style=fake_clip_style.to(uniform.device)
                 style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
