@@ -7,7 +7,7 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from generator_src import Generator
-from discriminator_src import Discriminator,GANDataset,NoiseDataset
+from discriminator_src import Discriminator,GANDataset,UtilDataset
 
 from huggingface_hub import create_repo, upload_folder, ModelCard
 from transformers import CLIPProcessor, CLIPModel
@@ -25,6 +25,7 @@ parser.add_argument("--batch_size",type=int, default=4)
 parser.add_argument("--repo_id",type=str,default="jlbaker361/dcgan-wikiart")
 parser.add_argument("--output_dir",type=str,default="/scratch/jlb638/dcgan-wikiart")
 parser.add_argument("--use_clip",type=bool,default=False)
+parser.add_argument("--style_lambda",type=float,default=0.1, help="coefficient on style terms")
 
 parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise for generator")
 parser.add_argument("--image_dim", type=int,default=512)
@@ -43,12 +44,13 @@ def training_loop(args):
     gen=Generator(args.gen_z_dim,args.image_dim)
     disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
-    noise_dataset=NoiseDataset(args.gen_z_dim, len(dataset))
+    
     for x,y in dataset:
         break
     print(y.size())
     print(y.size()[-1])
     n_classes=y.size()[-1]
+    util_dataset=UtilDataset(args.gen_z_dim, len(dataset),n_classes)
 
     if args.use_clip:
         print("using clip classifier")
@@ -71,22 +73,18 @@ def training_loop(args):
     disc_optimizer=optim.Adam(disc.parameters())
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
     training_dataloader=DataLoader(dataset, batch_size=args.batch_size,drop_last=True)
-    noise_dataloader=DataLoader(noise_dataset,batch_size=args.batch_size,drop_last=True)
+    util_dataloader=DataLoader(util_dataset,batch_size=args.batch_size,drop_last=True)
 
     accelerator = Accelerator(log_with="wandb")
     accelerator.init_trackers(project_name="creativity")
-    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, noise_dataloader = accelerator.prepare(gen, 
-                                                                                                          gen_optimizer, 
-                                                                                                          disc, 
-                                                                                                          disc_optimizer, 
-                                                                                                          training_dataloader,
-                                                                                                          noise_dataloader)
+    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
     device=accelerator.device
+    print(f"acceleerate device = {device}")
     #gen.to(device)
     #disc.to(device)
     cross_entropy=torch.nn.CrossEntropyLoss()
     binary_cross_entropy = torch.nn.BCELoss()
-    uniform=torch.full((args.batch_size, n_classes), fill_value=1.0/n_classes)
+    #uniform=torch.full((args.batch_size, n_classes), fill_value=1.0/n_classes)
     real_label_int = 1.
     fake_label_int = 0.
     for e in range(args.epochs):
@@ -96,7 +94,8 @@ def training_loop(args):
         style_ambiguity_loss_sum=0.
         reverse_fake_binary_loss_sum=0.
         start=time.time()
-        for batch,noise in zip(training_dataloader,noise_dataloader):
+        for batch,util_vectors in zip(training_dataloader,util_dataloader):
+            noise,real_vector,fake_vector,uniform = util_vectors
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
             #real_images, real_labels = real_images.to(device), real_labels.to(device)
@@ -110,9 +109,6 @@ def training_loop(args):
             
             fake_binary,fake_style=disc(fake_images)
 
-            real_vector=torch.full((args.batch_size,1),fill_value=real_label_int)
-            fake_vector=torch.full((args.batch_size,1),fill_value=fake_label_int)
-
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
@@ -123,6 +119,9 @@ def training_loop(args):
             else:
                 style_classification_loss=cross_entropy(real_style,real_labels)
                 style_ambiguity_loss=cross_entropy(fake_style, uniform)
+
+            style_classification_loss*=args.style_lambda
+            style_ambiguity_loss*=args.style_lambda
 
             style_classification_loss_sum+=torch.sum(style_classification_loss)
             fake_binary_loss_sum+=torch.sum(fake_binary_loss)
