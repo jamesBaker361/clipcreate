@@ -56,12 +56,22 @@ class Discriminator(nn.Module):
 
 class SquarePad:
     def __call__(self, image):
-        w, h = image.size
+        w, h = image.size()[-2:]
         max_wh = np.max([w, h])
         hp = int((max_wh - w) / 2)
         vp = int((max_wh - h) / 2)
         padding = (hp, vp, hp, vp)
         return functional.pad(image, padding, 0, 'constant')
+
+class MakeRGB:
+    def __call__(self,image):
+        return image.convert("RGB")
+    
+class Rescale:
+    def __call__(self,image):
+        return 255*image
+    
+
 
 class GANDataset(torch.utils.data.Dataset):
     def __init__(self, hf_dataset_src,image_dim,resize_dim,batch_size,split):
@@ -69,10 +79,12 @@ class GANDataset(torch.utils.data.Dataset):
         hf_dataset=load_dataset(hf_dataset_src,split=split)
 
         self.transform = transforms.Compose([
+            MakeRGB(),
+            Rescale(),
+            transforms.ToTensor(),
             SquarePad(),
             transforms.Resize(resize_dim),
-            transforms.CenterCrop(image_dim),
-            transforms.ToTensor()
+            transforms.CenterCrop(image_dim)
         ])
         self.data = []
         for i,img in enumerate(hf_dataset["image"]):
