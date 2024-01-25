@@ -118,7 +118,8 @@ def training_loop(args):
             real_binary,real_style=disc(real_images)
             fake_binary,fake_style=disc(fake_images)
 
-            for name,thing in zip(['real_binary','real_style','fake_binary','fake_style','disc','gen','noise','fake_images'],[real_binary,real_style,fake_binary,fake_style,disc,gen,noise,fake_images]):
+            for name,thing in zip(['real_binary','real_style','fake_binary','fake_style','noise','fake_images'],
+                                  [real_binary,real_style,fake_binary,fake_style,noise,fake_images]):
                 print(f"{name} {thing.device}")
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
 
