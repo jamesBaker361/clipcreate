@@ -291,3 +291,17 @@ try: runpymain 256GB memory
 
 result:
 ???
+
+Problem:
+RuntimeError: Input type (torch.FloatTensor) and weight type (torch.cuda.FloatTensor) should be the same or input should be a MKLDNN tensor and weight is a dense tensor
+srun: error: gpu006: task 0: Exited with exit code 1
+
+solution:
+noise.to(accelerator.device)
+
+result:
+nothing
+
+solution:
+dataloader for noise to pass to acleratoer.prepare ? ?
+
