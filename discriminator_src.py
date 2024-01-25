@@ -116,13 +116,14 @@ class GANDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data)
     
-class NoiseDataset(torch.utils.data.Dataset):
-    def __init__(self,noise_dim, len_data):
+class UtilDataset(torch.utils.data.Dataset):
+    def __init__(self,noise_dim, len_data,n_classes):
         self.noise_dim=noise_dim
         self.len_data=len_data
+        self.n_classes=n_classes
 
     def __getitem__(self, index):
-        return torch.randn(self.noise_dim, 1, 1)
+        return torch.randn(self.noise_dim, 1, 1),torch.tensor([1.]),torch.tensor([0.]),torch.tensor([1.0/self.n_classes for _ in range(self.n_classes)])
     
     def __len__(self):
         return self.len_data
