@@ -37,6 +37,7 @@ parser.add_argument("--resize_dim",type=int,default=512)
 
 
 def training_loop(args):
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     os.makedirs(args.output_dir,exist_ok=True)
     gen=Generator(args.gen_z_dim,args.image_dim)
@@ -78,7 +79,9 @@ def training_loop(args):
         for batch in training_dataloader:
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
+            real_images, real_labels = real_images.to(device), real_labels.to(device)
             noise= torch.randn(args.batch_size, 100, 1, 1)
+            noise.to(accelerator.device)
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
 
