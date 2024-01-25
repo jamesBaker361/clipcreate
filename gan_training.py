@@ -61,6 +61,8 @@ def training_loop(args):
             logits_per_image = outputs.logits_per_image # this is the image-text similarity score
             return logits_per_image.softmax(dim=1)
     
+    repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
+
     gen_optimizer=optim.Adam(gen.parameters())
     disc_optimizer=optim.Adam(disc.parameters())
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
@@ -79,14 +81,15 @@ def training_loop(args):
         for batch in training_dataloader:
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
-            real_images, real_labels = real_images.to(device), real_labels.to(device)
+            #real_images, real_labels = real_images.to(device), real_labels.to(device)
             noise= torch.randn(args.batch_size, 100, 1, 1)
             noise.to(accelerator.device)
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
 
-            fake_images=gen(noise)
             real_binary,real_style=disc(real_images)
+            fake_images=gen(noise)
+            
             fake_binary,fake_style=disc(fake_images)
 
             real_vector=torch.full((args.batch_size,1),fill_value=real_label_int)
@@ -112,10 +115,22 @@ def training_loop(args):
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
+        if e%10==0:
+            checkpoint_dir=f"{args.output_dir}/checkpoint_{e}"
+            os.makedirs(checkpoint_dir,exist_ok=True)
+            torch.save(gen.state_dict(),"{checkpoint_dir}/gen-weights.pickle")
+            torch.save(disc.state_dict(),"{checkpoint_dir}/disc-weights.pickle")
+            upload_folder(
+                repo_id=repo_id,
+                folder_path=args.output_dir,
+                commit_message=f"epoch {e}",
+                ignore_patterns=["step_*", "epoch_*"],
+            )
+
     
     torch.save(gen.state_dict(),args.output_dir+"/gen-weights.pickle")
     torch.save(disc.state_dict(),args.output_dir+"/disc-weights.pickle")
-    repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
+    
     upload_folder(
                 repo_id=repo_id,
                 folder_path=args.output_dir,
