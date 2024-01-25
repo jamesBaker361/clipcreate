@@ -18,6 +18,8 @@ import argparse
 import time
 from static_globals import *
 
+torch.autograd.set_detect_anomaly(True)
+
 parser = argparse.ArgumentParser(description="classifier training")
 parser.add_argument("--epochs", type=int,default=50)
 parser.add_argument("--dataset_name",type=str,default="jlbaker361/wikiart")
@@ -72,24 +74,31 @@ def training_loop(args):
 
     accelerator = Accelerator(log_with="wandb")
     accelerator.init_trackers(project_name="creativity")
-    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
+    #gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
+    #device=accelerator.device
+    #print(f"acceleerate device = {device}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    gen=gen.to(device)
+    disc=disc.to(device)
 
     if args.use_clip:
         print("using clip classifier")
         model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
         processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
-        model,processor=accelerator.prepare(model,processor)
+        #model,processor=accelerator.prepare(model,processor)
+        model=model.to(device)
+        #processor=processor.to(device)
 
         def clip_classifier(images):
             #images=images/255
             inputs = processor(text=args.style_list, images=images, return_tensors="pt", padding=True)
+            inputs['input_ids'] = inputs['input_ids'].to(device)
+            inputs['attention_mask'] = inputs['attention_mask'].to(device)
+            inputs['pixel_values'] = inputs['pixel_values'].to(device)
             outputs = model(**inputs)
             logits_per_image = outputs.logits_per_image # this is the image-text similarity score
             return logits_per_image.softmax(dim=1)
-
-    device=accelerator.device
-    print(f"acceleerate device = {device}")
     #gen.to(device)
     #disc.to(device)
     cross_entropy=torch.nn.CrossEntropyLoss()
@@ -108,7 +117,8 @@ def training_loop(args):
             noise,real_vector,fake_vector,uniform = util_vectors
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
-            #real_images, real_labels = real_images.to(device), real_labels.to(device)
+            real_images, real_labels = real_images.to(device), real_labels.to(device)
+            noise,real_vector,fake_vector,uniform = noise.to(device),real_vector.to(device),fake_vector.to(device),uniform.to(device)
             #noise= torch.randn(args.batch_size, 100, 1, 1)
             #noise.to(device)
             gen_optimizer.zero_grad()
@@ -142,20 +152,22 @@ def training_loop(args):
             real_binary_loss_sum+=torch.sum(real_binary_loss)
             style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
             reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)
-
+            
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
 
 
             freeze_model(disc)
             unfreeze_model(gen)
-            accelerator.backward(gen_loss, retain_graph=True)
+            #accelerator.backward(gen_loss, retain_graph=True)
+            gen_loss.backward(retain_graph=True)
             gen_optimizer.step()
 
             
             freeze_model(gen)
             unfreeze_model(disc)
-            accelerator.backward(disc_loss)
+            #accelerator.backward(disc_loss)
+            disc_loss.backward()
             disc_optimizer.step()
         accelerator.log({
             "style_classification":style_classification_loss_sum,
