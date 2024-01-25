@@ -45,7 +45,7 @@ class Generator(nn.Module):
             feature_dim//=2
         layers.append(nn.ConvTranspose2d( feature_dim,3, 4, 2, 1, bias=False))
         layers.append(nn.Sigmoid())
-        layers.append(ScaleLayer())
+        #layers.append(ScaleLayer())
         self.main=nn.Sequential(*layers)
 
     def forward(self,z):
