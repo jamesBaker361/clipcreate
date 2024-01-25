@@ -51,18 +51,6 @@ def training_loop(args):
     print(y.size()[-1])
     n_classes=y.size()[-1]
     util_dataset=UtilDataset(args.gen_z_dim, len(dataset),n_classes)
-
-    if args.use_clip:
-        print("using clip classifier")
-        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
-
-        def clip_classifier(images):
-            images=images/255
-            inputs = processor(text=args.style_list, images=images, return_tensors="pt", padding=True)
-            outputs = model(**inputs)
-            logits_per_image = outputs.logits_per_image # this is the image-text similarity score
-            return logits_per_image.softmax(dim=1)
     try:
         repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
     except:
@@ -78,6 +66,21 @@ def training_loop(args):
     accelerator = Accelerator(log_with="wandb")
     accelerator.init_trackers(project_name="creativity")
     gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
+
+    if args.use_clip:
+        print("using clip classifier")
+        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+
+        #model,processor=accelerator.prepare(model,processor)
+
+        def clip_classifier(images):
+            #images=images/255
+            inputs = processor(text=args.style_list, images=images, return_tensors="pt", padding=True)
+            outputs = model(**inputs)
+            logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+            return logits_per_image.softmax(dim=1)
+
     device=accelerator.device
     print(f"acceleerate device = {device}")
     #gen.to(device)
@@ -106,14 +109,15 @@ def training_loop(args):
 
             real_binary,real_style=disc(real_images)
             fake_images=gen(noise)
-            
             fake_binary,fake_style=disc(fake_images)
+            reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
 
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
-            reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
             if args.use_clip:
+
                 fake_clip_style=clip_classifier(fake_images)
+                fake_clip_style=fake_clip_style.to(uniform.device)
                 style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
                 style_classification_loss=0.
             else:
@@ -131,9 +135,15 @@ def training_loop(args):
 
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
+
+            
+
             accelerator.backward(gen_loss, retain_graph=True)
-            accelerator.backward(disc_loss)
             gen_optimizer.step()
+
+            
+
+            accelerator.backward(disc_loss)
             disc_optimizer.step()
         accelerator.log({
             "style_classification":style_classification_loss_sum,
