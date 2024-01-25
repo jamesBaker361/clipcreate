@@ -147,12 +147,14 @@ def training_loop(args):
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
 
 
-
+            freeze_model(disc)
+            unfreeze_model(gen)
             accelerator.backward(gen_loss, retain_graph=True)
             gen_optimizer.step()
 
             
-
+            freeze_model(gen)
+            unfreeze_model(disc)
             accelerator.backward(disc_loss)
             disc_optimizer.step()
         accelerator.log({
