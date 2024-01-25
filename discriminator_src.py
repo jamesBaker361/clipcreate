@@ -80,7 +80,6 @@ class GANDataset(torch.utils.data.Dataset):
 
         self.transform = transforms.Compose([
             MakeRGB(),
-            Rescale(),
             transforms.ToTensor(),
             SquarePad(),
             transforms.Resize(resize_dim),
