@@ -7,7 +7,7 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from generator_src import Generator
-from discriminator_src import Discriminator,GANDataset
+from discriminator_src import Discriminator,GANDataset,NoiseDataset
 
 from huggingface_hub import create_repo, upload_folder, ModelCard
 from transformers import CLIPProcessor, CLIPModel
@@ -43,6 +43,7 @@ def training_loop(args):
     gen=Generator(args.gen_z_dim,args.image_dim)
     disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
+    noise_dataset=NoiseDataset(args.gen_z_dim, len(dataset))
     for x,y in dataset:
         break
     print(y.size())
@@ -70,13 +71,19 @@ def training_loop(args):
     disc_optimizer=optim.Adam(disc.parameters())
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
     training_dataloader=DataLoader(dataset, batch_size=args.batch_size,drop_last=True)
+    noise_dataloader=DataLoader(noise_dataset,batch_size=args.batch_size,drop_last=True)
 
     accelerator = Accelerator(log_with="wandb")
     accelerator.init_trackers(project_name="creativity")
-    gen, gen_optimizer, disc, disc_optimizer, training_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader)
+    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, noise_dataloader = accelerator.prepare(gen, 
+                                                                                                          gen_optimizer, 
+                                                                                                          disc, 
+                                                                                                          disc_optimizer, 
+                                                                                                          training_dataloader,
+                                                                                                          noise_dataloader)
     device=accelerator.device
-    gen.to(device)
-    disc.to(device)
+    #gen.to(device)
+    #disc.to(device)
     cross_entropy=torch.nn.CrossEntropyLoss()
     binary_cross_entropy = torch.nn.BCELoss()
     uniform=torch.full((args.batch_size, n_classes), fill_value=1.0/n_classes)
@@ -89,12 +96,12 @@ def training_loop(args):
         style_ambiguity_loss_sum=0.
         reverse_fake_binary_loss_sum=0.
         start=time.time()
-        for batch in training_dataloader:
+        for batch,noise in zip(training_dataloader,noise_dataloader):
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
             #real_images, real_labels = real_images.to(device), real_labels.to(device)
-            noise= torch.randn(args.batch_size, 100, 1, 1)
-            noise.to(device)
+            #noise= torch.randn(args.batch_size, 100, 1, 1)
+            #noise.to(device)
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
 
