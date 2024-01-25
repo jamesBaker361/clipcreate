@@ -60,8 +60,11 @@ def training_loop(args):
             outputs = model(**inputs)
             logits_per_image = outputs.logits_per_image # this is the image-text similarity score
             return logits_per_image.softmax(dim=1)
-    
-    repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
+    try:
+        repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
+    except:
+        print("retrying creating repo")
+        repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
 
     gen_optimizer=optim.Adam(gen.parameters())
     disc_optimizer=optim.Adam(disc.parameters())
@@ -71,6 +74,9 @@ def training_loop(args):
     accelerator = Accelerator(log_with="wandb")
     accelerator.init_trackers(project_name="creativity")
     gen, gen_optimizer, disc, disc_optimizer, training_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader)
+    device=accelerator.device
+    gen.to(device)
+    disc.to(device)
     cross_entropy=torch.nn.CrossEntropyLoss()
     binary_cross_entropy = torch.nn.BCELoss()
     uniform=torch.full((args.batch_size, n_classes), fill_value=1.0/n_classes)
@@ -88,7 +94,7 @@ def training_loop(args):
             real_labels=real_labels.to(torch.float64)
             #real_images, real_labels = real_images.to(device), real_labels.to(device)
             noise= torch.randn(args.batch_size, 100, 1, 1)
-            noise.to(accelerator.device)
+            noise.to(device)
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
 
