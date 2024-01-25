@@ -25,7 +25,7 @@ def cross_entropy(pred,true):
 
 def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/examples/scripts/ddpo.py#L126
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):

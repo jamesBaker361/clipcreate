@@ -70,9 +70,9 @@ def training_loop(args):
     if args.use_clip:
         print("using clip classifier")
         model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
-        #model,processor=accelerator.prepare(model,processor)
+        model,processor=accelerator.prepare(model,processor)
 
         def clip_classifier(images):
             #images=images/255
@@ -117,9 +117,9 @@ def training_loop(args):
             if args.use_clip:
 
                 fake_clip_style=clip_classifier(fake_images)
-                fake_clip_style=fake_clip_style.to(uniform.device)
+                #fake_clip_style=fake_clip_style.to(uniform.device)
                 style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
-                style_classification_loss=0.
+                style_classification_loss=torch.tensor(0.)
             else:
                 style_classification_loss=cross_entropy(real_style,real_labels)
                 style_ambiguity_loss=cross_entropy(fake_style, uniform)
@@ -136,7 +136,7 @@ def training_loop(args):
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
 
-            
+
 
             accelerator.backward(gen_loss, retain_graph=True)
             gen_optimizer.step()
