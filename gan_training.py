@@ -119,7 +119,7 @@ def training_loop(args):
                 fake_clip_style=clip_classifier(fake_images)
                 fake_clip_style=fake_clip_style.to(uniform.device)
                 style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
-                style_classification_loss=0.
+                style_classification_loss=torch.tensor(0.)
             else:
                 style_classification_loss=cross_entropy(real_style,real_labels)
                 style_ambiguity_loss=cross_entropy(fake_style, uniform)
