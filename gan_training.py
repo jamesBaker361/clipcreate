@@ -87,7 +87,7 @@ def training_loop(args):
         processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
         #model,processor=accelerator.prepare(model,processor)
-        model=model.to(device)
+        #model=model.to(device)
         #processor=processor.to(device)
 
         def clip_classifier(images):
@@ -114,6 +114,7 @@ def training_loop(args):
         reverse_fake_binary_loss_sum=0.
         start=time.time()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
+            print("one step!!?!?!?")
             noise,real_vector,fake_vector,uniform = util_vectors
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
@@ -157,15 +158,15 @@ def training_loop(args):
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
 
 
-            freeze_model(disc)
-            unfreeze_model(gen)
+            #freeze_model(disc)
+            #unfreeze_model(gen)
             #accelerator.backward(gen_loss, retain_graph=True)
             gen_loss.backward(retain_graph=True)
             gen_optimizer.step()
 
             
-            freeze_model(gen)
-            unfreeze_model(disc)
+            #freeze_model(gen)
+            #unfreeze_model(disc)
             #accelerator.backward(disc_loss)
             disc_loss.backward()
             disc_optimizer.step()
