@@ -136,8 +136,8 @@ def training_loop(args):
         if e%10==0:
             checkpoint_dir=f"{args.output_dir}/checkpoint_{e}"
             os.makedirs(checkpoint_dir,exist_ok=True)
-            torch.save(gen.state_dict(),"{checkpoint_dir}/gen-weights.pickle")
-            torch.save(disc.state_dict(),"{checkpoint_dir}/disc-weights.pickle")
+            torch.save(gen.state_dict(),f"{checkpoint_dir}/gen-weights.pickle")
+            torch.save(disc.state_dict(),f"{checkpoint_dir}/disc-weights.pickle")
             upload_folder(
                 repo_id=repo_id,
                 folder_path=args.output_dir,
