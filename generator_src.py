@@ -30,7 +30,7 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self.z_dim=z_dim
         self.img_dim=img_dim
-        feature_dim=1024
+        feature_dim=2048
         layers=[
             nn.ConvTranspose2d( z_dim,feature_dim, 4, 1, 0, bias=False),
             nn.BatchNorm2d(feature_dim),
