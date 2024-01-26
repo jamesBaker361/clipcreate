@@ -74,20 +74,20 @@ def training_loop(args):
 
     accelerator = Accelerator(log_with="wandb")
     accelerator.init_trackers(project_name="creativity")
-    #gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
-    #device=accelerator.device
+    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
+    device=accelerator.device
     #print(f"acceleerate device = {device}")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    gen=gen.to(device)
-    disc=disc.to(device)
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #gen=gen.to(device)
+    #disc=disc.to(device)
 
     if args.use_clip:
         print("using clip classifier")
         model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
         processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
-        #model,processor=accelerator.prepare(model,processor)
-        model=model.to(device)
+        model,processor=accelerator.prepare(model,processor)
+        #model=model.to(device)
         freeze_model(model)
         #processor=processor.to(device)
 
@@ -119,8 +119,8 @@ def training_loop(args):
             noise,real_vector,fake_vector,uniform = util_vectors
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
-            real_images, real_labels = real_images.to(device), real_labels.to(device)
-            noise,real_vector,fake_vector,uniform = noise.to(device),real_vector.to(device),fake_vector.to(device),uniform.to(device)
+            #real_images, real_labels = real_images.to(device), real_labels.to(device)
+            #noise,real_vector,fake_vector,uniform = noise.to(device),real_vector.to(device),fake_vector.to(device),uniform.to(device)
             #noise= torch.randn(args.batch_size, 100, 1, 1)
             #noise.to(device)
             gen_optimizer.zero_grad()
