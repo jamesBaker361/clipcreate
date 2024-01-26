@@ -93,13 +93,13 @@ if __name__=='__main__':
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
-
+    print("line 96")
     #sanity check to make sure we are logged in to huggingface
     os.makedirs("test",exist_ok=True)
     test_repo_id=create_repo("jlbaker361/test", exist_ok=True).repo_id
     upload_folder(repo_id=test_repo_id, folder_path="test")
 
-
+    print("line 102")
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
@@ -113,7 +113,7 @@ if __name__=='__main__':
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
 
-
+    print("line 116")
     project_kwargs={
             "project_dir":args.output_dir,
             'automatic_checkpoint_naming':True
@@ -128,6 +128,7 @@ if __name__=='__main__':
         pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
 
     resume_from=None
+    print("line 131")
     if args.resume_from:
         resume_from = os.path.normpath(os.path.expanduser(args.resume_from))
         if os.path.exists(resume_from):
@@ -146,7 +147,7 @@ if __name__=='__main__':
             )
 
             project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
-
+    print("line 150")
     config=DDPOConfig(
         num_epochs=args.num_epochs,
         train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
@@ -179,7 +180,7 @@ if __name__=='__main__':
             trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
         except:
             print(f"could not resume from {resume_from}")
-
+    print("line 183")
     start=time.time()
     torch.cuda.memory._record_memory_history()
     try:
