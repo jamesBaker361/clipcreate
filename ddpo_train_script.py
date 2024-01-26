@@ -34,7 +34,7 @@ parser.add_argument(
 parser.add_argument(
     "--dataset_name",
     type=str,
-    default="jlbaker361/wikiart-balanced100",
+    default="jlbaker361/wikiart-balanced500",
     help="The name of the Dataset (from the HuggingFace hub) to train on"
 )
 parser.add_argument(
