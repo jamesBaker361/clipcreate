@@ -76,7 +76,7 @@ def training_loop(args):
     accelerator.init_trackers(project_name="creativity")
     gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
     device=accelerator.device
-    #print(f"acceleerate device = {device}")
+    print(f"acceleerate device = {device}")
     #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #gen=gen.to(device)
     #disc=disc.to(device)
