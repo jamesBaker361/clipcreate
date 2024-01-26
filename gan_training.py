@@ -87,7 +87,8 @@ def training_loop(args):
         processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
         #model,processor=accelerator.prepare(model,processor)
-        #model=model.to(device)
+        model=model.to(device)
+        freeze_model(model)
         #processor=processor.to(device)
 
         def clip_classifier(images):
@@ -127,49 +128,60 @@ def training_loop(args):
             fake_images=gen(noise)
 
             real_binary,real_style=disc(real_images)
-            fake_binary,fake_style=disc(fake_images)
+            #real_binary.backward()
+            #real_style.backward()
+            fake_binary,fake_style=disc(fake_images.detach())
+            fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
+            real_binary_loss=binary_cross_entropy(real_binary,real_vector)
 
             for name,thing in zip(['real_binary','real_style','fake_binary','fake_style','noise','fake_images'],
                                   [real_binary,real_style,fake_binary,fake_style,noise,fake_images]):
                 print(f"{name} {thing.device}")
+
+            
+            if args.use_clip:
+                fake_clip_style=clip_classifier(fake_images)
+                #fake_clip_style=fake_clip_style.to(uniform.device)
+                #style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
+                style_classification_loss=torch.tensor(0.)
+            else:
+                style_classification_loss=cross_entropy(real_style,real_labels)
+                #style_ambiguity_loss=cross_entropy(fake_style.detach(), uniform)
+
+            style_classification_loss*=args.style_lambda
+            #style_ambiguity_loss*=args.style_lambda
+
+            
+            disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
+            disc_loss.backward(retain_graph=True)
+            disc_optimizer.step()
+
+            fake_binary,fake_style=disc(fake_images)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
 
-            fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
-            real_binary_loss=binary_cross_entropy(real_binary,real_vector)
             if args.use_clip:
                 fake_clip_style=clip_classifier(fake_images)
                 #fake_clip_style=fake_clip_style.to(uniform.device)
                 style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
-                style_classification_loss=torch.tensor(0.)
+                #style_classification_loss=torch.tensor(0.)
             else:
-                style_classification_loss=cross_entropy(real_style,real_labels)
-                style_ambiguity_loss=cross_entropy(fake_style, uniform)
+                #style_classification_loss=cross_entropy(real_style,real_labels)
+                style_ambiguity_loss=cross_entropy(fake_style.detach(), uniform)
 
-            style_classification_loss*=args.style_lambda
             style_ambiguity_loss*=args.style_lambda
+            gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
+            #freeze_model(disc)
+            #unfreeze_model(gen)
+            #accelerator.backward(gen_loss, retain_graph=True)
+            gen_loss.backward()
+            gen_optimizer.step()
 
+            
             style_classification_loss_sum+=torch.sum(style_classification_loss)
             fake_binary_loss_sum+=torch.sum(fake_binary_loss)
             real_binary_loss_sum+=torch.sum(real_binary_loss)
             style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
             reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)
-            
-            disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
-            gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
-
-
-            #freeze_model(disc)
-            #unfreeze_model(gen)
-            #accelerator.backward(gen_loss, retain_graph=True)
-            gen_loss.backward(retain_graph=True)
-            gen_optimizer.step()
-
-            
-            #freeze_model(gen)
-            #unfreeze_model(disc)
-            #accelerator.backward(disc_loss)
-            disc_loss.backward()
-            disc_optimizer.step()
         accelerator.log({
             "style_classification":style_classification_loss_sum,
             "fake_binary": fake_binary_loss_sum,

@@ -305,3 +305,45 @@ nothing
 solution:
 dataloader for noise to pass to acleratoer.prepare ? ?
 
+
+problems: graph getting broken or something
+
+solution:
+disc optimizer before generator???
+
+result:
+naur
+
+solution:
+call detach on fake output
+
+result: didn't work BUT the variable in question was the discirimnator clssifier final layer
+solutin: try detaching???
+
+result:
+RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.
+
+solution:
+retain_graph=True???
+
+result:
+no
+
+current problem:
+shits itself for when we do gen gradient
+
+solution:
+make fake_labels, fake_style TWICE, once with detach one without
+
+result:
+RuntimeError: one of the variables needed for gradient computation has been modified by an inplace operation: [torch.cuda.FloatTensor [131072, 1]], which is output 0 of AsStridedBackward0, is at version 2; expected version 1 instead. Hint: the backtrace further above shows the operation that failed to compute its gradient
+this is the thing that does the classification
+
+solution:
+do all the discrikinator stuff THEN the generator stuff
+
+result:
+that worked lmfao :)))
+
+problem:
+OOM but it works!!!
