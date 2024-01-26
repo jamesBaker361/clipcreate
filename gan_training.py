@@ -153,7 +153,7 @@ def training_loop(args):
 
             
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
-            disc_loss.backward(retain_graph=True)
+            disc_loss.backward()
             disc_optimizer.step()
 
             fake_binary,fake_style=disc(fake_images)

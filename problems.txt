@@ -347,3 +347,9 @@ that worked lmfao :)))
 
 problem:
 OOM but it works!!!
+
+solution:
+retain_graph=False???
+
+result:
+that worked lmfao
