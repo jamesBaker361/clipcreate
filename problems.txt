@@ -353,3 +353,12 @@ retain_graph=False???
 
 result:
 that worked lmfao
+
+problem:
+slow as shit :(((
+
+solution:
+delete and restart... i suspect hf may be being stupid
+
+result:
+hf is being very stupid indeed
