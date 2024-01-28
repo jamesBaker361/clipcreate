@@ -21,6 +21,7 @@ def cross_entropy_per_sample(y_pred, y_true):
     return loss
 
 def cross_entropy(pred,true):
+    print('lens???',len(pred),len(true))
     return [cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)]
 
 def cross_entropy_per_sample_dcgan(y_pred, y_true):
