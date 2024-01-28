@@ -64,7 +64,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
             scores.append(cross_entropy_per_sample(y_pred,y_true))
-        print(scores)
+        #print(scores)
         #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
 
@@ -94,10 +94,14 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         images=transform_composition(images)
         _,probs=model(images)
         n_image=images.shape[0]
-        print(f"n_image = {n_image}")
+        print(f"probs type {type(probs)}")
+        print(f"probs size {probs.size()}")
         uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device)
-        print("time to caluclate scores???")
-        scores = -1 * cross_entropy_dcgan(probs,uniform)
+        scores=[]
+        for x in range(n_image):
+            y_true=[1.0/n_classes] * n_classes
+            y_pred=probs[x]
+            scores.append(cross_entropy_per_sample(y_pred,y_true))
         print(type(scores))
         return scores, {}
     
