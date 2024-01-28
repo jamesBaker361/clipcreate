@@ -95,14 +95,11 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         images=images.cpu()
         _,probs=model(images)
         n_image=images.shape[0]
-        print(f"probs type {type(probs)}")
-        print(f"probs size {probs.size()}")
         uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device)
         scores=[]
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
-            print(y_pred)
             scores.append(cross_entropy_per_sample(y_pred,y_true))
         print(type(scores))
         return scores, {}
