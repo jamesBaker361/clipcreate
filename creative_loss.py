@@ -21,8 +21,6 @@ def cross_entropy_per_sample(y_pred, y_true):
     return torch.tensor(loss)
 
 def cross_entropy(pred,true):
-    print(pred)
-    print(true)
     return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
 
 def cross_entropy_per_sample_dcgan(y_pred, y_true):
@@ -79,7 +77,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
             transforms.CenterCrop(image_dim)
     ])
 
-    #@torch.no_grad()
+    @torch.no_grad()
     def _fn(images, prompts, metadata):
         images=transform_composition(images)
         _,probs=model(images)
