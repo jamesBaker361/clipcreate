@@ -92,6 +92,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     @torch.no_grad()
     def _fn(images, prompts, metadata):
         images=transform_composition(images)
+        images=images.cpu()
         _,probs=model(images)
         n_image=images.shape[0]
         print(f"probs type {type(probs)}")
