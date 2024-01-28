@@ -14,13 +14,23 @@ import torch
 cache_dir="/scratch/jlb638/trans_cache"
 
 def cross_entropy_per_sample(y_pred, y_true):
-    loss = 0
+    loss = 0.
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
         loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
     return torch.tensor(loss)
 
 def cross_entropy(pred,true):
+    return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
+
+def cross_entropy_per_sample_dcgan(y_pred, y_true):
+    loss = 0.
+    # Doing cross entropy Loss
+    for i in range(len(y_pred)):
+        loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
+    return loss
+
+def cross_entropy_dcgan(pred,true):
     return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
 
 def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/examples/scripts/ddpo.py#L126
@@ -71,9 +81,9 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         images=transform_composition(images)
         _,probs=model(images)
         n_image=images.shape[0]
-        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device,requires_grad=True)
+        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device)
 
-        scores = -1 * cross_entropy(probs,uniform)
+        scores = -1 * cross_entropy_dcgan(probs,uniform)
 
         return scores, {}
     
