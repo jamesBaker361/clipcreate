@@ -21,6 +21,8 @@ def cross_entropy_per_sample(y_pred, y_true):
     return torch.tensor(loss)
 
 def cross_entropy(pred,true):
+    print(pred)
+    print(true)
     return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
 
 def cross_entropy_per_sample_dcgan(y_pred, y_true):
