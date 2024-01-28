@@ -102,6 +102,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
+            print(y_pred)
             scores.append(cross_entropy_per_sample(y_pred,y_true))
         print(type(scores))
         return scores, {}
