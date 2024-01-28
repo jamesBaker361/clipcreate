@@ -48,7 +48,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
     return _fn
 
 
-def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,disc_final_dim,repo_id):
+def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,disc_final_dim,repo_id,device=None):
     n_classes=len(style_list)
     model=Discriminator(image_dim,disc_init_dim,disc_final_dim,style_list)
     weights_location=hf_hub_download(repo_id, filename="disc-weights.pickle")
@@ -57,6 +57,8 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     else:
         state_dict=torch.load(weights_location, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict)
+    if device is not None:
+        model.to(device)
     
     transform_composition=transforms.Compose([
             SquarePad(),
@@ -69,7 +71,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         images=transform_composition(images)
         _,probs=model(images)
         n_image=images.shape[0]
-        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
+        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device)
 
         scores = -1 * cross_entropy(probs,uniform)
 

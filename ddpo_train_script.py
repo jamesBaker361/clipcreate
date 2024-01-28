@@ -176,6 +176,12 @@ if __name__=='__main__':
             prompt_fn,
             pipeline
     )
+    if args.reward_function="dcgan":
+        reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, 
+                                             args.resize_dim, 
+                                             args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id,
+                                             device=trainer.accelerator.device)
+        trainer.reward_fn=reward_fn
     if resume_from:
         print(f"Resuming from {resume_from}")
         try:
