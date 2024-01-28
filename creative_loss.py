@@ -52,7 +52,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 
         #cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores = -1 * cross_entropy(probs,uniform)
+        scores = [-1] * n_image
         #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
 
