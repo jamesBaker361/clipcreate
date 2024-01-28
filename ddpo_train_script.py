@@ -65,7 +65,7 @@ parser.add_argument("--cache_dir",type=str, default=None)
 parser.add_argument("--resume_from",type=str,default=None)
 parser.add_argument("--reward_function",default="clip",type=str,help="reward function: resnet dcgan or clip")
 
-parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-wikiart")
+parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-wikiart1000")
 parser.add_argument("--disc_init_dim",type=int,default=32, help="initial layer # of channels in discriminator")
 parser.add_argument("--disc_final_dim",type=int, default=512, help="final layer # of channels in discriminator")
 parser.add_argument("--resize_dim",type=int,default=512,help="dim to resize images to before cropping (for dcgan)")
