@@ -1,9 +1,1 @@
-
-
-
-  sbatch runpygpu.sh ddpo_train_script.py --pretrained_model_name_or_path "jlbaker361/sd-wikiart-lora-0epoch" \
-  --output_dir "/scratch/jlb638/sd-lora0" \
-  --hub_model_id "jlbaker361/sd-lora0" \
-  --train_gradient_accumulation_steps 2 \
-  --train_batch_size 2 --num_epochs 2 --sample_num_steps 2  \
-  --sample_batch_size 2  --sample_num_batches_per_epoch 4 \
+python3 ddpo_train_script.py --pretrained_model_name_or_path "zero_epoch" --image_dir "~/elgammal-0-images/" --output_dir "elgammal-0-ddpo" --hub_model_id "jlbaker361/elgammal-0-ddpo" --train_gradient_accumulation_steps 8 --train_batch_size 2 --num_epochs 10 --sample_num_steps 10  --sample_batch_size 2  --sample_num_batches_per_epoch 128  --resume_from "~/clipcreate/elgammal-0-ddpo/checkpoints" --dataset_name "jlbaker361/wikiart-balanced1000"
