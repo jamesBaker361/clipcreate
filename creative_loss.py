@@ -17,7 +17,7 @@ def cross_entropy_per_sample(y_pred, y_true):
     loss = 0.0
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
-        loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
+        loss = loss + (-1 * y_true[i]*np.log(y_pred[i]))
     return loss
 
 def cross_entropy(pred,true):
@@ -53,12 +53,18 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         n_classes=len(style_list)
         n_image=images.shape[0]
         uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
-        print(f"uniform shape {(n_image, n_classes)}")
+        #print(f"uniform shape {(n_image, n_classes)}")
         #uniform=torch.normal(0, 5, size=(n_image, n_text))
 
         #cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores =  -1 * cross_entropy(probs,uniform)
+        #scores =  -1 * cross_entropy(probs,uniform)
+        #print(scores)
+        scores=[]
+        for x in range(n_image):
+            y_true=[1.0/n_classes] * n_classes
+            y_pred=probs[x]
+            scores.append(cross_entropy_per_sample(y_pred,y_true))
         print(scores)
         #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
