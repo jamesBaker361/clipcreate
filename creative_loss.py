@@ -14,7 +14,7 @@ import torch
 cache_dir="/scratch/jlb638/trans_cache"
 
 def cross_entropy_per_sample(y_pred, y_true):
-    loss = torch.tensor(0,requires_grad=True)
+    loss = torch.tensor(0.0,requires_grad=True)
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
         loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
