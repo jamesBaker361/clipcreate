@@ -96,11 +96,11 @@ def text_encoder_lora_state_dict(text_encoder):
 
 def save_model_card(repo_id: str, 
                     images=None, 
-                    base_model=str, 
-                    dataset_name=str, 
-                    repo_folder=None,
-                    epochs=1,
-                    num_train_timesteps=1000):
+                    base_model:str='', 
+                    dataset_name:str='', 
+                    repo_folder:str=None,
+                    epochs:int=1,
+                    num_train_timesteps:int=1000):
     img_str = ""
     for i, image in enumerate(images):
         image.save(os.path.join(repo_folder, f"image_{i}.png"))
