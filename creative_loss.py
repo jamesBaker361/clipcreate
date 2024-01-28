@@ -79,7 +79,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
             transforms.CenterCrop(image_dim)
     ])
 
-    @torch.no_grad()
+    #@torch.no_grad()
     def _fn(images, prompts, metadata):
         images=transform_composition(images)
         _,probs=model(images)
