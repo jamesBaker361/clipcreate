@@ -71,7 +71,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         images=transform_composition(images)
         _,probs=model(images)
         n_image=images.shape[0]
-        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device)
+        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device,requires_grad=True)
 
         scores = -1 * cross_entropy(probs,uniform)
 
