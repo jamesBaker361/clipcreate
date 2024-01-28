@@ -181,7 +181,7 @@ if __name__=='__main__':
                                              args.resize_dim, 
                                              args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id,
                                              device=trainer.accelerator.device)
-        trainer.reward_fn=reward_fn
+        #trainer.reward_fn=reward_fn
     if resume_from:
         print(f"Resuming from {resume_from}")
         try:
