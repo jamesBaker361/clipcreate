@@ -21,7 +21,6 @@ def cross_entropy_per_sample(y_pred, y_true):
     return loss
 
 def cross_entropy(pred,true):
-    print('lens???',len(pred),len(true))
     for y_pred,y_true in zip(pred,true):
         print(y_pred)
     return [cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)]
@@ -48,7 +47,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         probs = logits_per_image.softmax(dim=1)
 
-        print(f"probs shape {probs.size()}")
+        #print(f"probs shape {probs.size()}")
 
         n_classes=len(style_list)
         n_image=images.shape[0]
