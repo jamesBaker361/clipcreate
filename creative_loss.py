@@ -28,6 +28,7 @@ def cross_entropy_per_sample_dcgan(y_pred, y_true):
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
         loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
+    print(loss)
     return loss
 
 def cross_entropy_dcgan(pred,true):
