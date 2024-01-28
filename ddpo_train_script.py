@@ -118,14 +118,17 @@ if __name__=='__main__':
             "project_dir":args.output_dir,
             'automatic_checkpoint_naming':True
         }
-    try:
-        pipeline = DefaultDDPOStableDiffusionPipeline(
-            args.pretrained_model_name_or_path,  use_lora=args.use_lora
-        )
-    except (EntryNotFoundError,ValueError, OSError) as error:
-        print("EntryNotFoundError or ValueError using pipeline.sd_pipeline.load_lora_weights")
+    if args.pretrained_model_name_or_path is not None:
+        try:
+            pipeline = DefaultDDPOStableDiffusionPipeline(
+                args.pretrained_model_name_or_path,  use_lora=args.use_lora
+            )
+        except (EntryNotFoundError,ValueError, OSError) as error:
+            print("EntryNotFoundError or ValueError using pipeline.sd_pipeline.load_lora_weights")
+            pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
+            pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
+    else:
         pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
-        pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
 
     resume_from=None
     print("line 131")
