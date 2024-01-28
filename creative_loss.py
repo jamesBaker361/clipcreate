@@ -14,14 +14,14 @@ import torch
 cache_dir="/scratch/jlb638/trans_cache"
 
 def cross_entropy_per_sample(y_pred, y_true):
-    loss = torch.tensor(0.0,requires_grad=True)
+    loss = 0.0
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
         loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
     return loss
 
 def cross_entropy(pred,true):
-    return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
+    return [cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)]
 
 def cross_entropy_per_sample_dcgan(y_pred, y_true):
     loss = 0.
@@ -52,7 +52,8 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 
         #cosine = torch.nn.CosineSimilarity(dim=1) 
 
-        scores = [[-1.0] for _ in range(n_image)]
+        scores =  scores = -1 * cross_entropy(probs,uniform)
+        print(scores)
         #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
 
