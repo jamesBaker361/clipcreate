@@ -45,13 +45,23 @@ def unfreeze_model(model):
     for param in model.parameters():
         param.requires_grad = True
 
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        torch.nn.init.normal_(m.weight, 0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        torch.nn.init.normal_(m.weight, 1.0, 0.02)
+        torch.nn.init.zeros_(m.bias)
+
 
 def training_loop(args):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     os.makedirs(args.output_dir,exist_ok=True)
     gen=Generator(args.gen_z_dim,args.image_dim)
+    gen.apply(weights_init)
     disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list)
+    disc.apply(weights_init)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
     
     for x,y in dataset:
