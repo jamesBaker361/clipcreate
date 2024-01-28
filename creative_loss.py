@@ -3,7 +3,7 @@ from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
 from res_net_src import ResNet
-from discriminator_src import Discriminator
+from discriminator_src import Discriminator,SquarePad
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
 from torch.nn import Softmax
@@ -59,6 +59,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     model.load_state_dict(state_dict)
     
     transform_composition=transforms.Compose([
+            SquarePad(),
             transforms.Resize(resize_dim),
             transforms.CenterCrop(image_dim)
     ])
