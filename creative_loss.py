@@ -18,7 +18,7 @@ def cross_entropy_per_sample(y_pred, y_true):
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
         loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
-    return torch.tensor(loss)
+    return loss
 
 def cross_entropy(pred,true):
     return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
@@ -38,7 +38,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
     processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
-    #@torch.no_grad()
+    @torch.no_grad()
     def _fn(images, prompts, metadata):
         inputs = processor(text=style_list, images=images, return_tensors="pt", padding=True)
         outputs = model(**inputs)
