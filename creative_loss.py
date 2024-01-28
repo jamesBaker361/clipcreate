@@ -38,7 +38,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
     processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
-    @torch.no_grad()
+    #@torch.no_grad()
     def _fn(images, prompts, metadata):
         inputs = processor(text=style_list, images=images, return_tensors="pt", padding=True)
         outputs = model(**inputs)
