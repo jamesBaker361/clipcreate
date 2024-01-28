@@ -362,3 +362,20 @@ delete and restart... i suspect hf may be being stupid
 
 result:
 hf is being very stupid indeed
+
+problem:
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+
+solution:
+wrap tensors in???
+
+cross entropy problem???
+solution: try with cosine
+
+1/28 1:44 PM- shitty clip reward function works!!!
+
+1/28 2:08 PM
+Normal CLIP reward works!
+
+1/28 2:27 PM
+DCGAN reward works maybe???
