@@ -467,18 +467,33 @@ def main():
             ).repo_id
     # Load scheduler, tokenizer and models.
     noise_scheduler = DDPMScheduler(num_train_timesteps=args.num_train_timesteps_per_image,clip_sample=False)
-    tokenizer = CLIPTokenizer.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
-    )
-    text_encoder = CLIPTextModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
-    )
-    vae = AutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="vae", revision=args.revision, variant=args.variant
-    )
-    unet = UNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision, variant=args.variant
-    )
+    if args.pretrained_model_name_or_path is not None:
+        tokenizer = CLIPTokenizer.from_pretrained(
+            args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
+        )
+        text_encoder = CLIPTextModel.from_pretrained(
+            args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
+        )
+        vae = AutoencoderKL.from_pretrained(
+            args.pretrained_model_name_or_path, subfolder="vae", revision=args.revision, variant=args.variant
+        )
+        unet = UNet2DConditionModel.from_pretrained(
+            args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision, variant=args.variant
+        )
+    else:
+        tokenizer = CLIPTokenizer.from_pretrained(
+            "stabilityai/stable-diffusion-2-base", subfolder="tokenizer"
+        )
+        text_encoder = CLIPTextModel.from_pretrained(
+            "stabilityai/stable-diffusion-2-base", subfolder="text_encoder"
+        )
+        vae = AutoencoderKL.from_pretrained(
+            "stabilityai/stable-diffusion-2-base", subfolder="vae"
+        )
+        unet = UNet2DConditionModel(
+            attention_head_dim=[5,10,20,20],
+            cross_attention_dim=1024
+        )
     # freeze parameters of models to save more memory
     unet.requires_grad_(False)
     vae.requires_grad_(False)
