@@ -26,11 +26,16 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2, inplace=True)
         ]
         while init_dim<final_dim:
-            layers.append(nn.Conv2d(init_dim, init_dim * 2, 4, 2, 1, bias=False))
-            layers.append(nn.BatchNorm2d(init_dim*2))
+            interm_dim=int(3*init_dim/2)
+            later_dim=init_dim*2
+            layers.append(nn.Conv2d(init_dim, interm_dim, 4, 2, 1, bias=False))
+            layers.append(nn.BatchNorm2d(interm_dim))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
-            init_dim*=2
-            image_dim//=2
+            layers.append(nn.Conv2d(interm_dim, later_dim, 4, 2, 1, bias=False))
+            layers.append(nn.BatchNorm2d(later_dim))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            init_dim=later_dim
+            image_dim//=4
         layers.append(nn.Flatten())
         self.main = nn.Sequential(
             * layers
@@ -41,7 +46,11 @@ class Discriminator(nn.Module):
         )
         self.style_layers=nn.Sequential(
             nn.Linear(init_dim*image_dim*image_dim//4,1024),
+            nn.ReLU(True),
+            nn.Dropout(0.3),
             nn.Linear(1024,512),
+            nn.ReLU(True),
+            nn.Dropout(0.3),
             nn.Linear(512, len(style_list)),
             nn.Softmax(dim=-1)
         )
