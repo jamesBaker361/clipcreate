@@ -164,7 +164,8 @@ def training_loop(args):
 
             
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
-            disc_loss.backward()
+            #disc_loss.backward()
+            accelerator.backward(disc_loss)
             disc_optimizer.step()
 
             fake_binary,fake_style=disc(fake_images)
@@ -183,8 +184,8 @@ def training_loop(args):
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
             #freeze_model(disc)
             #unfreeze_model(gen)
-            #accelerator.backward(gen_loss, retain_graph=True)
-            gen_loss.backward()
+            accelerator.backward(gen_loss)
+            #gen_loss.backward()
             gen_optimizer.step()
 
             
@@ -193,13 +194,14 @@ def training_loop(args):
             real_binary_loss_sum+=torch.sum(real_binary_loss)
             style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
             reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)
+        
         accelerator.log({
             "style_classification":style_classification_loss_sum,
             "fake_binary": fake_binary_loss_sum,
             "real_binary":real_binary_loss_sum,
             "style_ambiguity":style_ambiguity_loss_sum,
             "reverse_fake_binary":reverse_fake_binary_loss_sum
-        })
+        },step=e)
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
