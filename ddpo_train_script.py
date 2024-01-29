@@ -174,7 +174,8 @@ if __name__=='__main__':
             config,
             reward_fn,
             prompt_fn,
-            pipeline
+            pipeline,
+            image_samples_hook
     )
     if args.reward_function=="dcgan":
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, 
