@@ -165,10 +165,11 @@ if __name__=='__main__':
         },
         project_kwargs=project_kwargs
     )
-
+    print("line 168")
     if args.image_dir==None:
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
+    print("line 172")
     image_samples_hook=get_image_sample_hook(args.image_dir)
     trainer = DDPOTrainer(
             config,
@@ -177,6 +178,7 @@ if __name__=='__main__':
             pipeline
             #image_samples_hook
     )
+    print("line 181")
     if args.reward_function=="dcgan":
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, 
                                              args.resize_dim, 
