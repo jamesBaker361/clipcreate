@@ -68,7 +68,7 @@ if __name__=='__main__':
             print(f"loaded weights for {model}")
         except (EntryNotFoundError,ValueError) as error:
             print(error)
-            pipeline=DefaultDDPOStableDiffusionPipeline("runwayml/stable-diffusion-v1-5")
+            pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
             pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
             try:
                 slurm_job_id=os.environ["SLURM_JOB_ID"]
