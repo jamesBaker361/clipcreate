@@ -192,9 +192,10 @@ if __name__=='__main__':
             trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
         except:
             print(f"could not resume from {resume_from}")
-    print("line 183")
+    print("line 195")
     start=time.time()
     torch.cuda.memory._record_memory_history()
+    print("line 198")
     try:
         trainer.train()
     except Exception as exc:
