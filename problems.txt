@@ -379,3 +379,13 @@ Normal CLIP reward works!
 
 1/28 2:27 PM
 DCGAN reward works maybe???
+
+1/28 8:57 PM
+CAN does not work... after one step it just gives up
+
+solution:
+> separate all the gradient updtes??? didnt seem to work...
+> more layers in discriminator true or false
+
+1/29 10:16 AM
+OOM for creativity- smaller batch size???
