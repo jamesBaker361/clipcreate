@@ -125,7 +125,7 @@ def training_loop(args):
         reverse_fake_binary_loss_sum=0.
         start=time.time()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
-            #print("one step!!?!?!?")
+            print("one step!!?!?!?")
             noise,real_vector,fake_vector,uniform = util_vectors
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
@@ -135,14 +135,22 @@ def training_loop(args):
             #noise.to(device)
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
-            fake_images=gen(noise)
-
+            
+            #real loss discirinator
             real_binary,real_style=disc(real_images)
-            #real_binary.backward()
-            #real_style.backward()
-            fake_binary,fake_style=disc(fake_images.detach())
-            fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
+            #accelerator.backward(real_binary_loss)
+            #disc_optimizer.step()
+            #disc_optimizer.zero_grad()
+
+            #fake image loss discrikinator
+            fake_images=gen(noise)
+            fake_binary,fake_style=disc(fake_images.detach())
+            #print(fake_binary)
+            fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
+            #accelerator.backward(fake_binary_loss)
+            #disc_optimizer.step()
+            #disc_optimizer.zero_grad()
 
             for name,thing in zip(['real_binary','real_style','fake_binary','fake_style','noise','fake_images'],
                                   [real_binary,real_style,fake_binary,fake_style,noise,fake_images]):
@@ -151,42 +159,51 @@ def training_loop(args):
 
             
             if args.use_clip:
-                fake_clip_style=clip_classifier(fake_images)
                 #fake_clip_style=fake_clip_style.to(uniform.device)
                 #style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
                 style_classification_loss=torch.tensor(0.)
             else:
+                #real_binary,real_style=disc(real_images)
                 style_classification_loss=cross_entropy(real_style,real_labels)
+                #accelerator.backward(style_classification_loss)
+                #disc_optimizer.step()
+                #disc_optimizer.zero_grad()
                 #style_ambiguity_loss=cross_entropy(fake_style.detach(), uniform)
 
-            style_classification_loss*=args.style_lambda
+            #style_classification_loss*=args.style_lambda
             #style_ambiguity_loss*=args.style_lambda
 
             
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
-            #disc_loss.backward()
             accelerator.backward(disc_loss)
             disc_optimizer.step()
+            disc_optimizer.zero_grad()
 
             fake_binary,fake_style=disc(fake_images)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
+            #accelerator.backward(reverse_fake_binary_loss)
+            #gen_optimizer.step()
+            #gen_optimizer.zero_grad()
 
+            #fake_images=gen(noise)
             if args.use_clip:
                 fake_clip_style=clip_classifier(fake_images)
                 #fake_clip_style=fake_clip_style.to(uniform.device)
-                style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
+                style_ambiguity_loss=torch.tensor(cross_entropy(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
                 #style_classification_loss=torch.tensor(0.)
             else:
                 #style_classification_loss=cross_entropy(real_style,real_labels)
-                style_ambiguity_loss=cross_entropy(fake_style.detach(), uniform)
+                fake_binary,fake_style=disc(fake_images)
+                style_ambiguity_loss=cross_entropy(fake_style, uniform)
 
-            style_ambiguity_loss*=args.style_lambda
+            #style_ambiguity_loss*=args.style_lambda
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
             #freeze_model(disc)
             #unfreeze_model(gen)
             accelerator.backward(gen_loss)
             #gen_loss.backward()
             gen_optimizer.step()
+            gen_optimizer.zero_grad()
 
             
             style_classification_loss_sum+=torch.sum(style_classification_loss)
