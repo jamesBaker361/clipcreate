@@ -2,6 +2,9 @@ import os
 import sys
 import argparse
 from static_globals import *
+import faulthandler
+
+faulthandler.enable()
 
 def get_prompt_fn(dataset_name,split):
     hf_dataset=load_dataset(dataset_name,split=split)
