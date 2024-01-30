@@ -40,7 +40,7 @@ class AestheticScorer(torch.nn.Module):
     def __init__(self, *, dtype, model_id, model_filename):
         super().__init__()
         self.clip = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
         self.mlp = MLP()
         try:
             cached_path = hf_hub_download(model_id, model_filename)
@@ -70,7 +70,7 @@ def aesthetic_scorer(hub_model_id, model_filename):
     #scorer = scorer.xpu() if is_xpu_available() else scorer.cuda() #disabled because running on cpu
 
     def _fn(images, prompts, metadata):
-        images=torch.from_numpy(np.array(images)).to(torch.uint8)
+        images=torch.from_numpy(np.array(images))
         scores = scorer(images)
         return scores, {}
 
