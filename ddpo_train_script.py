@@ -26,7 +26,7 @@ def get_image_sample_hook(image_dir):
                 print("saving at ",path)
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
-                tracker.log({f"example{global_step}":wandb.Image(path)})
+                tracker.log({f"{pmpt}_{global_step}":wandb.Image(path)})
     return _fn
 
 parser = argparse.ArgumentParser(description="ddpo training")
