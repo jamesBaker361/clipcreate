@@ -89,10 +89,15 @@ def training_loop(args):
                 args.output_dir,
                 f"checkpoint_{checkpoint_numbers[-1]}/gen-weights.pickle'",
             )
-            disc_state_dict=torch.load(disc_weight_path)
-            gen_state_dict=torch.load(gen_weight_path)
-            disc.load_state_dict(disc_state_dict)
-            gen.load_state_dict(gen_state_dict)
+            try:
+                disc_state_dict=torch.load(disc_weight_path)
+                gen_state_dict=torch.load(gen_weight_path)
+                disc.load_state_dict(disc_state_dict)
+                gen.load_state_dict(gen_state_dict)
+            except FileNotFoundError:
+                print("couldn't find weights")
+                disc.apply(weights_init)
+                gen.apply(weights_init)
 
             
 
