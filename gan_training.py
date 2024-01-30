@@ -63,6 +63,8 @@ def training_loop(args):
     disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list)
     disc.apply(weights_init)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
+
+    start_epoch=0
     
     for x,y in dataset:
         break
@@ -117,7 +119,7 @@ def training_loop(args):
     #uniform=torch.full((args.batch_size, n_classes), fill_value=1.0/n_classes)
     real_label_int = 1.
     fake_label_int = 0.
-    for e in range(args.epochs):
+    for e in range(start_epoch,args.epochs):
         style_classification_loss_sum=0.
         fake_binary_loss_sum=0.
         real_binary_loss_sum=0.
