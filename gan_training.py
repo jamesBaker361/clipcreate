@@ -79,23 +79,23 @@ def training_loop(args):
             gen.apply(weights_init)
         else:
             checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
-            start_epoch=checkpoint_numbers[-1]
             print(f"loading from checkpoint_{checkpoint_numbers[-1]}")
             disc_weight_path = os.path.join(
                 args.output_dir,
-                f"checkpoint_{checkpoint_numbers[-1]}/disc-weights.pickle'",
+                f"checkpoint_{checkpoint_numbers[-1]}/disc-weights.pickle",
             )
             gen_weight_path = os.path.join(
                 args.output_dir,
-                f"checkpoint_{checkpoint_numbers[-1]}/gen-weights.pickle'",
+                f"checkpoint_{checkpoint_numbers[-1]}/gen-weights.pickle",
             )
             try:
                 disc_state_dict=torch.load(disc_weight_path)
                 gen_state_dict=torch.load(gen_weight_path)
                 disc.load_state_dict(disc_state_dict)
                 gen.load_state_dict(gen_state_dict)
+                start_epoch=checkpoint_numbers[-1]+1
             except FileNotFoundError:
-                print("couldn't find weights")
+                print(f"couldn't find {disc_weight_path} or {gen_weight_path}")
                 disc.apply(weights_init)
                 gen.apply(weights_init)
 
@@ -121,7 +121,16 @@ def training_loop(args):
     util_dataloader=DataLoader(util_dataset,batch_size=args.batch_size,drop_last=True)
 
     accelerator = Accelerator(log_with="wandb")
-    accelerator.init_trackers(project_name="creativity")
+    accelerator.init_trackers(project_name="creativity",init_kwargs={
+        "wandb":
+            {"config":{
+                "dataset_name":args.dataset_name,
+                "batch_size": args.batch_size,
+                "repo_id":args.repo_id,
+                "style_list": args.style_list
+            }
+        }
+    })
     gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
     device=accelerator.device
     print(f"acceleerate device = {device}")
