@@ -4,6 +4,7 @@ import argparse
 from static_globals import *
 import faulthandler
 import wandb
+import re
 
 faulthandler.enable()
 
@@ -23,6 +24,8 @@ def get_image_sample_hook(image_dir):
             prompts=row[1]
             for img,pmpt in zip(images, prompts):
                 pmpt=pmpt.replace(" ", "_")
+                pmpt=re.sub(r'\W+', '', pmpt)
+                pmpt=pmpt[:30]
                 path=image_dir+pmpt+str(global_step)+".png"
                 print("saving at ",path)
                 pil_img=to_pil_image(img)
