@@ -125,7 +125,7 @@ def training_loop(args):
         reverse_fake_binary_loss_sum=0.
         start=time.time()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
-            print("one step!!?!?!?")
+            #print("one step!!?!?!?")
             noise,real_vector,fake_vector,uniform = util_vectors
             real_images, real_labels = batch
             real_labels=real_labels.to(torch.float64)
