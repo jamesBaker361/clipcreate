@@ -127,7 +127,10 @@ def training_loop(args):
                 "dataset_name":args.dataset_name,
                 "batch_size": args.batch_size,
                 "repo_id":args.repo_id,
-                "style_list": args.style_list
+                "style_list": args.style_list,
+                "gen_z_dim":args.gen_z_dim,
+                "image_dim":args.image_dim,
+                "resize_dim":args.resize_dim
             }
         }
     })
