@@ -81,9 +81,9 @@ if __name__=='__main__':
 
     table_data=[]
     columns=["image","model","prompt","score"]
-    
+    result_dict={}
     for model,pipeline in model_dict.items():
-        
+        result_dict[model]={}
         total_score=0.0
         score_list=[]
         for [prompt,name] in prompt_list:
@@ -104,6 +104,8 @@ if __name__=='__main__':
             except:
                 print(prompt,score)
         score_std=np.std(score_list)
+        result_dict[model]["std"]=score_std
+        result_dict[model]["mean"]=total_score/len(score_list)
         try:
             slurm_job_id=os.environ["SLURM_JOB_ID"]
             with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
@@ -118,6 +120,8 @@ if __name__=='__main__':
     try:
         slurm_job_id=os.environ["SLURM_JOB_ID"]
         with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
+            print(result_dict,file=file)
             print("all done :)))",file=file)
     except:
+        print(result_dict)
         print("all done :)))")
