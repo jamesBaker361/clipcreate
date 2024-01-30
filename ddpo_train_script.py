@@ -3,6 +3,7 @@ import sys
 import argparse
 from static_globals import *
 import faulthandler
+import wandb
 
 faulthandler.enable()
 
@@ -25,6 +26,7 @@ def get_image_sample_hook(image_dir):
                 print("saving at ",path)
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
+                tracker[0].log({f"example{global_step}":wandb.Image(path)})
     return _fn
 
 parser = argparse.ArgumentParser(description="ddpo training")
