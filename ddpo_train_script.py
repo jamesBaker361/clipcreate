@@ -162,6 +162,8 @@ if __name__=='__main__':
         train_batch_size=args.train_batch_size,
         sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
         mixed_precision=args.mixed_precision,
+        tracker_project_name="ddpo",
+        log_with="wandb",
         #resume_from=args.resume_from,
         accelerator_kwargs={
             "project_dir":args.output_dir
