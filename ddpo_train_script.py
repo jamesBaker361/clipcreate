@@ -178,7 +178,8 @@ if __name__=='__main__':
             config,
             reward_fn,
             prompt_fn,
-            pipeline
+            pipeline,
+            image_samples_hook
     )
     print("line 181")
     if args.reward_function=="dcgan":
