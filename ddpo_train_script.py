@@ -241,7 +241,8 @@ if __name__=='__main__':
     sample_batch_size={args.sample_batch_size} \n 
     train_batch_size={args.train_batch_size} \n
     sample_num_batches_per_epoch={args.sample_num_batches_per_epoch} \n
-
+    based off of stabilityai/stable-diffusion-2-base
+    and then trained off of {args.pretrained_model_name_or_path}
     """
     card=ModelCard(model_card_content)
     card.push_to_hub(repo_id)
