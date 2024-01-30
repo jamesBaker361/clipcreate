@@ -389,3 +389,48 @@ solution:
 
 1/29 10:16 AM
 OOM for creativity- smaller batch size???
+yee
+
+1/29 3:51 PM
+ddpo train script not working- hardware prboleme? 
+
+faulthandler:
+
+Thread 0x00007f30b3ba5700 (most recent call first):
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 324 in wait
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 622 in wait
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/tqdm/_monitor.py", line 60 in run
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Thread 0x00007f3194ffd700 (most recent call first):
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 324 in wait
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 622 in wait
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/tqdm/_monitor.py", line 60 in run
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 1038 in _bootstrap_inner
+  File "/home/kasm-user/miniconda3/lib/python3.11/threading.py", line 995 in _bootstrap
+
+Current thread 0x00007f351619e4c0 (most recent call first):
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/torch/nn/modules/conv.py", line 456 in _conv_forward
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/torch/nn/modules/conv.py", line 460 in forward
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1520 in _call_impl
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1511 in _wrapped_call_impl
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/diffusers/models/unet_2d_condition.py", line 1072 in forward
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1520 in _call_impl
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1511 in _wrapped_call_impl
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/trl/models/modeling_sd_base.py", line 479 in pipeline_step
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115 in decorate_context
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/trl/models/modeling_sd_base.py", line 564 in __call__
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/trl/trainer/ddpo_trainer.py", line 476 in _generate_samples
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/trl/trainer/ddpo_trainer.py", line 251 in step
+  File "/home/kasm-user/miniconda3/lib/python3.11/site-packages/trl/trainer/ddpo_trainer.py", line 604 in train
+  File "/home/kasm-user/clipcreate/ddpo_train_script.py", line 202 in <module>
+
+Extension modules: numpy.core._multiarray_umath, numpy.core._multiarray_tests, numpy.linalg._umath_linalg, numpy.fft._pocketfft_internal, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._mt19937, numpy.random.mtrand, numpy.random._philox, numpy.random._pcg64, numpy.random._sfc64, numpy.random._generator, torch._C, torch._C._fft, torch._C._linalg, torch._C._nested, torch._C._nn, torch._C._sparse, torch._C._special, _brotli, yaml._yaml, PIL._imaging, regex._regex, zstandard.backend_c, pyarrow.lib, pyarrow._hdfsio, pandas._libs.tslibs.ccalendar, pandas._libs.tslibs.np_datetime, pandas._libs.tslibs.dtypes, pandas._libs.tslibs.base, pandas._libs.tslibs.nattype, pandas._libs.tslibs.timezones, pandas._libs.tslibs.fields, pandas._libs.tslibs.timedeltas, pandas._libs.tslibs.tzconversion, pandas._libs.tslibs.timestamps, pandas._libs.properties, pandas._libs.tslibs.offsets, pandas._libs.tslibs.strptime, pandas._libs.tslibs.parsing, pandas._libs.tslibs.conversion, pandas._libs.tslibs.period, pandas._libs.tslibs.vectorized, pandas._libs.ops_dispatch, pandas._libs.missing, pandas._libs.hashtable, pandas._libs.algos, pandas._libs.interval, pandas._libs.lib, pyarrow._compute, pandas._libs.ops, pandas._libs.hashing, pandas._libs.arrays, pandas._libs.tslib, pandas._libs.sparse, pandas._libs.internals, pandas._libs.indexing, pandas._libs.index, pandas._libs.writers, pandas._libs.join, pandas._libs.window.aggregations, pandas._libs.window.indexers, pandas._libs.reshape, pandas._libs.groupby, pandas._libs.json, pandas._libs.parsers, pandas._libs.testing, pyarrow._parquet, pyarrow._fs, pyarrow._hdfs, pyarrow._gcsfs, pyarrow._s3fs, multidict._multidict, yarl._quoting_c, aiohttp._helpers, aiohttp._http_writer, aiohttp._http_parser, aiohttp._websocket, frozenlist._frozenlist, xxhash._xxhash, pyarrow._json, google._upb._message, psutil._psutil_linux, psutil._psutil_posix, PIL._imagingft, scipy._lib._ccallback_c, numpy.linalg.lapack_lite, scipy.sparse._sparsetools, _csparsetools, scipy.sparse._csparsetools, scipy.linalg._fblas, scipy.linalg._flapack, scipy.linalg.cython_lapack, scipy.linalg._cythonized_array_utils, scipy.linalg._solve_toeplitz, scipy.linalg._flinalg, scipy.linalg._decomp_lu_cython, scipy.linalg._matfuncs_sqrtm_triu, scipy.linalg.cython_blas, scipy.linalg._matfuncs_expm, scipy.linalg._decomp_update, scipy.sparse.linalg._dsolve._superlu, scipy.sparse.linalg._eigen.arpack._arpack, scipy.sparse.csgraph._tools, scipy.sparse.csgraph._shortest_path, scipy.sparse.csgraph._traversal, scipy.sparse.csgraph._min_spanning_tree, scipy.sparse.csgraph._flow, scipy.sparse.csgraph._matching, scipy.sparse.csgraph._reordering, scipy.io.matlab._mio_utils, scipy.io.matlab._streams, scipy.io.matlab._mio5_utils, scipy.special._ufuncs_cxx, scipy.special._ufuncs, scipy.special._specfun, scipy.special._comb, scipy.special._ellip_harm_2, scipy.integrate._odepack, scipy.integrate._quadpack, scipy.integrate._vode, scipy.integrate._dop, scipy.integrate._lsoda, scipy.optimize._minpack2, scipy.optimize._group_columns, scipy._lib.messagestream, scipy.optimize._trlib._trlib, scipy.optimize._lbfgsb, _moduleTNC, scipy.optimize._moduleTNC, scipy.optimize._cobyla, scipy.optimize._slsqp, scipy.optimize._minpack, scipy.optimize._lsq.givens_elimination, scipy.optimize._zeros, scipy.optimize._highs.cython.src._highs_wrapper, scipy.optimize._highs._highs_wrapper, scipy.optimize._highs.cython.src._highs_constants, scipy.optimize._highs._highs_constants, scipy.linalg._interpolative, scipy.optimize._bglu_dense, scipy.optimize._lsap, scipy.spatial._ckdtree, scipy.spatial._qhull, scipy.spatial._voronoi, scipy.spatial._distance_wrap, scipy.spatial._hausdorff, scipy.spatial.transform._rotation, scipy.optimize._direct (total: 150)
+ddpo-test.sh: line 2:  7445 Segmentation fault      (core dumped) python3 ddpo_train_script.py --image_dir "~/elgammal-0-images/" --output_dir "elgammal-0-ddpo-2" --hub_model_id "jlbaker361/elgammal-0-ddpo-2" --train_gradient_accumulation_steps 1 --train_batch_size 4 --num_epochs 2 --sample_num_steps 10 --sample_batch_size 4 --sample_num_batches_per_epoch 8 --resume_from "~/clipcreate/elgammal-0-ddpo-2/checkpoints" --dataset_name "jlbaker361/wikiart-balanced1000" --reward_function dcgan --dcgan_repo_id "jlbaker361/dcgan-wikiart500-resized"
+
+solution:
+use conda
+
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+conda install -c conda-forge wandb huggingface_hub peft diffusers bitsandbytes scipy matplotlib trl datasets
