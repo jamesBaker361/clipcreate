@@ -61,10 +61,41 @@ def training_loop(args):
     gen=Generator(args.gen_z_dim,args.image_dim)
     gen.apply(weights_init)
     disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list)
-    disc.apply(weights_init)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
 
     start_epoch=0
+
+
+    if os.path.exists(args.output_dir):
+        checkpoints = list(
+        filter(
+            lambda x: "checkpoint_" in x,
+            os.listdir(args.output_dir),
+            )
+        )
+        if len(checkpoints) == 0:
+            print(f"No checkpoints found in {args.output_dir}")
+            disc.apply(weights_init)
+            gen.apply(weights_init)
+        else:
+            checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
+            start_epoch=checkpoint_numbers[-1]
+            print(f"loading from checkpoint_{checkpoint_numbers[-1]}")
+            disc_weight_path = os.path.join(
+                args.output_dir,
+                f"checkpoint_{checkpoint_numbers[-1]}/disc-weights.pickle'",
+            )
+            gen_weight_path = os.path.join(
+                args.output_dir,
+                f"checkpoint_{checkpoint_numbers[-1]}/gen-weights.pickle'",
+            )
+            disc_state_dict=torch.load(disc_weight_path)
+            gen_state_dict=torch.load(gen_weight_path)
+            disc.load_state_dict(disc_state_dict)
+            gen.load_state_dict(gen_state_dict)
+
+            
+
     
     for x,y in dataset:
         break
