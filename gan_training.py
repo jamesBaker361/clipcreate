@@ -28,6 +28,7 @@ parser.add_argument("--repo_id",type=str,default="jlbaker361/dcgan-wikiart")
 parser.add_argument("--output_dir",type=str,default="/scratch/jlb638/dcgan-wikiart")
 parser.add_argument("--use_clip",type=bool,default=False)
 parser.add_argument("--style_lambda",type=float,default=0.1, help="coefficient on style terms")
+parser.add_argument("--conditional", type=bool,default=False,help="whether to use conditional GAN or not")
 
 parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise for generator")
 parser.add_argument("--image_dim", type=int,default=512)
