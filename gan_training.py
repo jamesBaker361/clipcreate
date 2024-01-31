@@ -103,7 +103,7 @@ def training_loop(args):
             
 
     
-    for x,y in dataset:
+    for x,y,z in dataset:
         break
     print(y.size())
     print(y.size()[-1])
@@ -179,7 +179,7 @@ def training_loop(args):
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
             #print("one step!!?!?!?")
             noise,real_vector,fake_vector,uniform = util_vectors
-            real_images, real_labels = batch
+            real_images, real_labels,text_encoding = batch
             real_labels=real_labels.to(torch.float64)
             #real_images, real_labels = real_images.to(device), real_labels.to(device)
             #noise,real_vector,fake_vector,uniform = noise.to(device),real_vector.to(device),fake_vector.to(device),uniform.to(device)

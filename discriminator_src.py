@@ -12,6 +12,7 @@ import torchvision.utils as vutils
 import numpy as np
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
+from sentence_transformers import SentenceTransformer
 from datasets import Dataset,load_dataset
 import torchvision.transforms.functional as functional
 
@@ -90,8 +91,9 @@ class GANDataset(torch.utils.data.Dataset):
             transforms.Resize(resize_dim),
             transforms.CenterCrop(image_dim)
         ])
+        self.sentence_trans=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
         self.data = []
-        for i,img in enumerate(hf_dataset["image"]):
+        for i,(img, text) in enumerate(zip(hf_dataset["image"],hf_dataset["text"])):
             try:
                 trans_img=self.transform(img)
                 del trans_img
@@ -109,14 +111,17 @@ class GANDataset(torch.utils.data.Dataset):
             encoding_dict[style][i]=1.0
         targets=[encoding_dict[style] for style in hf_dataset["style"]][:limit]
         self.targets = torch.LongTensor(targets)
+        self.text_encoding_data=[torch.Tensor(self.sentence_trans.encode(t)) for t in hf_dataset["text"]][:limit]
+        #self.text_encoding_data=text_encoding_data
         
     def __getitem__(self, index):
 
         x = self.data[index]
         x=self.transform(x)
         y = self.targets[index]
+        z = self.text_encoding_data[index]
         
-        return x, y
+        return x, y, z
     
     def __len__(self):
         return len(self.data)
