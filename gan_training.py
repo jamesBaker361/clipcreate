@@ -167,6 +167,7 @@ def training_loop(args):
     #uniform=torch.full((args.batch_size, n_classes), fill_value=1.0/n_classes)
     real_label_int = 1.
     fake_label_int = 0.
+    print(f"starting at epoch {start_epoch}")
     for e in range(start_epoch,args.epochs):
         style_classification_loss_sum=0.
         fake_binary_loss_sum=0.
