@@ -20,6 +20,12 @@ def cross_entropy_per_sample(y_pred, y_true):
         loss = loss + (-1 * y_true[i]*np.log(y_pred[i]))
     return loss
 
+def mse(y_true,y_pred):
+    loss=0.
+    for i in range(len(y_pred)):
+        loss = loss + (y_true[i]-y_pred[i])**2
+    return loss
+
 def cross_entropy(pred,true):
     for y_pred,y_true in zip(pred,true):
         print(y_pred)
@@ -63,7 +69,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
-            scores.append(cross_entropy_per_sample(y_pred,y_true))
+            scores.append(-1.0 * mse(y_pred,y_true))
         #print(scores)
         #scores=torch.normal(0.0, 5.0, size=(1,n_image))
         return scores, {}
@@ -100,7 +106,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
-            scores.append(cross_entropy_per_sample(y_pred,y_true))
+            scores.append(-1.0 * mse(y_pred,y_true))
         print(type(scores))
         return scores, {}
     
