@@ -29,6 +29,13 @@ parser.add_argument(
     help="Path to pretrained models or model identifiers from huggingface.co/models.",
 )
 
+parser.add_argument(
+    "--conditional_model_list",
+    type=str,
+    nargs="*",
+    help="Path to pretrained models or model identifiers from huggingface.co/models where conditional==True",
+)
+
 parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation-gan",help="hf dir to push to")
 
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/gan_evaluation_images/")
