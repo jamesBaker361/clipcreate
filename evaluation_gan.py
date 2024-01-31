@@ -9,8 +9,9 @@ import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from generator_src import Generator
 from discriminator_src import Discriminator,GANDataset,UtilDataset
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, ModelCard, upload_file
 from torchvision.transforms import ToPILImage
+from datasets import Dataset,load_dataset
 import numpy as np
 
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
@@ -64,13 +65,25 @@ def evaluate(args):
             src_dict["model"].append(model)
             score,_=aesthetic_fn(image.detach(),{},{})
             score=score.detach().numpy()[0]
-            src_dict["score"]=score
+            src_dict["score"].append(score)
             score_list.append(score)
             total_score+=score
         score_std=np.std(score_list)
         result_dict[model]["std"]=score_std
         result_dict[model]["mean"]=total_score/len(score_list)
         print(f"total score {model} {total_score} std {score_std}")
+    Dataset.from_dict(src_dict).push_to_hub(args.hf_dir)
+    model_card_content=f"created a total of {len(score_list)} images \n"
+    for model,metric_dict in result_dict.items():
+        model_card_content+="\n"+model
+        for m_name,m_value in metric_dict.items():
+            model_card_content+=f" {m_name}: {m_value} "
+    with open("tmp.md","w+") as file:
+        file.write(model_card_content)
+    upload_file(path_or_fileobj="tmp.md", 
+                path_in_repo="README.md",
+                repo_id=args.hf_dir,
+                repo_type="dataset")
 
 
 if __name__=='__main__':
