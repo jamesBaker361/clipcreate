@@ -107,7 +107,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
             scores.append(-1.0 * mse(y_pred,y_true))
-        print(type(scores))
+        #print(type(scores))
         return scores, {}
     
     return _fn
