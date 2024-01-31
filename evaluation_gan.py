@@ -66,7 +66,7 @@ def evaluate(args):
         total_score=0.0
         score_list=[]
         for i in range(args.limit):
-            noise=torch.randn(1,100, 1, 1)
+            noise=torch.randn(1,args.gen_z_dim, 1, 1)
             image=gen(noise)
             src_dict["image"].append(ToPILImage()( image[0]))
             src_dict["model"].append(model)
