@@ -59,9 +59,9 @@ def training_loop(args):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     os.makedirs(args.output_dir,exist_ok=True)
-    gen=Generator(args.gen_z_dim,args.image_dim)
+    gen=Generator(args.gen_z_dim,args.image_dim,args.conditional)
     gen.apply(weights_init)
-    disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list)
+    disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list,args.conditional)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
 
     start_epoch=0

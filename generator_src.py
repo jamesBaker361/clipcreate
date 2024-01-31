@@ -26,10 +26,11 @@ class ScaleLayer(nn.Module):
        return input * self.scale
 
 class Generator(nn.Module):
-    def __init__(self,z_dim,img_dim):
+    def __init__(self,z_dim,img_dim,conditional):
         super(Generator, self).__init__()
         self.z_dim=z_dim
         self.img_dim=img_dim
+        self.conditional=conditional
         feature_dim=2048
         layers=[
             nn.ConvTranspose2d( z_dim,feature_dim, 4, 1, 0, bias=False),

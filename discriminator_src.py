@@ -17,11 +17,12 @@ from datasets import Dataset,load_dataset
 import torchvision.transforms.functional as functional
 
 class Discriminator(nn.Module):
-    def __init__(self, image_dim,init_dim,final_dim,style_list):
+    def __init__(self, image_dim,init_dim,final_dim,style_list,conditional):
         super(Discriminator, self).__init__()
         self.image_dim=image_dim
         self.init_dim=init_dim
         self.final_dim=final_dim
+        self.conditional=conditional
         layers=[
             nn.Conv2d(3, init_dim, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True)

@@ -46,8 +46,14 @@ parser.add_argument("--image_dim", type=int,default=512)
 
 def evaluate(args):
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
+    if args.conditional_model_list is None:
+        args.conditional_model_list=[]
+    if args.model_list is None:
+        args.model_list=[]
     model_dict={
-        model: Generator(args.gen_z_dim, args.image_dim) for model in args.model_list
+        model: Generator(args.gen_z_dim, args.image_dim,False) for model in args.model_list
+    } | {
+        model: Generator(args.gen_z_dim, args.image_dim,True) for model in args.conditional_model_list
     }
     result_dict={}
     src_dict={
