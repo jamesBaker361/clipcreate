@@ -25,12 +25,12 @@ def get_image_sample_hook(image_dir):
             for img,pmpt in zip(images, prompts):
                 pmpt=pmpt.replace(" ", "_")
                 pmpt=re.sub(r'\W+', '', pmpt)
-                pmpt=pmpt[:30]
+                pmpt=pmpt[:45]
                 path=image_dir+pmpt+str(global_step)+".png"
                 print("saving at ",path)
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
-                tracker.log({f"{pmpt}_{global_step}":wandb.Image(path)},tracker.tracker.step)
+                tracker.log({f"{pmpt}":wandb.Image(path)},tracker.tracker.step)
     return _fn
 
 parser = argparse.ArgumentParser(description="ddpo training")
