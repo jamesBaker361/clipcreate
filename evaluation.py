@@ -5,6 +5,7 @@ os.environ["TRANSFORMERS_CACHE"]=cache_dir
 os.environ["HF_HOME"]=cache_dir
 os.environ["HF_HUB_CACHE"]=cache_dir
 from huggingface_hub.utils import EntryNotFoundError
+from huggingface_hub import upload_file
 #os.symlink("~/.cache/huggingface/", cache_dir)
 from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 import torch
@@ -117,6 +118,17 @@ if __name__=='__main__':
     #table=wandb.Table(columns=columns,data=table_data)
     #run.log({"table":table})
     Dataset.from_dict(src_dict).push_to_hub(args.hf_dir)
+    model_card_content=f"created a total of {len(score_list)} images \n"
+    for model,metric_dict in result_dict.items():
+        model_card_content+="\n"+model
+        for m_name,m_value in metric_dict.items():
+            model_card_content+=f" {m_name}: {m_value} "
+    with open("tmp.md","w+") as file:
+        file.write(model_card_content)
+    upload_file(path_or_fileobj="tmp.md", 
+                path_in_repo="README.md",
+                repo_id=args.hf_dir,
+                repo_type="dataset")
     try:
         slurm_job_id=os.environ["SLURM_JOB_ID"]
         with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
