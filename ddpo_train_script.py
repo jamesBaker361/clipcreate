@@ -16,6 +16,7 @@ def get_prompt_fn(dataset_name,split):
         return random.choice(prompt_list),{}
     
     return _fn
+
 def get_image_sample_hook(image_dir):
     os.makedirs(image_dir, exist_ok=True)
     def _fn(prompt_image_data, global_step, tracker):
