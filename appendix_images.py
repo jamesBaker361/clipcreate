@@ -27,6 +27,7 @@ parser.add_argument("--dataset",type=str,help="source of prompts",default="jlbak
 parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise for generator")
 parser.add_argument("--image_dim", type=int,default=512)
 parser.add_argument("--file_path",type=str,default="table.png",help="file to save table")
+parser.add_argument("--num_inference_steps",type=int,default=30)
 
 
 # Function to create a table with prompts and images
@@ -34,14 +35,17 @@ def create_row(ax, row_data,conditional):
     prompt = row_data["prompt"]
     images = row_data["images"]
 
-    # Plot prompt
-    ax[0].text(0.5, 0.5, prompt, va='center', ha='center', fontsize=10, color='black')
-    ax[0].axis('off')
+    offset=0
+    if conditional:
+        # Plot prompt
+        ax[0].text(0.5, 0.5, prompt, va='center', ha='center', fontsize=10, color='black')
+        ax[0].axis('off')
+        offset=1
 
     # Plot images
     for i, image in enumerate(images):
-        ax[i + 1].imshow(image, cmap='gray')  # Adjust the colormap as needed
-        ax[i + 1].axis('off')
+        ax[i + offset].imshow(image, cmap='gray')  # Adjust the colormap as needed
+        ax[i + offset].axis('off')
 
 '''data = [
     {"prompt": "Prompt 1", "images": [np.random.rand(10, 10) for _ in range(4)]},
@@ -89,7 +93,7 @@ def main(args):
         gen.load_state_dict(state_dict)
         can_model_dict[can_model]=gen
     for ddpo_model in args.ddpo_model_list:
-        pipeline=pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
+        pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
         pipeline.sd_pipeline.load_lora_weights(ddpo_model,weight_name="pytorch_lora_weights.safetensors")
         ddpo_model_dict[ddpo_model]=pipeline
     data=[]
@@ -101,6 +105,10 @@ def main(args):
         for model_name,gen in can_model_dict.items():
             noise=torch.randn((1,args.gen_z_dim,1,1))
             images.append(to_pil_image(gen(noise,text_encoding)[0]))
+        for model_name,pipeline in ddpo_model_dict.items():
+            if args.conditional is False:
+                prompt=""
+            images.append(pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0])
         #new_dict={"prompt":prompt,"images":images}
         data.append({"prompt":prompt,"images":images})
     save_table(data,args.conditional,args.file_path)
