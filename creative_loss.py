@@ -99,7 +99,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     def _fn(images, prompts, metadata):
         images=transform_composition(images)
         images=images.cpu()
-        _,probs=model(images)
+        _,probs=model(images,None)
         n_image=images.shape[0]
         uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device)
         scores=[]
