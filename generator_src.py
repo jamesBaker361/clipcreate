@@ -47,7 +47,25 @@ class Generator(nn.Module):
         layers.append(nn.ConvTranspose2d( feature_dim,3, 4, 2, 1, bias=False))
         layers.append(nn.Sigmoid())
         #layers.append(ScaleLayer())
+        if self.conditional:
+            self.conditional_linear=nn.Sequential(
+                nn.Linear(768,512),
+                nn.ReLU(True),
+                nn.Dropout(0.3),
+                nn.Linear(512,256),
+                nn.ReLU(True),
+                nn.Dropout(0.3),
+                nn.Linear(256,z_dim),
+            )
+            self.conditional_mha=nn.MultiheadAttention(z_dim, 4) #query = image kv=text
+            self.flatten=nn.Flatten()
+            self.unflatten=nn.Unflatten(1,(z_dim,1,1))
         self.main=nn.Sequential(*layers)
 
-    def forward(self,z):
+    def forward(self,z,text_encoding):
+        if self.conditional:
+            text_output=self.conditional_linear(text_encoding)
+            z=self.flatten(z)
+            (z, attn_output_weights)=self.conditional_mha(z, text_output, text_output)
+            z=self.unflatten(z)
         return self.main(z)

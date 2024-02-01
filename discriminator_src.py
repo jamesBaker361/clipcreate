@@ -61,10 +61,10 @@ class Discriminator(nn.Module):
             nn.Softmax(dim=-1)
         )
 
-    def forward(self, input,text):
+    def forward(self, input,text_encoding):
         if self.conditional:
             main_output = self.main(input)
-            text_output=self.conditional_linear(text)
+            text_output=self.conditional_linear(text_encoding)
             main_output=self.conditional_mha(main_output, text_output, text_output)
             (main_output, attn_output_weights)=main_output
         else:

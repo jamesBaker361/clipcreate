@@ -196,7 +196,7 @@ def training_loop(args):
             #disc_optimizer.zero_grad()
 
             #fake image loss discrikinator
-            fake_images=gen(noise)
+            fake_images=gen(noise, text_encoding)
             fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
             #print(fake_binary)
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
