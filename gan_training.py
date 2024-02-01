@@ -189,7 +189,7 @@ def training_loop(args):
             disc_optimizer.zero_grad()
             
             #real loss discirinator
-            real_binary,real_style=disc(real_images)
+            real_binary,real_style=disc(real_images,text_encoding)
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
             #accelerator.backward(real_binary_loss)
             #disc_optimizer.step()
@@ -197,7 +197,7 @@ def training_loop(args):
 
             #fake image loss discrikinator
             fake_images=gen(noise)
-            fake_binary,fake_style=disc(fake_images.detach())
+            fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
             #print(fake_binary)
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
             #accelerator.backward(fake_binary_loss)
@@ -231,7 +231,7 @@ def training_loop(args):
             disc_optimizer.step()
             disc_optimizer.zero_grad()
 
-            fake_binary,fake_style=disc(fake_images)
+            fake_binary,fake_style=disc(fake_images,text_encoding)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
             #accelerator.backward(reverse_fake_binary_loss)
             #gen_optimizer.step()
@@ -245,7 +245,7 @@ def training_loop(args):
                 #style_classification_loss=torch.tensor(0.)
             else:
                 #style_classification_loss=cross_entropy(real_style,real_labels)
-                fake_binary,fake_style=disc(fake_images)
+                fake_binary,fake_style=disc(fake_images,text_encoding)
                 style_ambiguity_loss=cross_entropy(fake_style, uniform)
 
             #style_ambiguity_loss*=args.style_lambda

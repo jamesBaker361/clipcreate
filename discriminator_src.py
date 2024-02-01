@@ -42,12 +42,16 @@ class Discriminator(nn.Module):
         self.main = nn.Sequential(
             * layers
         )
+        n_head_dim=init_dim*image_dim*image_dim//4
+        if self.conditional:
+            self.conditional_linear=nn.Linear(768,n_head_dim)
+            self.conditional_mha=nn.MultiheadAttention(n_head_dim, 4) #query = image kv=text
         self.binary_layers=nn.Sequential(
-            nn.Linear(init_dim*image_dim*image_dim//4,1),
+            nn.Linear(n_head_dim,1),
             nn.Sigmoid()
         )
         self.style_layers=nn.Sequential(
-            nn.Linear(init_dim*image_dim*image_dim//4,1024),
+            nn.Linear(n_head_dim,1024),
             nn.ReLU(True),
             nn.Dropout(0.3),
             nn.Linear(1024,512),
@@ -57,8 +61,14 @@ class Discriminator(nn.Module):
             nn.Softmax(dim=-1)
         )
 
-    def forward(self, input):
-        main_output = self.main(input)
+    def forward(self, input,text):
+        if self.conditional:
+            main_output = self.main(input)
+            text_output=self.conditional_linear(text)
+            main_output=self.conditional_mha(main_output, text_output, text_output)
+            (main_output, attn_output_weights)=main_output
+        else:
+            main_output = self.main(input)
         return self.binary_layers(main_output), self.style_layers(main_output)
 
 class SquarePad:
