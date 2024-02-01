@@ -90,8 +90,12 @@ def training_loop(args):
                 f"checkpoint_{checkpoint_numbers[-1]}/gen-weights.pickle",
             )
             try:
-                disc_state_dict=torch.load(disc_weight_path)
-                gen_state_dict=torch.load(gen_weight_path)
+                if torch.cuda.is_available():
+                    disc_state_dict=torch.load(disc_weight_path)
+                    gen_state_dict=torch.load(gen_weight_path)
+                else:
+                    disc_state_dict=torch.load(disc_weight_path,map_location=torch.device('cpu'))
+                    gen_state_dict=torch.load(gen_weight_path,map_location=torch.device('cpu'))
                 disc.load_state_dict(disc_state_dict)
                 gen.load_state_dict(gen_state_dict)
                 start_epoch=checkpoint_numbers[-1]+1
