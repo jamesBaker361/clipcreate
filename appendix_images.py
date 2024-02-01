@@ -26,7 +26,7 @@ parser.add_argument("--limit",type=int,default=5,help="n images")
 parser.add_argument("--dataset",type=str,help="source of prompts",default="jlbaker361/wikiart-balanced1000")
 parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise for generator")
 parser.add_argument("--image_dim", type=int,default=512)
-
+parser.add_argument("--file_path",type=str,default="table.png",help="file to save table")
 
 
 # Function to create a table with prompts and images
@@ -48,7 +48,7 @@ def create_row(ax, row_data,conditional):
     {"prompt": "Prompt 2", "images": [np.random.rand(10, 10) for _ in range(4)]},
     # Add more rows as needed
 ]'''
-def save_table(data,conditional):
+def save_table(data,conditional,file_path):
     # Create the plot
     rows = len(data)
     cols = len(data[0]["images"])  # 1 column for prompt and 4 columns for images
@@ -63,7 +63,7 @@ def save_table(data,conditional):
     plt.tight_layout()
     plt.show()
 
-    plt.savefig("table.png")
+    plt.savefig(file_path)
 
 def main(args):
     if args.can_model_list is None:
@@ -102,7 +102,7 @@ def main(args):
             images.append(to_pil_image(gen(noise,text_encoding)[0]))
         #new_dict={"prompt":prompt,"images":images}
         data.append({"prompt":prompt,"images":images})
-    save_table(data,args.conditional)
+    save_table(data,args.conditional,args.file_path)
 
 
     
