@@ -29,6 +29,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--conditional_model_list",
+    type=str,
+    nargs="*",
+    help="Path to pretrained models or model identifiers from huggingface.co/models where conditional==True",
+)
+
+parser.add_argument(
     "--dataset_name",
     type=str,
     default="jlbaker361/wikiart-balanced100",
@@ -57,13 +64,19 @@ if __name__=='__main__':
         "score":[],
         "name":[]
     }
+    if args.conditional_model_list is None:
+        args.conditional_model_list=[]
+    if args.model_list is None:
+        args.model_list=[]
+
+    #args.conditional_model_list=[f"{c}-CONDTIONAL" for c in args.conditional_model_list]
 
     hf_dataset=load_dataset(args.dataset_name,split="test")
     prompt_list=[[t,n] for t,n in zip(hf_dataset["text"], hf_dataset["name"])]
     random.shuffle(prompt_list)
     prompt_list=prompt_list[:args.limit]
     model_dict={}
-    for model in args.model_list:
+    for model in args.conditional_model_list+args.model_list:
         try:
             pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
             print(f"loaded weights for {model}")
@@ -78,7 +91,10 @@ if __name__=='__main__':
             except:
                 print(f"loaded lora weights spearately for {model}")
         #pipeline.set_progress_bar_config(disable=True)
-        model_dict[model]=pipeline
+        if model in args.conditional_model_list:
+            model_dict[model+"-CONDITIONAL"]=pipeline
+        else:
+            model_dict[model]=pipeline
 
     table_data=[]
     columns=["image","model","prompt","score"]
@@ -88,6 +104,8 @@ if __name__=='__main__':
         total_score=0.0
         score_list=[]
         for [prompt,name] in prompt_list:
+            if model not in args.conditional_model_list:
+                prompt=""
             image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
