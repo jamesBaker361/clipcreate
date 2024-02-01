@@ -305,6 +305,7 @@ def training_loop(args):
     images where resized to {args.resize_dim}
      and then center cropped to: {args.image_dim}
     used clip={args.use_clip}
+    conditional ={args.conditional}
 
     discriminator parameters:
     init_dim: {args.disc_init_dim}
