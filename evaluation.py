@@ -104,7 +104,7 @@ if __name__=='__main__':
         total_score=0.0
         score_list=[]
         for [prompt,name] in prompt_list:
-            if model not in args.conditional_model_list:
+            if model.find("-CONDITIONAL")==-1:
                 prompt=""
             image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
             src_dict["prompt"].append(prompt)
