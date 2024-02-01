@@ -64,6 +64,7 @@ def save_table(data,conditional,file_path):
     plt.show()
 
     plt.savefig(file_path)
+    print(f"saved at {file_path}")
 
 def main(args):
     if args.can_model_list is None:
@@ -111,3 +112,4 @@ if __name__=='__main__':
     args=parser.parse_args()
     print(args)
     main(args)
+    print("all done! :)))")
