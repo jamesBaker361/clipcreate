@@ -41,6 +41,9 @@ parser.add_argument(
     default=None,
     help="Path to pretrained model or model identifier from huggingface.co/models.",
 )
+
+parser.add_argument("--base_model",type=str,default="stabilityai/stable-diffusion-2-base",help="base model")
+
 parser.add_argument(
     "--dataset_name",
     type=str,
@@ -135,10 +138,10 @@ if __name__=='__main__':
             )
         except (EntryNotFoundError,ValueError, OSError) as error:
             print("EntryNotFoundError or ValueError using pipeline.sd_pipeline.load_lora_weights")
-            pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
+            pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
             pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
     else:
-        pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
+        pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
 
     resume_from=None
     print("line 131")
