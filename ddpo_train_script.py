@@ -233,7 +233,7 @@ if __name__=='__main__':
     print("line 198")
     try:
         trainer.train()
-        with open(args.output_dir+"num_epochs.txt","w+") as f:
+        with open(args.output_dir+"/num_epochs.txt","w+") as f:
             f.write(f"{args.num_epochs}")
     except Exception as exc:
         print(exc)
