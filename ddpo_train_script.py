@@ -5,6 +5,7 @@ from static_globals import *
 import faulthandler
 import wandb
 import re
+from safetensors import safe_open
 
 faulthandler.enable()
 
@@ -205,6 +206,21 @@ if __name__=='__main__':
         try:
             pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
             trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
+            lora_keys=[]
+            lora_dict={}
+            with safe_open(resume_from+"/pytorch_lora_weights.safetensors", framework="pt", device="cpu") as f:
+                for key in f.keys():
+                    lora_keys.append(key)
+                    lora_dict[key]=f.get_tensor(key)
+            print("here are the LORA keys")
+            print(lora_keys[:15])
+            print("here are the normal keys")
+            unet_keys=[]
+            n_p_dict={}
+            for name,param in pipeline.sd_pipeline.unet.named_parameters():
+                unet_keys.append(name)
+                n_p_dict[name]=param
+            print(unet_keys[:15])
         except:
             print(f"could not resume from {resume_from}")
     print("line 195")
