@@ -234,7 +234,7 @@ if __name__=='__main__':
     try:
         trainer.train()
         with open(args.output_dir+"num_epochs.txt","w+") as f:
-            f.write(args.num_epochs)
+            f.write(f"{args.num_epochs}")
     except Exception as exc:
         print(exc)
         torch.cuda.memory._dump_snapshot("failure.pickle")
