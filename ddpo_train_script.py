@@ -127,7 +127,7 @@ if __name__=='__main__':
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
 
-    print("line 116")
+    print("line 130")
     project_kwargs={
             "project_dir":args.output_dir,
             'automatic_checkpoint_naming':True
