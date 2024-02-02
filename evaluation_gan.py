@@ -36,6 +36,8 @@ parser.add_argument(
     help="Path to pretrained models or model identifiers from huggingface.co/models where conditional==True",
 )
 
+parser.add_argument("--dataset_name",type=str,help="hf dataset for test prompts",default="jlbaker361/wikiart-balanced1000")
+
 parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation-gan",help="hf dir to push to")
 
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/gan_evaluation_images/")
@@ -61,6 +63,10 @@ def evaluate(args):
         "model":[],
         "score":[]
     }
+    hf_dataset=load_dataset(args.dataset_name,split="test")
+    prompt_list=[[t,n] for t,n in zip(hf_dataset["text"], hf_dataset["name"])]
+    random.shuffle(prompt_list)
+    prompt_list=prompt_list[:args.limit]
     for model,gen in model_dict.items():
         weights_location=hf_hub_download(model, filename="gen-weights.pickle")
         if torch.cuda.is_available():
