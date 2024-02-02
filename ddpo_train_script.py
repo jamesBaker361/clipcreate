@@ -140,7 +140,10 @@ if __name__=='__main__':
         except (EntryNotFoundError,ValueError, OSError) as error:
             print("EntryNotFoundError or ValueError using pipeline.sd_pipeline.load_lora_weights")
             pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
-            pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
+            try:
+                pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
+            except:
+                print(f"couldn't load lora weights from {args.pretrained_model_name_or_path}")
     else:
         pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
 
