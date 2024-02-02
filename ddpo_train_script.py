@@ -142,6 +142,7 @@ if __name__=='__main__':
             pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
             try:
                 pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
+                print(f"loaded weights from {args.pretrained_model_name_or_path}")
             except:
                 print(f"couldn't load lora weights from {args.pretrained_model_name_or_path}")
     else:
@@ -232,6 +233,8 @@ if __name__=='__main__':
     print("line 198")
     try:
         trainer.train()
+        with open(args.output_dir+"num_epochs.txt","w+") as f:
+            f.write(args.num_epochs)
     except Exception as exc:
         print(exc)
         torch.cuda.memory._dump_snapshot("failure.pickle")
