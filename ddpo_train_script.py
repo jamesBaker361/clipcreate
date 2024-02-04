@@ -183,6 +183,7 @@ if __name__=='__main__':
                 )
                 weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
                 adapter_name="default"
+                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=adapter_name)
                 load_weights(pipeline,weight_path,adapter_name)
                 project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
     print("line 150")
