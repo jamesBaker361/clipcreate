@@ -136,9 +136,9 @@ if __name__=='__main__':
     import random
     print("line 96")
     #sanity check to make sure we are logged in to huggingface
-    os.makedirs("test",exist_ok=True)
-    test_repo_id=create_repo("jlbaker361/test", exist_ok=True).repo_id
-    upload_folder(repo_id=test_repo_id, folder_path="test")
+    #os.makedirs("test",exist_ok=True)
+    #test_repo_id=create_repo("jlbaker361/test", exist_ok=True).repo_id
+    #upload_folder(repo_id=test_repo_id, folder_path="test")
 
     print("line 116")
     style_list=args.style_list
@@ -178,8 +178,10 @@ if __name__=='__main__':
         pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
 
     resume_from_path=None
-    os.makedirs(args.output_dir,exist_ok=True)
-    os.makedirs(args.resume_from,exist_ok=True)
+    if args.output_dir is not None:
+        os.makedirs(args.output_dir,exist_ok=True)
+    if args.resume_from is not None:
+        os.makedirs(args.resume_from,exist_ok=True)
     #os.makedirs(args.resume_from)
     print("line 155")
     if args.resume_from:
