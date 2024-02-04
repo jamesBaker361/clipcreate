@@ -46,6 +46,11 @@ def load_weights(pipeline, weight_path,adapter_name):
                 new_key=new_key.replace("lora.down", f"lora_A.{adapter_name}")
                 lora_keys.append(new_key)
                 lora_dict[new_key]=f.get_tensor(key)
+    count=0
+    for name,param in pipeline.sd_pipeline.unet.named_parameters():
+        if name in lora_dict:
+            count+=1
+    print(f"{count} shared params!!!")
     pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=False)
 
 parser = argparse.ArgumentParser(description="ddpo training")
