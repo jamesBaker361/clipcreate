@@ -35,6 +35,19 @@ def get_image_sample_hook(image_dir):
                 tracker.log({f"{pmpt}":wandb.Image(path)},tracker.tracker.step)
     return _fn
 
+def load_weights(pipeline, weight_path,adapter_name):
+    lora_keys=[]
+    lora_dict={}
+    with safe_open(weight_path, framework="pt", device="cpu") as f:
+        for key in f.keys():
+            if "unet." in key:
+                new_key=key[5:]
+                new_key=new_key.replace("lora.up", f"lora_B.{adapter_name}")
+                new_key=new_key.replace("lora.down", f"lora_A.{adapter_name}")
+                lora_keys.append(new_key)
+                lora_dict[new_key]=f.get_tensor(key)
+    pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=False)
+
 parser = argparse.ArgumentParser(description="ddpo training")
 parser.add_argument(
     "--pretrained_model_name_or_path",
