@@ -113,7 +113,7 @@ if __name__=='__main__':
     test_repo_id=create_repo("jlbaker361/test", exist_ok=True).repo_id
     upload_folder(repo_id=test_repo_id, folder_path="test")
 
-    print("line 102")
+    print("line 116")
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
@@ -152,7 +152,7 @@ if __name__=='__main__':
     os.makedirs(args.output_dir,exist_ok=True)
     os.makedirs(args.resume_from,exist_ok=True)
     #os.makedirs(args.resume_from)
-    print("line 131")
+    print("line 155")
     '''if args.resume_from:
         resume_from = os.path.normpath(os.path.expanduser(args.resume_from))
         if os.path.exists(resume_from):
@@ -189,11 +189,11 @@ if __name__=='__main__':
         },
         project_kwargs=project_kwargs
     )
-    print("line 168")
+    print("line 192")
     if args.image_dir==None:
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
-    print("line 172")
+    print("line 196")
     image_samples_hook=get_image_sample_hook(args.image_dir)
     try:
         trainer = DDPOTrainer(
@@ -228,7 +228,7 @@ if __name__=='__main__':
                 pipeline,
                 image_samples_hook
         )
-    print("line 181")
+    print("line 231")
     if args.reward_function=="dcgan":
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, 
                                              args.resize_dim, 
@@ -257,10 +257,10 @@ if __name__=='__main__':
             print(unet_keys[:15])
         except:
             print(f"could not resume from {resume_from}")'''
-    print("line 195")
+    print("line 260")
     start=time.time()
     torch.cuda.memory._record_memory_history()
-    print("line 198")
+    print("line 263")
     try:
         trainer.train()
         with open(args.output_dir+"/num_epochs.txt","w+") as f:
