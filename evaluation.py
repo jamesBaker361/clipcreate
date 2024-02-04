@@ -49,6 +49,7 @@ parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation",help="hf
 
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/evaluation_images/")
 parser.add_argument("--limit",type=int,default=150,  help="how many samples to make")
+parser.add_argument("--lora_scale",type=float,help="lora scale 0-1 0 is the same as not using the LoRA weights, whereas 1 means only the LoRA fine-tuned weights will be used")
 
 if __name__=='__main__':
     args = parser.parse_args()
@@ -102,7 +103,10 @@ if __name__=='__main__':
         for [prompt,name] in prompt_list:
             if model.find("-CONDITIONAL")==-1:
                 prompt=""
-            image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
+            if args.lora_scale is not None:
+                image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
+            else:
+                image = pipeline(prompt, num_inference_steps=args.num_inference_steps, cross_attention_kwargs={"scale": args.lora_scale}).images[0]
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
             src_dict["model"].append(model)
