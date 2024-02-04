@@ -27,7 +27,7 @@ class Discriminator(nn.Module):
             nn.Conv2d(3, init_dim, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True)
         ]
-        while init_dim<final_dim:
+        while init_dim<final_dim and image_dim>4:
             interm_dim=int(3*init_dim/2)
             later_dim=init_dim*2
             layers.append(nn.Conv2d(init_dim, interm_dim, 4, 2, 1, bias=False))
