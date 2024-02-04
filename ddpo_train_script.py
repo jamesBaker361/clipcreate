@@ -1,5 +1,12 @@
 import os
 import sys
+cache_dir="/scratch/jlb638/trans_cache"
+os.environ["TRANSFORMERS_CACHE"]=cache_dir
+os.environ["HF_HOME"]=cache_dir
+os.environ["HF_HUB_CACHE"]=cache_dir
+
+import torch
+torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 import argparse
 from static_globals import *
 import faulthandler
@@ -163,7 +170,7 @@ if __name__=='__main__':
             try:
                 weight_path=hf_hub_download(repo_id=args.pretrained_model_name_or_path, filename="pytorch_lora_weights.safetensors",repo_type="model")
                 pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=args.adapter_name)
-                load_weights(pipeline,weight_path,adapter_name)
+                load_weights(pipeline,weight_path,args.adapter_name)
                 print(f"loaded weights from {args.pretrained_model_name_or_path}")
             except:
                 print(f"couldn't load lora weights from {args.pretrained_model_name_or_path}")
@@ -192,7 +199,7 @@ if __name__=='__main__':
                 )
                 weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
                 pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=args.adapter_name)
-                load_weights(pipeline,weight_path,adapter_name)
+                load_weights(pipeline,weight_path,args.adapter_name)
                 project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
     print("line 150")
     config=DDPOConfig(
