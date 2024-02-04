@@ -162,11 +162,12 @@ if __name__=='__main__':
                     os.listdir(resume_from_path),
                 )
             )
-            checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
-            resume_from_path = os.path.join(
-                resume_from_path,
-                f"checkpoint_{checkpoint_numbers[-1]}",
-            )
+            if len(checkpoints) != 0:
+                checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
+                resume_from_path = os.path.join(
+                    resume_from_path,
+                    f"checkpoint_{checkpoint_numbers[-1]}",
+                )
 
             #project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
     print("line 150")
