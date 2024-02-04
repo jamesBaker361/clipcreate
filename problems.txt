@@ -434,3 +434,107 @@ use conda
 
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 conda install -c conda-forge wandb huggingface_hub peft diffusers bitsandbytes scipy matplotlib trl datasets
+
+problem: can't load lora weights???
+like the adapter doesn't recognize the weight names
+when use_lora=True
+stability base weight names:
+down_blocks.0.attentions.0.transformer_blocks.0.norm1.bias
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.bias
+down_blocks.0.attentions.0.transformer_blocks.0.norm2.weight
+
+stability weight names AFTER trying to load lora weights:
+
+down_blocks.0.attentions.0.transformer_blocks.0.norm1.bias
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora_A.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora_B.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.lora_A.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.lora_B.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora_A.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora_B.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.base_layer.bias
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora_A.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora_B.default_0.weight
+
+lora weight names:
+
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.lora.up.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.lora.up_1.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.down.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.down_1.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.up.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.up_1.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora.down.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora.down_1.weight',
+ 'down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora.up.weight',
+
+ lets try to train ddpo-stability-test for a second and load the lora weights???
+ so we dont get the :((( message
+
+ YES if you train it again the new pytorch weights trigger the error
+
+syability weight names:
+down_blocks.0.attentions.0.transformer_blocks.0.norm1.weight
+down_blocks.0.attentions.0.transformer_blocks.0.norm1.bias
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.bias
+down_blocks.0.attentions.0.transformer_blocks.0.norm2.weight
+down_blocks.0.attentions.0.transformer_blocks.0.norm2.bias
+down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_q.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_k.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_v.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_out.0.weigh
+
+stability after loading weight names:
+
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora_A.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora_B.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.lora_A.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.lora_B.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora_A.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora_B.default_0.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.base_layer.weight
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.base_layer.bias
+down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora_A.default_0.weight
+
+lora weights:
+
+unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_k.lora.up_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.down.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.down_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.up.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_out.0.lora.up_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora.down.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora.down_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora.up.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q.lora.up_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora.down.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora.down_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora.up.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_v.lora.up_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_k.lora.down.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_k.lora.down_1.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_k.lora.up.weight',
+ 'unet.down_blocks.0.attentions.0.transformer_blocks.0.attn2.to_k.lora.up_1.weight',
+
+this was the last snapshot that worked:
+ab8dc5de3833bd2604988f3e7df16dcdb63c1a08
+
+so the tldr is once it loads from a "second hand" lora and tries to retrain it starts to shit itself
+
+ddpo-stability-good is our good model
+
