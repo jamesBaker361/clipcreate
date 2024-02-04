@@ -10,6 +10,7 @@ torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from generator_src import Generator
 from discriminator_src import Discriminator,GANDataset,UtilDataset
 from huggingface_hub import hf_hub_download, ModelCard, upload_file
+from sentence_transformers import SentenceTransformer
 from torchvision.transforms import ToPILImage
 from datasets import Dataset,load_dataset
 import numpy as np
@@ -67,6 +68,7 @@ def evaluate(args):
     prompt_list=[[t,n] for t,n in zip(hf_dataset["text"], hf_dataset["name"])]
     random.shuffle(prompt_list)
     prompt_list=prompt_list[:args.limit]
+    sentence_encoder=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
     for model,gen in model_dict.items():
         weights_location=hf_hub_download(model, filename="gen-weights.pickle")
         if torch.cuda.is_available():
@@ -77,9 +79,10 @@ def evaluate(args):
         result_dict[model]={}
         total_score=0.0
         score_list=[]
-        for i in range(args.limit):
+        for prompt in prompt_list:
             noise=torch.randn(1,args.gen_z_dim, 1, 1)
-            image=gen(noise)
+            text_encoding=torch.tensor(sentence_encoder.encode(prompt))
+            image=gen(noise,text_encoding )
             src_dict["image"].append(ToPILImage()( image[0]))
             src_dict["model"].append(model)
             score,_=aesthetic_fn(image.detach(),{},{})
