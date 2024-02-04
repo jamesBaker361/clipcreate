@@ -51,7 +51,7 @@ def load_weights(pipeline, weight_path,adapter_name):
         if name in lora_dict:
             count+=1
     print(f"{count} shared params!!!")
-    pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=False)
+    pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=True)
 
 parser = argparse.ArgumentParser(description="ddpo training")
 parser.add_argument(
