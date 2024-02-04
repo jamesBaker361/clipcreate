@@ -181,8 +181,10 @@ if __name__=='__main__':
                     resume_from_path,
                     f"checkpoint_{checkpoint_numbers[-1]}",
                 )
-
-            #project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
+                weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
+                adapter_name="default"
+                load_weights(pipeline,weight_path,adapter_name)
+                project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
     print("line 150")
     config=DDPOConfig(
         num_epochs=args.num_epochs,
@@ -192,7 +194,7 @@ if __name__=='__main__':
         train_batch_size=args.train_batch_size,
         sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
         mixed_precision=args.mixed_precision,
-        resume_from=args.resume_from,
+        #resume_from=args.resume_from,
         tracker_project_name="ddpo",
         log_with="wandb",
         #resume_from=args.resume_from,
