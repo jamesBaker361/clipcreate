@@ -4,6 +4,7 @@ import argparse
 from static_globals import *
 import faulthandler
 import wandb
+from huggingface_hub import hf_hub_download
 import re
 from safetensors import safe_open
 
@@ -159,7 +160,10 @@ if __name__=='__main__':
             print("EntryNotFoundError or ValueError using pipeline.sd_pipeline.load_lora_weights")
             pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
             try:
-                pipeline.sd_pipeline.load_lora_weights(args.pretrained_model_name_or_path,weight_name="pytorch_lora_weights.safetensors")
+                weight_path=hf_hub_download(repo_id=args.pretrained_model_name_or_path, filename="pytorch_lora_weights.safetensors",repo_type="model")
+                adapter_name="default"
+                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=adapter_name)
+                load_weights(pipeline,weight_path,adapter_name)
                 print(f"loaded weights from {args.pretrained_model_name_or_path}")
             except:
                 print(f"couldn't load lora weights from {args.pretrained_model_name_or_path}")
