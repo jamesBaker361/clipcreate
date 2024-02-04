@@ -148,29 +148,29 @@ if __name__=='__main__':
     else:
         pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
 
-    resume_from=None
+    resume_from_path=None
     os.makedirs(args.output_dir,exist_ok=True)
     os.makedirs(args.resume_from,exist_ok=True)
     #os.makedirs(args.resume_from)
     print("line 155")
-    '''if args.resume_from:
-        resume_from = os.path.normpath(os.path.expanduser(args.resume_from))
-        if os.path.exists(resume_from):
+    if args.resume_from:
+        resume_from_path = os.path.normpath(os.path.expanduser(args.resume_from))
+        if os.path.exists(resume_from_path):
             checkpoints = list(
                 filter(
                     lambda x: "checkpoint_" in x,
-                    os.listdir(resume_from),
+                    os.listdir(resume_from_path),
                 )
             )
             if len(checkpoints) == 0:
-                raise ValueError(f"No checkpoints found in {resume_from}")
+                raise ValueError(f"No checkpoints found in {resume_from_path}")
             checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
-            resume_from = os.path.join(
-                resume_from,
+            resume_from_path = os.path.join(
+                resume_from_path,
                 f"checkpoint_{checkpoint_numbers[-1]}",
             )
 
-            project_kwargs["iteration"] = checkpoint_numbers[-1] + 1'''
+            #project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
     print("line 150")
     config=DDPOConfig(
         num_epochs=args.num_epochs,
@@ -203,6 +203,7 @@ if __name__=='__main__':
                 pipeline,
                 image_samples_hook
         )
+        print(f"possibly successfully resuming from {resume_from_path}")
     except ValueError as val_err:
         print(val_err)
         config=DDPOConfig(
