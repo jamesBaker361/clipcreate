@@ -1,5 +1,4 @@
 import os
-import sys
 cache_dir="/scratch/jlb638/trans_cache"
 os.environ["TRANSFORMERS_CACHE"]=cache_dir
 os.environ["HF_HOME"]=cache_dir
@@ -7,9 +6,7 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 from huggingface_hub.utils import EntryNotFoundError
 from huggingface_hub import upload_file
 #os.symlink("~/.cache/huggingface/", cache_dir)
-from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
-import torch
-import wandb
+from trl import DefaultDDPOStableDiffusionPipeline
 from datasets import Dataset,load_dataset
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 import random
