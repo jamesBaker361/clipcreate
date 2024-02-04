@@ -102,6 +102,7 @@ parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discrimi
 parser.add_argument("--disc_init_dim",type=int,default=32, help="initial layer # of channels in discriminator")
 parser.add_argument("--disc_final_dim",type=int, default=512, help="final layer # of channels in discriminator")
 parser.add_argument("--resize_dim",type=int,default=512,help="dim to resize images to before cropping (for dcgan)")
+parser.add_argument("--adapter_name",type=str,default="default")
 
 
 if __name__=='__main__':
@@ -161,8 +162,7 @@ if __name__=='__main__':
             pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
             try:
                 weight_path=hf_hub_download(repo_id=args.pretrained_model_name_or_path, filename="pytorch_lora_weights.safetensors",repo_type="model")
-                adapter_name="default"
-                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=adapter_name)
+                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=args.adapter_name)
                 load_weights(pipeline,weight_path,adapter_name)
                 print(f"loaded weights from {args.pretrained_model_name_or_path}")
             except:
@@ -191,8 +191,7 @@ if __name__=='__main__':
                     f"checkpoint_{checkpoint_numbers[-1]}",
                 )
                 weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
-                adapter_name="default"
-                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=adapter_name)
+                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=args.adapter_name)
                 load_weights(pipeline,weight_path,adapter_name)
                 project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
     print("line 150")
