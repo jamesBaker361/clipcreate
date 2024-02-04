@@ -149,6 +149,7 @@ if __name__=='__main__':
         pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
 
     resume_from=None
+    os.makedirs(args.output_dir,exist_ok=True)
     os.makedirs(args.resume_from,exist_ok=True)
     #os.makedirs(args.resume_from)
     print("line 131")
