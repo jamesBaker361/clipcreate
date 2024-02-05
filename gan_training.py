@@ -38,7 +38,7 @@ parser.add_argument("--disc_final_dim",type=int,default=512)
 parser.add_argument("--style_list",nargs="+",default=WIKIART_STYLES)
 parser.add_argument("--resize_dim",type=int,default=768)
 
-parser.add_argument("--only_classifier",default=False,help="whether to only use style classifier")
+parser.add_argument("--classifier_only",default=False,help="whether to only use style classifier")
 
 def freeze_model(model):
     for param in model.parameters():
