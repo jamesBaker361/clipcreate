@@ -7,6 +7,7 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 
 import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
+from torchmetrics.image.inception import InceptionScore
 from generator_src import Generator
 from discriminator_src import Discriminator,GANDataset,UtilDataset
 from huggingface_hub import hf_hub_download, ModelCard, upload_file
@@ -65,6 +66,7 @@ def evaluate(args):
         "score":[]
     }
     hf_dataset=load_dataset(args.dataset_name,split="test")
+    inception = InceptionScore(normalize=True)
     prompt_list=[[t,n] for t,n in zip(hf_dataset["text"], hf_dataset["name"])]
     random.shuffle(prompt_list)
     prompt_list=prompt_list[:args.limit]
@@ -79,10 +81,12 @@ def evaluate(args):
         result_dict[model]={}
         total_score=0.0
         score_list=[]
+        image_list=[]
         for prompt in prompt_list:
             noise=torch.randn(1,args.gen_z_dim, 1, 1)
             text_encoding=torch.tensor(sentence_encoder.encode(prompt))
             image=gen(noise,text_encoding )
+            image_list.append(image)
             src_dict["image"].append(ToPILImage()( image[0]))
             src_dict["model"].append(model)
             score,_=aesthetic_fn(image.detach(),{},{})
@@ -94,6 +98,10 @@ def evaluate(args):
         result_dict[model]["std"]=score_std
         result_dict[model]["mean"]=total_score/len(score_list)
         print(f"total score {model} {total_score} std {score_std}")
+        image_tensor=torch.cat(image_list)
+        inception.update(image_tensor)
+        inception_mean, inception_std=inception.compute()
+        print("inception mean", inception_mean, "inceptstion std", inception_std)
     Dataset.from_dict(src_dict).push_to_hub(args.hf_dir)
     model_card_content=f"created a total of {len(score_list)} images \n"
     for model,metric_dict in result_dict.items():

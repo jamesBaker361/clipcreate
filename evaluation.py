@@ -3,16 +3,20 @@ cache_dir="/scratch/jlb638/trans_cache"
 os.environ["TRANSFORMERS_CACHE"]=cache_dir
 os.environ["HF_HOME"]=cache_dir
 os.environ["HF_HUB_CACHE"]=cache_dir
+import torch
+torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from huggingface_hub.utils import EntryNotFoundError
 from huggingface_hub import upload_file
 #os.symlink("~/.cache/huggingface/", cache_dir)
 from trl import DefaultDDPOStableDiffusionPipeline
 from datasets import Dataset,load_dataset
+from torchvision.transforms import PILToTensor
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 import random
 import argparse
 from static_globals import *
 import numpy as np
+from torchmetrics.image.inception import InceptionScore
 
 random.seed(1234)
 
@@ -74,6 +78,7 @@ if __name__=='__main__':
     random.shuffle(prompt_list)
     prompt_list=prompt_list[:args.limit]
     model_dict={}
+    inception = InceptionScore(normalize=True)
     for model in args.conditional_model_list+args.model_list:
         try:
             pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
@@ -100,15 +105,17 @@ if __name__=='__main__':
         result_dict[model]={}
         total_score=0.0
         score_list=[]
+        image_list=[]
         for [prompt,name] in prompt_list:
             if model.find("-CONDITIONAL")==-1:
                 prompt=""
-            if args.lora_scale is not None:
+            if args.lora_scale is None:
                 image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
             else:
                 image = pipeline(prompt, num_inference_steps=args.num_inference_steps, cross_attention_kwargs={"scale": args.lora_scale}).images[0]
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
+            image_list.append( PILToTensor()(image))
             src_dict["model"].append(model)
             score=aesthetic_fn(image,{},{})[0].numpy()[0]
             src_dict["score"].append(score)
@@ -125,6 +132,10 @@ if __name__=='__main__':
         score_std=np.std(score_list)
         result_dict[model]["std"]=score_std
         result_dict[model]["mean"]=total_score/len(score_list)
+        image_tensor=torch.stack(image_list)
+        inception.update(image_tensor)
+        inception_mean, inception_std=inception.compute()
+        print("inception mean", inception_mean, "inceptstion std", inception_std)
         try:
             slurm_job_id=os.environ["SLURM_JOB_ID"]
             with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
