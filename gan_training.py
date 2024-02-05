@@ -38,6 +38,8 @@ parser.add_argument("--disc_final_dim",type=int,default=512)
 parser.add_argument("--style_list",nargs="+",default=WIKIART_STYLES)
 parser.add_argument("--resize_dim",type=int,default=768)
 
+parser.add_argument("--only_classifier",default=False,help="whether to only use style classifier")
+
 def freeze_model(model):
     for param in model.parameters():
         param.requires_grad = False
@@ -194,7 +196,14 @@ def training_loop(args):
             
             #real loss discirinator
             real_binary,real_style=disc(real_images,text_encoding)
+            
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
+            if args.classifier_only:
+                accelerator.backward(real_binary_loss)
+                disc_optimizer.step()
+                disc_optimizer.zero_grad()
+                real_binary_loss_sum+=torch.sum(real_binary_loss)
+                continue
             #accelerator.backward(real_binary_loss)
             #disc_optimizer.step()
             #disc_optimizer.zero_grad()
