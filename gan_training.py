@@ -175,6 +175,8 @@ def training_loop(args):
     real_label_int = 1.
     fake_label_int = 0.
     print(f"starting at epoch {start_epoch}")
+    constant_noise=torch.randn(1,args.noise_dim, 1, 1)
+    constant_prompt="painting"
     for e in range(start_epoch,args.epochs):
         style_classification_loss_sum=0.
         fake_binary_loss_sum=0.
