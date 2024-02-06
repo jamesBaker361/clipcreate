@@ -10,8 +10,10 @@ from generator_src import Generator
 from discriminator_src import Discriminator,GANDataset,UtilDataset
 
 from huggingface_hub import create_repo, upload_folder, ModelCard
+from torchvision.transforms import ToPILImage
 from transformers import CLIPProcessor, CLIPModel
 from accelerate import Accelerator
+import wandb
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import argparse
@@ -141,7 +143,19 @@ def training_loop(args):
             }
         }
     })
-    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader = accelerator.prepare(gen, gen_optimizer, disc, disc_optimizer, training_dataloader,util_dataloader)
+    #=dataset.sentence_trans
+    #constant_noise=torch.randn(1,args.gen_z_dim, 1, 1)
+    #constant_text_encoding=torch.tensor(sentence_trans.encode("painting"))
+    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader, = accelerator.prepare(gen, 
+                                                                                                         gen_optimizer,
+                                                                                                           disc, disc_optimizer, training_dataloader,
+                                                                                                           util_dataloader)
+    
+    for batch,util_vectors in zip(training_dataloader,util_dataloader):
+        #print("one step!!?!?!?")
+        constant_noise,_real_vector,_fake_vector,_uniform = util_vectors
+        _real_images, _real_labels,constant_text_encoding = batch
+        break
     device=accelerator.device
     print(f"acceleerate device = {device}")
     #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -175,8 +189,6 @@ def training_loop(args):
     real_label_int = 1.
     fake_label_int = 0.
     print(f"starting at epoch {start_epoch}")
-    constant_noise=torch.randn(1,args.noise_dim, 1, 1)
-    constant_prompt="painting"
     for e in range(start_epoch,args.epochs):
         style_classification_loss_sum=0.
         fake_binary_loss_sum=0.
@@ -279,12 +291,19 @@ def training_loop(args):
             style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
             reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)
         
+        test_image=gen(constant_noise, constant_text_encoding)
+        pil_test_image=ToPILImage()( test_image[0])
+        path="tmp.png"
+        pil_test_image.save(path)
+
         accelerator.log({
             "style_classification":style_classification_loss_sum,
             "fake_binary": fake_binary_loss_sum,
             "real_binary":real_binary_loss_sum,
             "style_ambiguity":style_ambiguity_loss_sum,
-            "reverse_fake_binary":reverse_fake_binary_loss_sum
+            "reverse_fake_binary":reverse_fake_binary_loss_sum,
+            "test_image": wandb.Image(path)
+
         },step=e)
 
         end=time.time()
