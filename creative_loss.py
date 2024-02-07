@@ -85,7 +85,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         state_dict=torch.load(weights_location)
     else:
         state_dict=torch.load(weights_location, map_location=torch.device("cpu"))
-    model.load_state_dict(state_dict)
+    model.load_state_dict(state_dict,strict=False)
     if device is not None:
         model.to(device)
     
