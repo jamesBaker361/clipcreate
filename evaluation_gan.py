@@ -102,6 +102,8 @@ def evaluate(args):
         inception.update(image_tensor)
         inception_mean, inception_std=inception.compute()
         print("inception mean", inception_mean, "inceptstion std", inception_std)
+        result_dict[model]["inception_mean"]=float(inception_mean)
+        result_dict[model]["inception_src"]=float(inception_std)
     Dataset.from_dict(src_dict).push_to_hub(args.hf_dir)
     model_card_content=f"created a total of {len(score_list)} images \n"
     for model,metric_dict in result_dict.items():
