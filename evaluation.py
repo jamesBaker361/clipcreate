@@ -136,6 +136,8 @@ if __name__=='__main__':
         inception.update(image_tensor)
         inception_mean, inception_std=inception.compute()
         print("inception mean", inception_mean, "inceptstion std", inception_std)
+        result_dict[model]["inception_mean"]=float(inception_mean)
+        result_dict[model]["inception_src"]=float(inception_std)
         try:
             slurm_job_id=os.environ["SLURM_JOB_ID"]
             with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
