@@ -31,11 +31,13 @@ def evaluate(args):
             model_score_dict[model_name]=[]
         pil_img=row["image"]
         tensor_img=PILToTensor()(pil_img)
-        model_image_dict.append(tensor_img)
-        model_score_dict.append(ava_score)
+        model_image_dict[model_name].append(tensor_img)
+        model_score_dict[model_name].append(ava_score)
     for model in model_image_dict.keys():
         image_list=model_image_dict[model]
-        image_tensor=torch.cat(image_list)
+        image_tensor=torch.stack(image_list)
+        print(type(image_tensor))
+        print(image_tensor.size())
         inception.update(image_tensor)
         inception_mean, inception_std=inception.compute()
         print(model)
