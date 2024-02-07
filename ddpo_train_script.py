@@ -109,6 +109,7 @@ parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discrimi
 parser.add_argument("--disc_init_dim",type=int,default=32, help="initial layer # of channels in discriminator")
 parser.add_argument("--disc_final_dim",type=int, default=512, help="final layer # of channels in discriminator")
 parser.add_argument("--resize_dim",type=int,default=512,help="dim to resize images to before cropping (for dcgan)")
+parser.add_argument("--image_dim",type=int,default=512,help="image dim for dcgan")
 parser.add_argument("--adapter_name",type=str,default="default")
 
 
@@ -149,7 +150,7 @@ if __name__=='__main__':
     elif args.reward_function == "resnet":
         reward_fn=elgammal_resnet_scorer_ddpo(style_list,224)
     elif args.reward_function=="dcgan":
-        reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
+        reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
