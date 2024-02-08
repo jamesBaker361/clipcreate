@@ -1,5 +1,4 @@
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
-from res_net_src import ResNet
 from discriminator_src import Discriminator,SquarePad
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
@@ -90,41 +89,6 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
             scores.append(-1.0 * mse(y_pred,y_true))
-        return scores, {}
-    
-    return _fn
-
-
-def elgammal_resnet_scorer_ddpo(style_list, center_crop_dim):
-    n_classes=len(style_list)
-    model=ResNet("resnet18", n_classes)
-    weights_location=hf_hub_download(repo_id="jlbaker361/resnet-wikiart", filename="resnet-weights.pickle")
-    if torch.cuda.is_available():
-        state_dict=torch.load(weights_location)
-    else:
-        state_dict=torch.load(weights_location, map_location=torch.device("cpu"))
-    model.load_state_dict(state_dict)
-
-
-    transform_composition=transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(center_crop_dim),
-            #transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-
-    @torch.no_grad()
-    def _fn(images, prompts, metadata):
-        images=transform_composition(images)
-        probs=model(images)
-        n_image=images.shape[0]
-        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
-        #uniform=torch.normal(0, 5, size=(n_image, n_text))
-
-        #cosine = torch.nn.CosineSimilarity(dim=1) 
-
-        scores = -1 * cross_entropy(probs,uniform)
-
         return scores, {}
     
     return _fn
