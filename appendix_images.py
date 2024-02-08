@@ -12,6 +12,7 @@ from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 import random
 import matplotlib.pyplot as plt
 from matplotlib.table import table
+from accelerate import Accelerator
 import numpy as np
 from generator_src import Generator
 from sentence_transformers import SentenceTransformer
@@ -28,6 +29,7 @@ parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise fo
 parser.add_argument("--image_dim", type=int,default=512)
 parser.add_argument("--file_path",type=str,default="table.png",help="file to save table")
 parser.add_argument("--num_inference_steps",type=int,default=30)
+parser.add_argument("--lora_scale", type=float,default=0.9, help="lora scale [0.0-1.0]")
 
 
 # Function to create a table with prompts and images
@@ -76,6 +78,8 @@ def main(args):
     if args.ddpo_model_list is None:
         args.ddpo_model_list=[]
 
+    accel=Accelerator()
+
     test_dataset=load_dataset(args.dataset, split="test")
     prompt_list=[t for t in test_dataset["text"]]
     random.shuffle(prompt_list)
@@ -91,10 +95,12 @@ def main(args):
         else:
             state_dict=torch.load(weights_location, map_location=torch.device("cpu"))
         gen.load_state_dict(state_dict)
+        gen.to(accel.device)
         can_model_dict[can_model]=gen
     for ddpo_model in args.ddpo_model_list:
         pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
         pipeline.sd_pipeline.load_lora_weights(ddpo_model,weight_name="pytorch_lora_weights.safetensors")
+        #pipeline.sd_pipeline.to(accel.device)
         ddpo_model_dict[ddpo_model]=pipeline
     data=[]
     sentence_encoder=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
@@ -108,7 +114,7 @@ def main(args):
         for model_name,pipeline in ddpo_model_dict.items():
             if args.conditional is False:
                 prompt=""
-            images.append(pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0])
+            images.append(pipeline(prompt, num_inference_steps=args.num_inference_steps,cross_attention_kwargs={"scale": args.lora_scale}).images[0])
         #new_dict={"prompt":prompt,"images":images}
         data.append({"prompt":prompt,"images":images})
     save_table(data,args.conditional,args.file_path)
