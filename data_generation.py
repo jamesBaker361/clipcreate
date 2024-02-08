@@ -7,8 +7,7 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 import sys
 import re
 from PIL import Image
-from datasets import Dataset,load_dataset
-from lavis.models import load_model_and_preprocess
+from datasets import Dataset
 import torch
 from transformers import BlipProcessor, BlipForQuestionAnswering, BlipForConditionalGeneration
 
