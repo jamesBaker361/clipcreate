@@ -117,7 +117,6 @@ class GANDataset(torch.utils.data.Dataset):
         targets=[encoding_dict[style] for style in hf_dataset["style"]][:limit]
         self.targets = torch.LongTensor(targets)
         self.text_encoding_data=[torch.Tensor(self.sentence_trans.encode(t)) for t in hf_dataset["text"]][:limit]
-        #self.text_encoding_data=text_encoding_data
         
     def __getitem__(self, index):
 
