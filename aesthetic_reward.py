@@ -4,13 +4,9 @@ from dataclasses import dataclass, field
 import numpy as np
 import torch
 import torch.nn as nn
-import tyro
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import EntryNotFoundError
 from transformers import CLIPModel, CLIPProcessor
-
-from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
-from trl.import_utils import is_xpu_available
 
 class MLP(nn.Module):
     def __init__(self):
