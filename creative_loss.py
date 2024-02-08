@@ -28,7 +28,6 @@ def mse(y_true,y_pred):
 
 def cross_entropy(pred,true):
     for y_pred,y_true in zip(pred,true):
-        print(y_pred)
     return [cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)]
 
 def cross_entropy_per_sample_dcgan(y_pred, y_true):
@@ -36,7 +35,6 @@ def cross_entropy_per_sample_dcgan(y_pred, y_true):
     # Doing cross entropy Loss
     for i in range(len(y_pred)):
         loss = loss + (-1 * y_true[i]*torch.log(y_pred[i]))
-    print(loss)
     return loss
 
 def cross_entropy_dcgan(pred,true):
@@ -53,25 +51,15 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         probs = logits_per_image.softmax(dim=1)
 
-        #print(f"probs shape {probs.size()}")
-
         n_classes=len(style_list)
         n_image=images.shape[0]
-        uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes)
-        #print(f"uniform shape {(n_image, n_classes)}")
-        #uniform=torch.normal(0, 5, size=(n_image, n_text))
 
-        #cosine = torch.nn.CosineSimilarity(dim=1) 
-
-        #scores =  -1 * cross_entropy(probs,uniform)
-        #print(scores)
         scores=[]
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
             scores.append(-1.0 * mse(y_pred,y_true))
-        #print(scores)
-        #scores=torch.normal(0.0, 5.0, size=(1,n_image))
+        
         return scores, {}
 
     return _fn
@@ -107,7 +95,6 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
             scores.append(-1.0 * mse(y_pred,y_true))
-        #print(type(scores))
         return scores, {}
     
     return _fn
