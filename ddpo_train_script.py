@@ -135,13 +135,7 @@ if __name__=='__main__':
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
-    print("line 96")
-    #sanity check to make sure we are logged in to huggingface
-    #os.makedirs("test",exist_ok=True)
-    #test_repo_id=create_repo("jlbaker361/test", exist_ok=True).repo_id
-    #upload_folder(repo_id=test_repo_id, folder_path="test")
 
-    print("line 116")
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
         style_list=WIKIART_STYLES
@@ -155,7 +149,6 @@ if __name__=='__main__':
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
 
-    print("line 130")
     project_kwargs={
             "project_dir":args.output_dir,
             'automatic_checkpoint_naming':True
@@ -183,8 +176,7 @@ if __name__=='__main__':
         os.makedirs(args.output_dir,exist_ok=True)
     if args.resume_from is not None:
         os.makedirs(args.resume_from,exist_ok=True)
-    #os.makedirs(args.resume_from)
-    print("line 155")
+
     if args.resume_from:
         resume_from_path = os.path.normpath(os.path.expanduser(args.resume_from))
         if os.path.exists(resume_from_path):
@@ -204,7 +196,7 @@ if __name__=='__main__':
                 pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=args.adapter_name)
                 load_weights(pipeline,weight_path,args.adapter_name)
                 project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
-    print("line 150")
+
     config=DDPOConfig(
         num_epochs=args.num_epochs,
         train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
@@ -222,11 +214,9 @@ if __name__=='__main__':
         },
         project_kwargs=project_kwargs
     )
-    print("line 192")
     if args.image_dir==None:
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
-    print("line 196")
     image_samples_hook=get_image_sample_hook(args.image_dir)
     try:
         trainer = DDPOTrainer(
@@ -262,39 +252,15 @@ if __name__=='__main__':
                 pipeline,
                 image_samples_hook
         )
-    print("line 231")
     if args.reward_function=="dcgan":
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, 
                                              args.resize_dim, 
                                              args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id,
                                              device=trainer.accelerator.device)
         #trainer.reward_fn=reward_fn
-    '''if resume_from:
-        print(f"Resuming from {resume_from}")
-        try:
-            pipeline.sd_pipeline.load_lora_weights(resume_from,weight_name="pytorch_lora_weights.safetensors")
-            trainer.first_epoch=int(resume_from.split("_")[-1]) + 1
-            lora_keys=[]
-            lora_dict={}
-            with safe_open(resume_from+"/pytorch_lora_weights.safetensors", framework="pt", device="cpu") as f:
-                for key in f.keys():
-                    lora_keys.append(key)
-                    lora_dict[key]=f.get_tensor(key)
-            print("here are the LORA keys")
-            print(lora_keys[:15])
-            print("here are the normal keys")
-            unet_keys=[]
-            n_p_dict={}
-            for name,param in pipeline.sd_pipeline.unet.named_parameters():
-                unet_keys.append(name)
-                n_p_dict[name]=param
-            print(unet_keys[:15])
-        except:
-            print(f"could not resume from {resume_from}")'''
-    print("line 260")
     start=time.time()
     torch.cuda.memory._record_memory_history()
-    print("line 263")
+
     try:
         trainer.train()
         with open(args.output_dir+"/num_epochs.txt","w+") as f:
