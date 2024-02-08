@@ -90,7 +90,7 @@ if __name__=='__main__':
             try:
                 slurm_job_id=os.environ["SLURM_JOB_ID"]
                 with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
-                    print(f"\nloaded lora weights spearately for {model} SLURM_JOB_ID={slurm_job_id}",file=file)
+                    print(f"\nloaded lora weights separately for {model} SLURM_JOB_ID={slurm_job_id}",file=file)
             except:
                 print(f"loaded lora weights spearately for {model}")
         #pipeline.set_progress_bar_config(disable=True)
@@ -135,7 +135,7 @@ if __name__=='__main__':
         image_tensor=torch.stack(image_list)
         inception.update(image_tensor)
         inception_mean, inception_std=inception.compute()
-        print("inception mean", inception_mean, "inceptstion std", inception_std)
+        print("inception mean", inception_mean, "inception std", inception_std)
         result_dict[model]["inception_mean"]=float(inception_mean)
         result_dict[model]["inception_src"]=float(inception_std)
         try:
