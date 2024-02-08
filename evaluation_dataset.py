@@ -35,8 +35,6 @@ def evaluate(args):
     for model in model_image_dict.keys():
         image_list=model_image_dict[model]
         image_tensor=torch.stack(image_list)
-        print(type(image_tensor))
-        print(image_tensor.size())
         inception.update(image_tensor)
         inception_mean, inception_std=inception.compute()
         print(model)
