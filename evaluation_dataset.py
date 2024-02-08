@@ -8,7 +8,6 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from torchmetrics.image.inception import InceptionScore
-from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 from datasets import Dataset,load_dataset
 from torchvision.transforms import PILToTensor
 import numpy as np
