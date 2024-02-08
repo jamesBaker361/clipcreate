@@ -1,12 +1,8 @@
-import os
-from transformers import BlipProcessor, BlipForConditionalGeneration,BlipModel
-from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
 from res_net_src import ResNet
 from discriminator_src import Discriminator,SquarePad
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
-from torch.nn import Softmax
 import torch
 import numpy as np
 import torch
