@@ -141,8 +141,6 @@ if __name__=='__main__':
         style_list=WIKIART_STYLES
     if args.reward_function == "clip":
         reward_fn=clip_scorer_ddpo(style_list)
-    elif args.reward_function == "resnet":
-        reward_fn=elgammal_resnet_scorer_ddpo(style_list,224)
     elif args.reward_function=="dcgan":
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
     else:
@@ -205,10 +203,8 @@ if __name__=='__main__':
         train_batch_size=args.train_batch_size,
         sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
         mixed_precision=args.mixed_precision,
-        #resume_from=args.resume_from,
         tracker_project_name="ddpo",
         log_with="wandb",
-        #resume_from=args.resume_from,
         accelerator_kwargs={
             "project_dir":args.output_dir
         },
@@ -218,46 +214,13 @@ if __name__=='__main__':
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
-    try:
-        trainer = DDPOTrainer(
-                config,
-                reward_fn,
-                prompt_fn,
-                pipeline,
-                image_samples_hook
-        )
-        print(f"possibly successfully resuming from {resume_from_path}")
-    except ValueError as val_err:
-        print(val_err)
-        config=DDPOConfig(
-            num_epochs=args.num_epochs,
-            train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
-            sample_num_steps=args.sample_num_steps,
-            sample_batch_size=args.sample_batch_size,
-            train_batch_size=args.train_batch_size,
-            sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
-            mixed_precision=args.mixed_precision,
-            tracker_project_name="ddpo",
-            log_with="wandb",
-            #resume_from=args.resume_from,
-            accelerator_kwargs={
-                "project_dir":args.output_dir
-            },
-            project_kwargs=project_kwargs
-        )
-        trainer = DDPOTrainer(
-                config,
-                reward_fn,
-                prompt_fn,
-                pipeline,
-                image_samples_hook
-        )
-    if args.reward_function=="dcgan":
-        reward_fn=elgammal_dcgan_scorer_ddpo(style_list,512, 
-                                             args.resize_dim, 
-                                             args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id,
-                                             device=trainer.accelerator.device)
-        #trainer.reward_fn=reward_fn
+    trainer = DDPOTrainer(
+        config,
+        reward_fn,
+        prompt_fn,
+        pipeline,
+        image_samples_hook
+    )
     start=time.time()
     torch.cuda.memory._record_memory_history()
 
