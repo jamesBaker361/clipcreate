@@ -9,7 +9,6 @@ import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from torchmetrics.image.inception import InceptionScore
 from generator_src import Generator
-from discriminator_src import Discriminator,GANDataset,UtilDataset
 from huggingface_hub import hf_hub_download, ModelCard, upload_file
 from sentence_transformers import SentenceTransformer
 from torchvision.transforms import ToPILImage
