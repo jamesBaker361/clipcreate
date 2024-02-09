@@ -152,15 +152,11 @@ def training_loop(args):
                                                                                                            util_dataloader)
     
     for batch,util_vectors in zip(training_dataloader,util_dataloader):
-        #print("one step!!?!?!?")
         constant_noise,_real_vector,_fake_vector,_uniform = util_vectors
         _real_images, _real_labels,constant_text_encoding = batch
         break
     device=accelerator.device
     print(f"acceleerate device = {device}")
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #gen=gen.to(device)
-    #disc=disc.to(device)
 
     if args.use_clip:
         print("using clip classifier")
@@ -168,12 +164,9 @@ def training_loop(args):
         processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
         model,processor=accelerator.prepare(model,processor)
-        #model=model.to(device)
         freeze_model(model)
-        #processor=processor.to(device)
 
         def clip_classifier(images):
-            #images=images/255
             inputs = processor(text=args.style_list, images=images, return_tensors="pt", padding=True)
             inputs['input_ids'] = inputs['input_ids'].to(device)
             inputs['attention_mask'] = inputs['attention_mask'].to(device)
@@ -181,11 +174,8 @@ def training_loop(args):
             outputs = model(**inputs)
             logits_per_image = outputs.logits_per_image # this is the image-text similarity score
             return logits_per_image.softmax(dim=1)
-    #gen.to(device)
-    #disc.to(device)
     cross_entropy=torch.nn.CrossEntropyLoss()
     binary_cross_entropy = torch.nn.BCELoss()
-    #uniform=torch.full((args.batch_size, n_classes), fill_value=1.0/n_classes)
     real_label_int = 1.
     fake_label_int = 0.
     print(f"starting at epoch {start_epoch}")
@@ -197,14 +187,10 @@ def training_loop(args):
         reverse_fake_binary_loss_sum=0.
         start=time.time()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
-            #print("one step!!?!?!?")
             noise,real_vector,fake_vector,uniform = util_vectors
             real_images, real_labels,text_encoding = batch
             real_labels=real_labels.to(torch.float64)
-            #real_images, real_labels = real_images.to(device), real_labels.to(device)
-            #noise,real_vector,fake_vector,uniform = noise.to(device),real_vector.to(device),fake_vector.to(device),uniform.to(device)
-            #noise= torch.randn(args.batch_size, 100, 1, 1)
-            #noise.to(device)
+
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
             
@@ -218,40 +204,17 @@ def training_loop(args):
                 disc_optimizer.zero_grad()
                 real_binary_loss_sum+=torch.sum(real_binary_loss)
                 continue
-            #accelerator.backward(real_binary_loss)
-            #disc_optimizer.step()
-            #disc_optimizer.zero_grad()
 
             #fake image loss discrikinator
             fake_images=gen(noise, text_encoding)
             fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
-            #print(fake_binary)
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
-            #accelerator.backward(fake_binary_loss)
-            #disc_optimizer.step()
-            #disc_optimizer.zero_grad()
-
-            for name,thing in zip(['real_binary','real_style','fake_binary','fake_style','noise','fake_images'],
-                                  [real_binary,real_style,fake_binary,fake_style,noise,fake_images]):
-                #print(f"{name} {thing.device}")
-                pass
 
             
             if args.use_clip:
-                #fake_clip_style=fake_clip_style.to(uniform.device)
-                #style_ambiguity_loss=cross_entropy(fake_clip_style, uniform)
                 style_classification_loss=torch.tensor(0.)
             else:
-                #real_binary,real_style=disc(real_images)
                 style_classification_loss=cross_entropy(real_style,real_labels)
-                #accelerator.backward(style_classification_loss)
-                #disc_optimizer.step()
-                #disc_optimizer.zero_grad()
-                #style_ambiguity_loss=cross_entropy(fake_style.detach(), uniform)
-
-            #style_classification_loss*=args.style_lambda
-            #style_ambiguity_loss*=args.style_lambda
-
             
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             accelerator.backward(disc_loss)
@@ -260,27 +223,15 @@ def training_loop(args):
 
             fake_binary,fake_style=disc(fake_images,text_encoding)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
-            #accelerator.backward(reverse_fake_binary_loss)
-            #gen_optimizer.step()
-            #gen_optimizer.zero_grad()
-
-            #fake_images=gen(noise)
             if args.use_clip:
                 fake_clip_style=clip_classifier(fake_images)
-                #fake_clip_style=fake_clip_style.to(uniform.device)
                 style_ambiguity_loss=torch.tensor(cross_entropy(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
-                #style_classification_loss=torch.tensor(0.)
             else:
-                #style_classification_loss=cross_entropy(real_style,real_labels)
                 fake_binary,fake_style=disc(fake_images,text_encoding)
                 style_ambiguity_loss=cross_entropy(fake_style, uniform)
 
-            #style_ambiguity_loss*=args.style_lambda
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
-            #freeze_model(disc)
-            #unfreeze_model(gen)
             accelerator.backward(gen_loss)
-            #gen_loss.backward()
             gen_optimizer.step()
             gen_optimizer.zero_grad()
 
