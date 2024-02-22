@@ -110,12 +110,14 @@ def main(args):
         text_encoding=torch.unsqueeze(torch.tensor(sentence_encoder.encode(prompt)),0)
         for model_name,gen in can_model_dict.items():
             noise=torch.randn((1,args.gen_z_dim,1,1))
+            if torch.cuda.is_available():
+                noise=noise.to(accel.device)
+                text_encoding=text_encoding.to(accel.device)
             images.append(to_pil_image(gen(noise,text_encoding)[0]))
         for model_name,pipeline in ddpo_model_dict.items():
             if args.conditional is False:
                 prompt=""
             images.append(pipeline(prompt, num_inference_steps=args.num_inference_steps,cross_attention_kwargs={"scale": args.lora_scale}).images[0])
-        #new_dict={"prompt":prompt,"images":images}
         data.append({"prompt":prompt,"images":images})
     save_table(data,args.conditional,args.file_path)
 
