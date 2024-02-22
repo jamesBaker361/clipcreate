@@ -270,7 +270,7 @@ def training_loop(args):
                 commit_message=f"epoch {e}",
                 ignore_patterns=["step_*", "epoch_*"],
             )
-
+    tracker_url=accelerator.get_tracker("wandb").run.get_url()
     accelerator.end_training()
     torch.save(gen.state_dict(),args.output_dir+"/gen-weights.pickle")
     torch.save(disc.state_dict(),args.output_dir+"/disc-weights.pickle")
@@ -298,6 +298,7 @@ def training_loop(args):
 
     generator parameters:
     input noise_dim: {args.gen_z_dim}
+    wandb project: {tracker_url}
     """
     card=ModelCard(model_card_content)
     card.push_to_hub(repo_id)
