@@ -64,6 +64,7 @@ def main(args):
         src_dict[SCALE].append(img_lora_scale)
     Dataset.from_dict(src_dict).push_to_hub(args.repo_id)
     model_card_content=f"created a total of {args.n_images} images \n"
+    model_card_content+=f"wandb run url: {run.get_url()}\n"
     with open("tmp_lora_scale.md","w+") as file:
         file.write(model_card_content)
     upload_file(path_or_fileobj="tmp_lora_scale.md", 
