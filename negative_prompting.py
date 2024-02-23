@@ -67,7 +67,7 @@ def main(args):
     for x in range(args.n_images):
         neg_img=call_multi_neg(pipeline.sd_pipeline,"painting",num_inference_steps=args.num_inference_steps,
                                generator=neg_generator,
-                        negative_prompt=["horse","donkey"]).images[0]
+                        negative_prompt=WIKIART_STYLES).images[0]
         path=f"{args.dir}/img{x}.png"
         neg_img.save(path)
         neg_img_score=aesthetic_fn(neg_img,{},{})[0]
