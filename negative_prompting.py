@@ -65,6 +65,8 @@ def main(args):
     LORA_DCGAN_SCORE=LORA_DCGAN+"_score"
     VANILLA_HALF="vanilla_half"
     VANILLA_HALF_SCORE="vanilla_half_score"
+    VANILLA_THIRD="vanilla_third"
+    VANILLA_THIRD_SCORE=VANILLA_THIRD+"_score"
     src_dict={
         NEGATIVE:[],
         VANILLA:[],
@@ -81,10 +83,13 @@ def main(args):
         LORA:[],
         LORA_SCORE:[],
         VANILLA_HALF:[],
-        VANILLA_HALF_SCORE:[]
+        VANILLA_HALF_SCORE:[],
+        VANILLA_THIRD:[],
+        VANILLA_THIRD_SCORE:[]
     }
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
     half_generator=torch.Generator(device="cpu").manual_seed(args.seed)
+    third_generator=torch.Generator(device="cpu").manual_seed(args.seed)
     neg_generator= torch.Generator(device="cpu").manual_seed(args.seed)
     simple_generator=torch.Generator(device="cpu").manual_seed(args.seed)
     lora_scale_generator=torch.Generator(device="cpu").manual_seed(args.seed)
@@ -119,6 +124,9 @@ def main(args):
         half_path=f"{args.dir}/img{n}_half.jpg"
         img_half=pipeline(args.prompt,num_inference_steps=args.num_inference_steps//2,generator=half_generator).images[0]
 
+        third_path=half_path=f"{args.dir}/img{n}_third.jpg"
+        img_third=pipeline(args.prompt,num_inference_steps=args.num_inference_steps//3,generator=third_generator).images[0]
+
 
         img_lora_dcgan=lora_dcgan_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_dcgan_generator).images[0]
         lora_dcgan_path=f"{args.dir}/img{n}_dcgan_lora.jpg"
@@ -127,9 +135,9 @@ def main(args):
         img_lora_scale_dcgan=lora_dcgan_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_scale_dcgan_generator,cross_attention_kwargs={"scale": 3.0}).images[0]
 
         for key,path,img in zip(
-            [VANILLA,LORA,SCALE,VANILLA_HALF, NEGATIVE, SIMPLE_NEGATIVE,LORA_DCGAN, SCALE_DCGAN],
-            [vanilla_path,lora_path, lora_scale_path, half_path, neg_path, simple_neg_path, lora_dcgan_path, lora_scale_dcgan_path],
-            [img_vanilla, img_lora,img_lora_scale, img_half, neg_img, simple_neg_img,img_lora_dcgan, img_lora_scale_dcgan]
+            [VANILLA,LORA,SCALE,VANILLA_HALF, NEGATIVE, SIMPLE_NEGATIVE,LORA_DCGAN, SCALE_DCGAN, VANILLA_THIRD],
+            [vanilla_path,lora_path, lora_scale_path, half_path, neg_path, simple_neg_path, lora_dcgan_path, lora_scale_dcgan_path, third_path],
+            [img_vanilla, img_lora,img_lora_scale, img_half, neg_img, simple_neg_img,img_lora_dcgan, img_lora_scale_dcgan,img_third]
         ):
             img.save(path)
             score_key=key+"_score"
