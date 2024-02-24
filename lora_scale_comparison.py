@@ -28,6 +28,7 @@ parser.add_argument("--repo_id",type=str,default="jlbaker361/lora_scale_comparis
 def main(args):
 
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
+    half_generator=torch.Generator(device="cpu").manual_seed(args.seed)
     lora_generator= torch.Generator(device="cpu").manual_seed(args.seed)
     lora_scale_generator=torch.Generator(device="cpu").manual_seed(args.seed)
 
@@ -38,11 +39,13 @@ def main(args):
     os.makedirs(args.dir,exist_ok=True,mode=777)
 
     SCALE="scaled_lora"
+    SCALE_SCORE="scaled_lora_score"
     LORA="lora"
+    LORA_SCORE="lora_score"
     VANILLA="vanilla"
     VANILLA_SCORE="vanilla_score"
-    LORA_SCORE="lora_score"
-    SCALE_SCORE="scaled_lora_score"
+    VANILLA_HALF="vanilla_half"
+    VANILLA_HALF_SCORE="vanilla_half_score"
 
     src_dict={
         SCALE:[],
@@ -50,13 +53,18 @@ def main(args):
         VANILLA:[],
         VANILLA_SCORE:[],
         LORA_SCORE:[],
-        SCALE_SCORE:[]
+        SCALE_SCORE:[],
+        VANILLA_HALF:[],
+        VANILLA_HALF_SCORE:[]
     }
 
     run=wandb.init(project="lora scale comparison")
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
 
     for n in range(args.n_images):
+        gen_state=generator.get_state()
+        half_generator.set_state(gen_state) #we want the half generator to start at the same place as the normal gen so initial N(0,1) is the same
+
         img_vanilla=pipeline(" ",num_inference_steps=args.num_inference_steps,generator=generator).images[0]
         vanilla_path=f"{args.dir}/img{n}.jpg"
         img_vanilla.save(vanilla_path)
@@ -72,21 +80,22 @@ def main(args):
         img_lora_scale.save(lora_scale_path)
         img_lora_scale_score=aesthetic_fn(img_lora_scale,{},{})[0]
 
-        run.log({VANILLA: wandb.Image(vanilla_path)},step=n)
-        run.log({LORA: wandb.Image(lora_path)},step=n)
-        run.log({SCALE: wandb.Image(lora_scale_path) },step=n)
+        half_path=f"{args.dir}/img{n}_half.jpg"
+        img_half=pipeline(" ",num_inference_steps=args.num_inference_steps//2,generator=half_generator).images[0]
+        img_half.save(half_path)
+        img_half_score=aesthetic_fn(img_half,{},{})[0]
 
-        run.log({VANILLA_SCORE: img_vanilla_score},step=n)
-        run.log({LORA_SCORE:img_lora_score},step=n)
-        run.log({SCALE_SCORE: img_lora_scale_score},step=n)
-
-        src_dict[VANILLA].append(img_vanilla)
-        src_dict[LORA].append(img_lora)
-        src_dict[SCALE].append(img_lora_scale)
-
-        src_dict[VANILLA_SCORE].append(img_vanilla_score)
-        src_dict[SCALE_SCORE].append(img_lora_scale_score)
-        src_dict[LORA_SCORE].append(img_lora_score)
+        for key,path,img,score_key,score in zip(
+            [VANILLA,LORA,SCALE,VANILLA_HALF],
+            [vanilla_path,lora_path, lora_scale_path, half_path],
+            [img_vanilla, img_lora,img_lora_scale, img_half],
+            [VANILLA_SCORE,LORA_SCORE,SCALE_SCORE,VANILLA_HALF_SCORE],
+            [img_vanilla_score, img_lora_score, img_lora_scale_score, img_half_score]
+        ):
+            run.log({key:wandb.Image(path)},step=n)
+            src_dict[key].append(img)
+            run.log({score_key: score},step=n)
+            src_dict[score_key].append(score)
 
     
     Dataset.from_dict(src_dict).push_to_hub(args.repo_id)

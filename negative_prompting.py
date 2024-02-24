@@ -26,68 +26,120 @@ parser.add_argument("--dir",type=str,default="images")
 parser.add_argument("--n_images",type=int,default=10)
 parser.add_argument("--prompt",type=str,default=" ")
 parser.add_argument("--base_model",type=str, default="stabilityai/stable-diffusion-2-base")
+parser.add_argument("--lora_model",type=str,default="jlbaker361/ddpo-stability-e5")
+parser.add_argument("--lora_model_dcgan",type=str,default="jlbaker361/ddpo-stability-dcgan-e5")
 parser.add_argument("--seed",type=int,default=0)
 parser.add_argument("--repo_id",type=str,default="jlbaker361/negative_creativity")
+parser.add_argument("--index",type=int,default=0)
 
 #lora_generator= torch.Generator(device="cpu").manual_seed(0)
 
 from call_neg import call_multi_neg, call_vanilla
 def main(args):
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
-    accelerator = Accelerator(log_with="wandb")
-    accelerator.init_trackers(project_name="negative_prompting",init_kwargs={
-            "wandb":
-                {"config":{
-                    "negative_prompts":WIKIART_STYLES,
-                    "n_steps":args.num_inference_steps,
-                    "prompt":args.prompt
-                }
-            }
-        })
+    
+    run=wandb.init(project="lora scale comparison")
 
     pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
+    lora_pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
+    lora_pipeline.sd_pipeline.load_lora_weights(args.lora_model,weight_name="pytorch_lora_weights.safetensors")
+    lora_dcgan_pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
+    lora_dcgan_pipeline.sd_pipeline.load_lora_weights(args.lora_model_dcgan,weight_name="pytorch_lora_weights.safetensors")
     #pipeline.sd_pipeline.to(device)
     #pipeline.sd_pipeline=accelerator.prepare(pipeline.sd_pipeline)
     #generator = torch.Generator(device=accelerator.device).manual_seed(0)
 
     NEGATIVE="negative_image"
     VANILLA="vanilla_image"
+    SIMPLE_NEGATIVE="simple_negative_image"
     NEGATIVE_SCORE=NEGATIVE+"_score"
     VANILLA_SCORE=VANILLA+"_score"
+    SIMPLE_NEGATIVE_SCORE=SIMPLE_NEGATIVE+"_score"
+    SCALE="scaled_lora"
+    SCALE_SCORE="scaled_lora_score"
+    LORA="lora"
+    LORA_SCORE="lora_score"
+    SCALE_DCGAN="scaled_lora_dcgan"
+    SCALE_DCGAN_SCORE=SCALE_DCGAN+"_score"
+    LORA_DCGAN="lora_dcgan"
+    LORA_DCGAN_SCORE=LORA_DCGAN+"_score"
+    VANILLA_HALF="vanilla_half"
+    VANILLA_HALF_SCORE="vanilla_half_score"
     src_dict={
         NEGATIVE:[],
         VANILLA:[],
         VANILLA_SCORE:[],
-        NEGATIVE_SCORE:[]
+        NEGATIVE_SCORE:[],
+        SIMPLE_NEGATIVE:[],
+        SIMPLE_NEGATIVE_SCORE:[],
+        SCALE:[],
+        SCALE_SCORE:[],
+        SCALE_DCGAN:[],
+        SCALE_DCGAN_SCORE:[],
+        LORA_DCGAN:[],
+        LORA_DCGAN_SCORE:[],
+        LORA:[],
+        LORA_SCORE:[],
+        VANILLA_HALF:[],
+        VANILLA_HALF_SCORE:[]
     }
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
+    half_generator=torch.Generator(device="cpu").manual_seed(args.seed)
     neg_generator= torch.Generator(device="cpu").manual_seed(args.seed)
+    simple_generator=torch.Generator(device="cpu").manual_seed(args.seed)
+    lora_scale_generator=torch.Generator(device="cpu").manual_seed(args.seed)
+    lora_generator= torch.Generator(device="cpu").manual_seed(args.seed)
+    lora_dcgan_generator= torch.Generator(device="cpu").manual_seed(args.seed)
+    lora_scale_dcgan_generator= torch.Generator(device="cpu").manual_seed(args.seed)
 
+    #WIKIART_STYLES=["cat","dog"]
+    for n in range(args.index,args.n_images+args.index):
+        gen_state=generator.get_state()
+        half_generator.set_state(gen_state) #we want the half generator to start at the same place as the normal gen so initial N(0,1) is the same
 
-    for x in range(args.n_images):
-        neg_img=call_multi_neg(pipeline.sd_pipeline,"painting",num_inference_steps=args.num_inference_steps,
+        neg_img=call_multi_neg(pipeline.sd_pipeline,args.prompt,num_inference_steps=args.num_inference_steps,
                                generator=neg_generator,
                         negative_prompt=WIKIART_STYLES).images[0]
-        path=f"{args.dir}/img{x}.png"
-        neg_img.save(path)
-        neg_img_score=aesthetic_fn(neg_img,{},{})[0]
+        neg_path=f"{args.dir}/img{n}.png"
 
-        accelerator.log({NEGATIVE: wandb.Image(path)},step=x)
-        accelerator.log({NEGATIVE_SCORE:neg_img_score},step=x)
-        src_dict[NEGATIVE].append(neg_img)
-        src_dict[NEGATIVE_SCORE].append(neg_img_score)
+        img_vanilla=pipeline(args.prompt,num_inference_steps=args.num_inference_steps,generator=generator).images[0]
+        vanilla_path=f"{args.dir}/vanilla_img{n}.png"
 
-        vanilla_img=pipeline("painting",num_inference_steps=args.num_inference_steps,generator=generator).images[0]
-        path=f"{args.dir}/vanilla_img{x}.png"
-        vanilla_img.save(path)
-        vanilla_img_score=aesthetic_fn(vanilla_img,{},{})[0]
+        img_lora=lora_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_generator).images[0]
+        lora_path=f"{args.dir}/img{n}_lora.jpg"
 
-        accelerator.log({VANILLA: wandb.Image(path)},step=x)
-        accelerator.log({VANILLA_SCORE: vanilla_img_score},step=x)
-        src_dict[VANILLA].append(vanilla_img)
-        src_dict[VANILLA_SCORE].append(vanilla_img_score)
+        lora_scale_path=f"{args.dir}/img{n}_lora_scaled.jpg"
+        img_lora_scale=lora_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_scale_generator,cross_attention_kwargs={"scale": 3.0}).images[0]
 
-    run_url=accelerator.get_tracker("wandb").run.get_url()
+        negative_prompt=",".join(WIKIART_STYLES)
+        simple_neg_img=pipeline(args.prompt,num_inference_steps=args.num_inference_steps,generator=simple_generator,
+                                negative_prompt=negative_prompt).images[0]
+        simple_neg_path=f"{args.dir}/simple_neg_img{n}.png"
+
+        half_path=f"{args.dir}/img{n}_half.jpg"
+        img_half=pipeline(args.prompt,num_inference_steps=args.num_inference_steps//2,generator=half_generator).images[0]
+
+
+        img_lora_dcgan=lora_dcgan_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_dcgan_generator).images[0]
+        lora_dcgan_path=f"{args.dir}/img{n}_dcgan_lora.jpg"
+
+        lora_scale_dcgan_path=f"{args.dir}/img{n}_dcgan_lora_scaled.jpg"
+        img_lora_scale_dcgan=lora_dcgan_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_scale_dcgan_generator,cross_attention_kwargs={"scale": 3.0}).images[0]
+
+        for key,path,img in zip(
+            [VANILLA,LORA,SCALE,VANILLA_HALF, NEGATIVE, SIMPLE_NEGATIVE,LORA_DCGAN, SCALE_DCGAN],
+            [vanilla_path,lora_path, lora_scale_path, half_path, neg_path, simple_neg_path, lora_dcgan_path, lora_scale_dcgan_path],
+            [img_vanilla, img_lora,img_lora_scale, img_half, neg_img, simple_neg_img,img_lora_dcgan, img_lora_scale_dcgan]
+        ):
+            img.save(path)
+            score_key=key+"_score"
+            score=aesthetic_fn(img,{},{})[0]
+            run.log({key:wandb.Image(path)},step=n)
+            src_dict[key].append(img)
+            run.log({score_key: score},step=n)
+            src_dict[score_key].append(score)    
+
+    run_url=run.get_url()
     Dataset.from_dict(src_dict).push_to_hub(args.repo_id)
     model_card_content=f"created a total of {args.n_images} images \n\n"
     model_card_content+=f"wandb run url: {run_url}\n\n"
