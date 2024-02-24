@@ -49,6 +49,8 @@ parser.add_argument(
     default=30
 )
 
+parser.add_argument("--seed",type=int,default=0)
+
 parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation",help="hf dir to push to")
 
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/evaluation_images/")
@@ -78,8 +80,10 @@ if __name__=='__main__':
     random.shuffle(prompt_list)
     prompt_list=prompt_list[:args.limit]
     model_dict={}
+    gen_dict={}
     inception = InceptionScore(normalize=True)
     for model in args.conditional_model_list+args.model_list:
+        generator=torch.Generator(device="cpu").manual_seed(args.seed)
         try:
             pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
             print(f"loaded weights for {model}")
@@ -95,13 +99,15 @@ if __name__=='__main__':
                 print(f"loaded lora weights spearately for {model}")
         #pipeline.set_progress_bar_config(disable=True)
         if model in args.conditional_model_list:
-            model_dict[model+"-CONDITIONAL"]=pipeline
-        model_dict[model]=pipeline
+            model_dict[model+"-CONDITIONAL"]=(pipeline,generator)
+        else:
+            model_dict[model]=(pipeline,generator)
+
 
     table_data=[]
     columns=["image","model","prompt","score"]
     result_dict={}
-    for model,pipeline in model_dict.items():
+    for model,(pipeline,generator) in model_dict.items():
         result_dict[model]={}
         total_score=0.0
         score_list=[]
@@ -110,9 +116,9 @@ if __name__=='__main__':
             if model.find("-CONDITIONAL")==-1:
                 prompt=""
             if args.lora_scale is None:
-                image = pipeline(prompt, num_inference_steps=args.num_inference_steps).images[0]
+                image = pipeline(prompt, num_inference_steps=args.num_inference_steps,generator=generator).images[0]
             else:
-                image = pipeline(prompt, num_inference_steps=args.num_inference_steps, cross_attention_kwargs={"scale": args.lora_scale}).images[0]
+                image = pipeline(prompt, num_inference_steps=args.num_inference_steps, generator=generator,cross_attention_kwargs={"scale": args.lora_scale}).images[0]
             src_dict["prompt"].append(prompt)
             src_dict["image"].append(image)
             image_list.append( PILToTensor()(image))
