@@ -100,8 +100,7 @@ if __name__=='__main__':
         #pipeline.set_progress_bar_config(disable=True)
         if model in args.conditional_model_list:
             model_dict[model+"-CONDITIONAL"]=(pipeline,generator)
-        else:
-            model_dict[model]=(pipeline,generator)
+        model_dict[model]=(pipeline,generator)
 
 
     table_data=[]
