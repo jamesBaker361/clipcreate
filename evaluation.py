@@ -83,7 +83,6 @@ if __name__=='__main__':
     gen_dict={}
     inception = InceptionScore(normalize=True)
     for model in args.conditional_model_list+args.model_list:
-        generator=torch.Generator(device="cpu").manual_seed(args.seed)
         try:
             pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
             print(f"loaded weights for {model}")
@@ -99,7 +98,9 @@ if __name__=='__main__':
                 print(f"loaded lora weights spearately for {model}")
         #pipeline.set_progress_bar_config(disable=True)
         if model in args.conditional_model_list:
+            generator=torch.Generator(device="cpu").manual_seed(args.seed)
             model_dict[model+"-CONDITIONAL"]=(pipeline,generator)
+        generator=torch.Generator(device="cpu").manual_seed(args.seed)
         model_dict[model]=(pipeline,generator)
 
 
