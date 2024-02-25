@@ -101,37 +101,39 @@ def main(args):
     for n in range(args.index,args.n_images+args.index):
         gen_state=generator.get_state()
         half_generator.set_state(gen_state) #we want the half generator to start at the same place as the normal gen so initial N(0,1) is the same
+        third_generator.set_state(gen_state)
 
-        neg_img=call_multi_neg(pipeline.sd_pipeline,args.prompt,num_inference_steps=args.num_inference_steps,
+        '''neg_img=call_multi_neg(pipeline.sd_pipeline,args.prompt,num_inference_steps=args.num_inference_steps,
                                generator=neg_generator,
-                        negative_prompt=WIKIART_STYLES).images[0]
-        neg_path=f"{args.dir}/img{n}.png"
+                        negative_prompt=WIKIART_STYLES).images[0]'''
+        neg_img=pipeline(args.prompt,num_inference_steps=args.num_inference_steps,generator=neg_generator).images[0]
+        neg_path=f"{args.dir}/img{n}_neg.png"
 
         img_vanilla=pipeline(args.prompt,num_inference_steps=args.num_inference_steps,generator=generator).images[0]
-        vanilla_path=f"{args.dir}/vanilla_img{n}.png"
+        vanilla_path=f"{args.dir}/img{n}_vanilla.png"
 
         img_lora=lora_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_generator).images[0]
-        lora_path=f"{args.dir}/img{n}_lora.jpg"
+        lora_path=f"{args.dir}/img{n}_lora.png"
 
-        lora_scale_path=f"{args.dir}/img{n}_lora_scaled.jpg"
+        lora_scale_path=f"{args.dir}/img{n}_lora_scaled.png"
         img_lora_scale=lora_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_scale_generator,cross_attention_kwargs={"scale": 3.0}).images[0]
 
         negative_prompt=",".join(WIKIART_STYLES)
         simple_neg_img=pipeline(args.prompt,num_inference_steps=args.num_inference_steps,generator=simple_generator,
                                 negative_prompt=negative_prompt).images[0]
-        simple_neg_path=f"{args.dir}/simple_neg_img{n}.png"
+        simple_neg_path=f"{args.dir}/img{n}_simple_neg.png"
 
-        half_path=f"{args.dir}/img{n}_half.jpg"
+        half_path=f"{args.dir}/img{n}_half.png"
         img_half=pipeline(args.prompt,num_inference_steps=args.num_inference_steps//2,generator=half_generator).images[0]
 
-        third_path=half_path=f"{args.dir}/img{n}_third.jpg"
+        third_path=half_path=f"{args.dir}/img{n}_third.png"
         img_third=pipeline(args.prompt,num_inference_steps=args.num_inference_steps//3,generator=third_generator).images[0]
 
 
         img_lora_dcgan=lora_dcgan_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_dcgan_generator).images[0]
-        lora_dcgan_path=f"{args.dir}/img{n}_dcgan_lora.jpg"
+        lora_dcgan_path=f"{args.dir}/img{n}_dcgan_lora.png"
 
-        lora_scale_dcgan_path=f"{args.dir}/img{n}_dcgan_lora_scaled.jpg"
+        lora_scale_dcgan_path=f"{args.dir}/img{n}_dcgan_lora_scaled.png"
         img_lora_scale_dcgan=lora_dcgan_pipeline(args.prompt, num_inference_steps=args.num_inference_steps,generator=lora_scale_dcgan_generator,cross_attention_kwargs={"scale": 3.0}).images[0]
 
         for key,path,img in zip(
