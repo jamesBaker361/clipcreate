@@ -100,8 +100,9 @@ def main(args):
     for ddpo_model in args.ddpo_model_list:
         pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
         pipeline.sd_pipeline.load_lora_weights(ddpo_model,weight_name="pytorch_lora_weights.safetensors")
+        generator = torch.Generator(device="cpu").manual_seed(1234)
         #pipeline.sd_pipeline.to(accel.device)
-        ddpo_model_dict[ddpo_model]=pipeline
+        ddpo_model_dict[ddpo_model]=(pipeline,generator)
     data=[]
     sentence_encoder=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
     to_pil_image=ToPILImage()
@@ -114,10 +115,10 @@ def main(args):
                 noise=noise.to(accel.device)
                 text_encoding=text_encoding.to(accel.device)
             images.append(to_pil_image(gen(noise,text_encoding)[0]))
-        for model_name,pipeline in ddpo_model_dict.items():
+        for model_name,(pipeline,generator) in ddpo_model_dict.items():
             if args.conditional is False:
                 prompt=""
-            images.append(pipeline(prompt, num_inference_steps=args.num_inference_steps,cross_attention_kwargs={"scale": args.lora_scale}).images[0])
+            images.append(pipeline(prompt, num_inference_steps=args.num_inference_steps,cross_attention_kwargs={"scale": args.lora_scale},generator=generator).images[0])
         data.append({"prompt":prompt,"images":images})
     save_table(data,args.conditional,args.file_path)
 
