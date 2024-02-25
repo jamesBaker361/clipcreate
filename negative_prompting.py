@@ -142,6 +142,7 @@ def main(args):
             [img_vanilla, img_lora,img_lora_scale, img_half, neg_img, simple_neg_img,img_lora_dcgan, img_lora_scale_dcgan,img_third]
         ):
             img.save(path)
+            print(f"saved to {path}")
             score_key=key+"_score"
             score=aesthetic_fn(img,{},{})[0]
             run.log({key:wandb.Image(path)},step=n)
@@ -169,8 +170,10 @@ def main(args):
                 path_in_repo="README.md",
                 repo_id=args.repo_id,
                 repo_type="dataset")
+    print(f"pushed to {args.repo_id}")
 
 if __name__=='__main__':
     args=parser.parse_args()
     print(args)
     main(args)
+    print("all done!")
