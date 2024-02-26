@@ -126,7 +126,7 @@ def main(args):
         half_path=f"{args.dir}/img{n}_half.png"
         img_half=pipeline(args.prompt,num_inference_steps=args.num_inference_steps//2,generator=half_generator).images[0]
 
-        third_path=half_path=f"{args.dir}/img{n}_third.png"
+        third_path=f"{args.dir}/img{n}_third.png"
         img_third=pipeline(args.prompt,num_inference_steps=args.num_inference_steps//3,generator=third_generator).images[0]
 
 
