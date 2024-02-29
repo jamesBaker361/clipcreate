@@ -34,7 +34,7 @@ parser.add_argument("--index",type=int,default=0)
 
 #lora_generator= torch.Generator(device="cpu").manual_seed(0)
 
-from call_neg import call_multi_neg, call_vanilla
+#from deprectaed.call_neg import call_multi_neg, call_vanilla
 def main(args):
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     
