@@ -62,7 +62,7 @@ def load_weights(pipeline, weight_path,adapter_name):
         if name in lora_dict:
             count+=1
     print(f"{count} shared params!!!")
-    pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=False)
+    pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=True)
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
