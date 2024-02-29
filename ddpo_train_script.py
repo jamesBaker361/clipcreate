@@ -20,11 +20,13 @@ from peft import get_peft_model_state_dict
 
 faulthandler.enable()
 
-def get_prompt_fn(dataset_name,split):
+def get_prompt_fn(dataset_name,split,unconditional_fraction):
     hf_dataset=load_dataset(dataset_name,split=split)
     prompt_list=[t for t in hf_dataset["text"]]
 
     def _fn():
+        if random.uniform(0.0,1.)<=unconditional_fraction:
+            return " ",{}
         return random.choice(prompt_list),{}
     
     return _fn
@@ -176,7 +178,7 @@ if __name__=='__main__':
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
-    prompt_fn=get_prompt_fn(args.dataset_name, "train")
+    prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction)
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
         try:
