@@ -160,6 +160,10 @@ if __name__=='__main__':
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
+    import numpy as np
+
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
 
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
