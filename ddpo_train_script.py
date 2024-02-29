@@ -117,6 +117,8 @@ parser.add_argument(
     default=None,
     help="The name of the repository on hf to write to",
 )
+
+parser.add_argument("--unconditional_fraction",type=float,default=0.2,help="fraction of prompts to be blank text")
 parser.add_argument("--train_batch_size", type=int, default=4, help="Batch size (per device) for the training dataloader.")
 parser.add_argument("--num_epochs", type=int, default=10)
 parser.add_argument("--sample_num_steps",type=int,default=10, help="Number of sampler inference steps per image")
