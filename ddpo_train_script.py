@@ -14,6 +14,9 @@ import wandb
 from huggingface_hub import hf_hub_download
 import re
 from safetensors import safe_open
+from safetensors.torch import save_file
+from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
+from peft import get_peft_model_state_dict
 
 faulthandler.enable()
 
@@ -61,6 +64,26 @@ def load_weights(pipeline, weight_path,adapter_name):
     print(f"{count} shared params!!!")
     pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=False)
 
+def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
+    state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
+    weight_path=os.path.join(output_dir, "pytorch_lora_weights.safetensors")
+    print("saving to ",weight_path)
+    save_file(state_dict, weight_path, metadata={"format": "pt"})
+
+def load_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
+    #pipeline.get_trainable_layers()
+    path=os.path.join(output_dir, "pytorch_lora_weights.safetensors")
+    print("loading from ",path)
+    state_dict={}
+    count=0
+    with safe_open(path, framework="pt", device="cpu") as f:
+        for key in f.keys():
+            state_dict[key]=f.get_tensor(key)
+    state_dict={
+        k.replace("weight","default.weight"):v for k,v in state_dict.items()
+    }
+    pipeline.sd_pipeline.unet.load_state_dict(state_dict,strict=False)
+
 parser = argparse.ArgumentParser(description="ddpo training")
 parser.add_argument(
     "--pretrained_model_name_or_path",
@@ -83,6 +106,8 @@ parser.add_argument(
         default="/scratch/jlb638/sd-ddpo",
         help="The output directory where the model predictions and checkpoints will be written.",
 )
+
+parser.add_argument("--decoy_output_dir",type=str,default="/scratch/jlb638/decoy")
 
 parser.add_argument("--image_dir",type=str,default=None)
 parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
@@ -131,7 +156,7 @@ if __name__=='__main__':
     from torchvision.transforms.functional import to_pil_image
     import torch
     import time
-    from creative_loss import clip_scorer_ddpo, elgammal_resnet_scorer_ddpo, elgammal_dcgan_scorer_ddpo
+    from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
@@ -146,35 +171,22 @@ if __name__=='__main__':
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train")
-
-    project_kwargs={
-            "project_dir":args.output_dir,
-            'automatic_checkpoint_naming':True
-        }
+    pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
         try:
-            pipeline = DefaultDDPOStableDiffusionPipeline(
-                args.pretrained_model_name_or_path,  use_lora=args.use_lora
-            )
-        except (EntryNotFoundError,ValueError, OSError) as error:
-            print("EntryNotFoundError or ValueError using pipeline.sd_pipeline.load_lora_weights")
-            pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
-            try:
-                weight_path=hf_hub_download(repo_id=args.pretrained_model_name_or_path, filename="pytorch_lora_weights.safetensors",repo_type="model")
-                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=args.adapter_name)
-                load_weights(pipeline,weight_path,args.adapter_name)
-                print(f"loaded weights from {args.pretrained_model_name_or_path}")
-            except:
-                print(f"couldn't load lora weights from {args.pretrained_model_name_or_path}")
-    else:
-        pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
+            weight_path=hf_hub_download(repo_id=args.pretrained_model_name_or_path, filename="pytorch_lora_weights.safetensors",repo_type="model")
+            #load_weights(pipeline,weight_path,args.adapter_name)
+            load_lora_weights(pipeline,weight_path)
+            print(f"loaded weights from {args.pretrained_model_name_or_path}")
+        except:
+            print(f"couldn't load lora weights from {args.pretrained_model_name_or_path}")
 
     resume_from_path=None
     if args.output_dir is not None:
         os.makedirs(args.output_dir,exist_ok=True)
     if args.resume_from is not None:
         os.makedirs(args.resume_from,exist_ok=True)
-
+    start_epoch=0
     if args.resume_from:
         resume_from_path = os.path.normpath(os.path.expanduser(args.resume_from))
         if os.path.exists(resume_from_path):
@@ -191,60 +203,48 @@ if __name__=='__main__':
                     f"checkpoint_{checkpoint_numbers[-1]}",
                 )
                 weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
-                pipeline.sd_pipeline.load_lora_weights("jlbaker361/ddpo-stability-good",adapter_name=args.adapter_name)
-                load_weights(pipeline,weight_path,args.adapter_name)
-                project_kwargs["iteration"] = checkpoint_numbers[-1] + 1
-
-    config=DDPOConfig(
-        num_epochs=args.num_epochs,
-        train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
-        sample_num_steps=args.sample_num_steps,
-        sample_batch_size=args.sample_batch_size,
-        train_batch_size=args.train_batch_size,
-        sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
-        mixed_precision=args.mixed_precision,
-        tracker_project_name="ddpo",
-        log_with="wandb",
-        accelerator_kwargs={
-            "project_dir":args.output_dir
-        },
-        project_kwargs=project_kwargs
-    )
+                #load_weights(pipeline,weight_path,args.adapter_name)
+                load_lora_weights(pipeline,resume_from_path)
+                start_epoch = checkpoint_numbers[-1] + 1
+    start=time.time()
     if args.image_dir==None:
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
-    trainer = DDPOTrainer(
-        config,
-        reward_fn,
-        prompt_fn,
-        pipeline,
-        image_samples_hook
-    )
-    start=time.time()
-    torch.cuda.memory._record_memory_history()
-
-    try:
+    for e in range(start_epoch,args.num_epochs):
+        config=DDPOConfig(
+            num_epochs=1,
+            train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
+            sample_num_steps=args.sample_num_steps,
+            sample_batch_size=args.sample_batch_size,
+            train_batch_size=args.train_batch_size,
+            sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
+            mixed_precision=args.mixed_precision,
+            tracker_project_name="ddpo",
+            log_with="wandb",
+            accelerator_kwargs={
+                #"project_dir":args.output_dir
+            },
+            #project_kwargs=project_kwargs
+        )
+        trainer = DDPOTrainer(
+            config,
+            reward_fn,
+            prompt_fn,
+            pipeline,
+            image_samples_hook
+        )
         trainer.train()
-        with open(args.output_dir+"/num_epochs.txt","w+") as f:
-            f.write(f"{args.num_epochs}")
-    except Exception as exc:
-        print(exc)
-        torch.cuda.memory._dump_snapshot("failure.pickle")
-        print("torch.cuda.memory_allocated: %fGB"%(torch.cuda.memory_allocated(0)/1024/1024/1024))
-        print("torch.cuda.max_memory_allocated: %fGB"%(torch.cuda.max_memory_allocated(0)/1024/1024/1024))
-        print("torch.cuda.memory_reserved: %fGB"%(torch.cuda.memory_reserved(0)/1024/1024/1024))
-        print("torch.cuda.max_memory_reserved: %fGB"%(torch.cuda.max_memory_reserved(0)/1024/1024/1024))
-        print(torch.cuda.memory_summary())
-        print("torch.cuda.list_gpu_processes()",torch.cuda.list_gpu_processes())
-        raise exc
-    torch.cuda.memory._dump_snapshot("success.pickle")
+        save_lora_weights(pipeline, args.output_dir)
+        checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
+        os.makedirs(checkpoint,exist_ok=True)
+        save_lora_weights(pipeline, checkpoint)
     end=time.time()
     seconds=end-start
     hours=seconds/(60*60)
     print(f"successful training :) time elapsed: {seconds} seconds = {hours} hours")
 
-    trainer._save_pretrained(args.output_dir)
+    #trainer._save_pretrained(args.output_dir)
     repo_id = create_repo(repo_id=args.hub_model_id, exist_ok=True).repo_id
     upload_folder(
         repo_id=repo_id,
