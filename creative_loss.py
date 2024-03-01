@@ -5,6 +5,7 @@ from huggingface_hub import hf_hub_download
 import torch
 import numpy as np
 import torch
+from scipy.special import softmax
 
 cache_dir="/scratch/jlb638/trans_cache"
 
@@ -91,4 +92,31 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
             scores.append(-1.0 * mse(y_pred,y_true))
         return scores, {}
     
+    return _fn
+
+def k_means_scorer(center_list_path):
+    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
+    center_list=np.load(center_list_path)
+    @torch.no_grad()
+    def _fn(images, prompts, metadata):
+        inputs = processor(images=images, return_tensors="pt", padding=True)
+        outputs = model(**inputs)
+        image_embeds=outputs.image_embeds.detach().numpy()
+
+        n_classes=len(center_list)
+        n_image=images.shape[0]
+
+        scores=[]
+        y_true=[1.0/n_classes] * n_classes
+        for x in range(n_image):
+            y_pred=[]
+            for center in center_list:
+                dist=np.linalg.norm(center-x)
+                y_pred.append(dist)
+            y_pred=softmax(y_pred)
+            scores.append(-1.0 * mse(y_pred,y_true))
+        
+        return scores, {}
+
     return _fn

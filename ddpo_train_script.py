@@ -130,7 +130,8 @@ parser.add_argument("--use_lora",type=bool,default=True)
 parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
 parser.add_argument("--cache_dir",type=str, default=None)
 parser.add_argument("--resume_from",type=str,default=None)
-parser.add_argument("--reward_function",default="clip",type=str,help="reward function: resnet dcgan or clip")
+parser.add_argument("--reward_function",default="clip",type=str,help="reward function: resnet dcgan or clip kmeans")
+parser.add_argument("--center_list_path",type=str,default="test_centers.npy", help="path for np files that are centers of the clusters for k means")
 
 parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-wikiart1000")
 parser.add_argument("--disc_init_dim",type=int,default=32, help="initial layer # of channels in discriminator")
@@ -158,7 +159,7 @@ if __name__=='__main__':
     from torchvision.transforms.functional import to_pil_image
     import torch
     import time
-    from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo
+    from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer
     from huggingface_hub import create_repo, upload_folder, ModelCard
     from datasets import load_dataset
     import random
@@ -172,6 +173,8 @@ if __name__=='__main__':
         style_list=WIKIART_STYLES
     if args.reward_function == "clip":
         reward_fn=clip_scorer_ddpo(style_list)
+    elif args.reward_function=="kmeans":
+        reward_fn=k_means_scorer(args.center_list_path)
     elif args.reward_function=="dcgan":
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
     else:
