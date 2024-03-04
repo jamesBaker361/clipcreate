@@ -100,7 +100,7 @@ def k_means_scorer(center_list_path):
     center_list=np.load(center_list_path)
     @torch.no_grad()
     def _fn(images, prompts, metadata):
-        inputs = processor(images=images, return_tensors="pt", padding=True)
+        inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
         outputs = model(**inputs)
         image_embeds=outputs.image_embeds.detach().numpy()
 
@@ -109,7 +109,7 @@ def k_means_scorer(center_list_path):
 
         scores=[]
         y_true=[1.0/n_classes] * n_classes
-        for x in range(n_image):
+        for x in image_embeds:
             y_pred=[]
             for center in center_list:
                 dist=np.linalg.norm(center-x)
