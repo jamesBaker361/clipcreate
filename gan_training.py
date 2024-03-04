@@ -65,7 +65,22 @@ def weights_init(m):
 
 
 def training_loop(args):
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    accelerator = Accelerator(log_with="wandb")
+    accelerator.init_trackers(project_name="creativity",init_kwargs={
+        "wandb":
+            {"config":{
+                "dataset_name":args.dataset_name,
+                "batch_size": args.batch_size,
+                "repo_id":args.repo_id,
+                "style_list": args.style_list,
+                "gen_z_dim":args.gen_z_dim,
+                "image_dim":args.image_dim,
+                "resize_dim":args.resize_dim
+            }
+        }
+    })
+    device=accelerator.device
+    print(f"acceleerate device = {device}")
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
@@ -123,48 +138,6 @@ def training_loop(args):
     print(y.size())
     print(y.size()[-1])
     n_classes=y.size()[-1]
-    util_dataset=UtilDataset(args.gen_z_dim, len(dataset),n_classes)
-    try:
-        repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
-    except:
-        print("retrying creating repo")
-        repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
-
-    gen_optimizer=optim.Adam(gen.parameters())
-    disc_optimizer=optim.Adam(disc.parameters())
-    #scheduler=optim.lr_scheduler.LinearLR(optimizer)
-    training_dataloader=DataLoader(dataset, batch_size=args.batch_size,drop_last=True)
-    util_dataloader=DataLoader(util_dataset,batch_size=args.batch_size,drop_last=True)
-
-    accelerator = Accelerator(log_with="wandb")
-    accelerator.init_trackers(project_name="creativity",init_kwargs={
-        "wandb":
-            {"config":{
-                "dataset_name":args.dataset_name,
-                "batch_size": args.batch_size,
-                "repo_id":args.repo_id,
-                "style_list": args.style_list,
-                "gen_z_dim":args.gen_z_dim,
-                "image_dim":args.image_dim,
-                "resize_dim":args.resize_dim
-            }
-        }
-    })
-    #=dataset.sentence_trans
-    #constant_noise=torch.randn(1,args.gen_z_dim, 1, 1)
-    #constant_text_encoding=torch.tensor(sentence_trans.encode("painting"))
-    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader, = accelerator.prepare(gen, 
-                                                                                                         gen_optimizer,
-                                                                                                           disc, disc_optimizer, training_dataloader,
-                                                                                                           util_dataloader)
-    
-    for batch,util_vectors in zip(training_dataloader,util_dataloader):
-        constant_noise,_real_vector,_fake_vector,_uniform = util_vectors
-        _real_images, _real_labels,constant_text_encoding = batch
-        break
-    device=accelerator.device
-    print(f"acceleerate device = {device}")
-
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
     processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
 
@@ -184,6 +157,7 @@ def training_loop(args):
     if args.use_kmeans:
         print("using kmeans classifier")
         center_list=np.load(args.center_list_path)
+        n_classes=len(center_list)
         def kmeans_classifier(images):
             inputs = processor(text="text", images=images, return_tensors="pt", padding=True)
             inputs['input_ids'] = inputs['input_ids'].to(device)
@@ -200,6 +174,31 @@ def training_loop(args):
                 y_pred=softmax(y_pred)
                 y_pred_list.append(y_pred)
             return torch.tensor(y_pred_list).to(device)
+    util_dataset=UtilDataset(args.gen_z_dim, len(dataset),n_classes)
+    try:
+        repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
+    except:
+        print("retrying creating repo")
+        repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
+
+    gen_optimizer=optim.Adam(gen.parameters())
+    disc_optimizer=optim.Adam(disc.parameters())
+    #scheduler=optim.lr_scheduler.LinearLR(optimizer)
+    training_dataloader=DataLoader(dataset, batch_size=args.batch_size,drop_last=True)
+    util_dataloader=DataLoader(util_dataset,batch_size=args.batch_size,drop_last=True)
+
+    #=dataset.sentence_trans
+    #constant_noise=torch.randn(1,args.gen_z_dim, 1, 1)
+    #constant_text_encoding=torch.tensor(sentence_trans.encode("painting"))
+    gen, gen_optimizer, disc, disc_optimizer, training_dataloader, util_dataloader, = accelerator.prepare(gen, 
+                                                                                                         gen_optimizer,
+                                                                                                           disc, disc_optimizer, training_dataloader,
+                                                                                                           util_dataloader)
+    
+    for batch,util_vectors in zip(training_dataloader,util_dataloader):
+        constant_noise,_real_vector,_fake_vector,_uniform = util_vectors
+        _real_images, _real_labels,constant_text_encoding = batch
+        break
     cross_entropy=torch.nn.CrossEntropyLoss()
     binary_cross_entropy = torch.nn.BCELoss()
     real_label_int = 1.
@@ -249,14 +248,11 @@ def training_loop(args):
 
             fake_binary,fake_style=disc(fake_images,text_encoding)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
-            print(f"uniform.size() {uniform.size()}")
             if args.use_clip:
                 fake_clip_style=clip_classifier(fake_images)
-                print(f"fake_clip_style.size() {fake_clip_style.size()}")
                 style_ambiguity_loss=torch.tensor(cross_entropy(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
             elif args.use_kmeans:
                 fake_kmeans_style=kmeans_classifier(fake_images)
-                print(f"fake_kmeans_style.size() {fake_kmeans_style.size()}")
                 style_ambiguity_loss=torch.tensor(cross_entropy(fake_kmeans_style, uniform).cpu().numpy(),requires_grad=True)
             else:
                 fake_binary,fake_style=disc(fake_images,text_encoding)
