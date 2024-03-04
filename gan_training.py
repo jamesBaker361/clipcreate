@@ -19,6 +19,8 @@ import torch.optim as optim
 import argparse
 import time
 from static_globals import *
+from scipy.special import softmax
+import numpy as np
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -29,6 +31,8 @@ parser.add_argument("--batch_size",type=int, default=4)
 parser.add_argument("--repo_id",type=str,default="jlbaker361/dcgan-wikiart")
 parser.add_argument("--output_dir",type=str,default="/scratch/jlb638/dcgan-wikiart")
 parser.add_argument("--use_clip",type=bool,default=False)
+parser.add_argument("--use_kmeans",type=bool,default=False)
+parser.add_argument("--center_list_path",type=str,default="test_centers.npy", help="path for np files that are centers of the clusters for k means")
 parser.add_argument("--style_lambda",type=float,default=0.1, help="coefficient on style terms")
 parser.add_argument("--conditional", type=bool,default=False,help="whether to use conditional GAN or not")
 
@@ -40,6 +44,7 @@ parser.add_argument("--disc_final_dim",type=int,default=512)
 parser.add_argument("--style_list",nargs="+",default=WIKIART_STYLES)
 parser.add_argument("--resize_dim",type=int,default=768)
 
+parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
 parser.add_argument("--classifier_only",default=False,help="whether to only use style classifier")
 
 def freeze_model(model):
@@ -61,6 +66,8 @@ def weights_init(m):
 
 def training_loop(args):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
 
     os.makedirs(args.output_dir,exist_ok=True)
     gen=Generator(args.gen_z_dim,args.image_dim,args.conditional)
@@ -158,14 +165,13 @@ def training_loop(args):
     device=accelerator.device
     print(f"acceleerate device = {device}")
 
+    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
+
+    model,processor=accelerator.prepare(model,processor)
+    freeze_model(model)
     if args.use_clip:
         print("using clip classifier")
-        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
-
-        model,processor=accelerator.prepare(model,processor)
-        freeze_model(model)
-
         def clip_classifier(images):
             inputs = processor(text=args.style_list, images=images, return_tensors="pt", padding=True)
             inputs['input_ids'] = inputs['input_ids'].to(device)
@@ -174,6 +180,26 @@ def training_loop(args):
             outputs = model(**inputs)
             logits_per_image = outputs.logits_per_image # this is the image-text similarity score
             return logits_per_image.softmax(dim=1)
+        
+    if args.use_kmeans:
+        print("using kmeans classifier")
+        center_list=np.load(args.center_list_path)
+        def kmeans_classifier(images):
+            inputs = processor(text="text", images=images, return_tensors="pt", padding=True)
+            inputs['input_ids'] = inputs['input_ids'].to(device)
+            inputs['attention_mask'] = inputs['attention_mask'].to(device)
+            inputs['pixel_values'] = inputs['pixel_values'].to(device)
+            outputs = model(**inputs)
+            image_embeds=outputs.image_embeds.cpu().numpy()
+            y_pred_list=[]
+            for x in image_embeds:
+                y_pred=[]
+                for center in center_list:
+                    dist=np.linalg.norm(center-x)
+                    y_pred.append(dist)
+                y_pred=softmax(y_pred)
+                y_pred_list.append(y_pred)
+            return torch.tensor(y_pred_list).to(device)
     cross_entropy=torch.nn.CrossEntropyLoss()
     binary_cross_entropy = torch.nn.BCELoss()
     real_label_int = 1.
@@ -211,7 +237,7 @@ def training_loop(args):
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
 
             
-            if args.use_clip:
+            if args.use_clip or args.use_kmeans:
                 style_classification_loss=torch.tensor(0.)
             else:
                 style_classification_loss=cross_entropy(real_style,real_labels)
@@ -223,9 +249,15 @@ def training_loop(args):
 
             fake_binary,fake_style=disc(fake_images,text_encoding)
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
+            print(f"uniform.size() {uniform.size()}")
             if args.use_clip:
                 fake_clip_style=clip_classifier(fake_images)
+                print(f"fake_clip_style.size() {fake_clip_style.size()}")
                 style_ambiguity_loss=torch.tensor(cross_entropy(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
+            elif args.use_kmeans:
+                fake_kmeans_style=kmeans_classifier(fake_images)
+                print(f"fake_kmeans_style.size() {fake_kmeans_style.size()}")
+                style_ambiguity_loss=torch.tensor(cross_entropy(fake_kmeans_style, uniform).cpu().numpy(),requires_grad=True)
             else:
                 fake_binary,fake_style=disc(fake_images,text_encoding)
                 style_ambiguity_loss=cross_entropy(fake_style, uniform)
