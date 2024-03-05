@@ -6,9 +6,11 @@ os.environ["HF_HUB_CACHE"]=cache_dir
 import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from huggingface_hub.utils import EntryNotFoundError
-from huggingface_hub import upload_file
+from huggingface_hub import upload_file, hf_hub_download
 #os.symlink("~/.cache/huggingface/", cache_dir)
 from trl import DefaultDDPOStableDiffusionPipeline
+from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
+from ddpo_train_script import load_lora_weights
 from datasets import Dataset,load_dataset
 from torchvision.transforms import PILToTensor
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
@@ -83,19 +85,14 @@ if __name__=='__main__':
     gen_dict={}
     inception = InceptionScore(normalize=True)
     for model in args.conditional_model_list+args.model_list:
+        pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
         try:
-            pipeline=DefaultDDPOStableDiffusionPipeline(model, use_lora=True)
-            print(f"loaded weights for {model}")
-        except (EntryNotFoundError,ValueError) as error:
-            print(error)
-            pipeline=DefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
-            pipeline.sd_pipeline.load_lora_weights(model,weight_name="pytorch_lora_weights.safetensors")
-            try:
-                slurm_job_id=os.environ["SLURM_JOB_ID"]
-                with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
-                    print(f"\nloaded lora weights separately for {model} SLURM_JOB_ID={slurm_job_id}",file=file)
-            except:
-                print(f"loaded lora weights spearately for {model}")
+            weight_path=hf_hub_download(repo_id=model, filename="pytorch_lora_weights.safetensors",repo_type="model")
+            #load_weights(pipeline,weight_path,args.adapter_name)
+            load_lora_weights(pipeline,weight_path)
+            print(f"loaded weights from {model}")
+        except:
+            print(f"couldn't load lora weights from {model}")
         #pipeline.set_progress_bar_config(disable=True)
         if model in args.conditional_model_list:
             generator=torch.Generator(device="cpu").manual_seed(args.seed)
