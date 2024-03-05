@@ -223,11 +223,15 @@ def training_loop(args):
             real_binary,real_style=disc(real_images,text_encoding)
             
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
+            if args.use_clip or args.use_kmeans:
+                style_classification_loss=torch.tensor(0.)
+            else:
+                style_classification_loss=cross_entropy(real_style,real_labels)
             if args.classifier_only:
-                accelerator.backward(real_binary_loss)
+                accelerator.backward(style_classification_loss)
                 disc_optimizer.step()
                 disc_optimizer.zero_grad()
-                real_binary_loss_sum+=torch.sum(real_binary_loss)
+                style_classification_loss_sum+=torch.sum(style_classification_loss)
                 continue
 
             #fake image loss discrikinator
@@ -235,11 +239,6 @@ def training_loop(args):
             fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
             fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
 
-            
-            if args.use_clip or args.use_kmeans:
-                style_classification_loss=torch.tensor(0.)
-            else:
-                style_classification_loss=cross_entropy(real_style,real_labels)
             
             disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             accelerator.backward(disc_loss)
