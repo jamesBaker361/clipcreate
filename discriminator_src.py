@@ -94,7 +94,8 @@ class GANDataset(torch.utils.data.Dataset):
             transforms.ToTensor(),
             SquarePad(),
             transforms.Resize(resize_dim),
-            transforms.CenterCrop(image_dim)
+            transforms.CenterCrop(image_dim),
+            transforms.Normalize([0.5], [0.5]),
         ])
         self.sentence_trans=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
         self.data = []
