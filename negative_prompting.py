@@ -8,10 +8,14 @@ from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
 import torchvision.transforms as transforms
 import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
+from huggingface_hub import hf_hub_download
 from torchmetrics.image.inception import InceptionScore
 from accelerate import Accelerator
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 import numpy as np
+from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
+from ddpo_train_script import load_lora_weights
+from accelerate import Accelerator
 
 import wandb
 from static_globals import *
@@ -26,8 +30,8 @@ parser.add_argument("--dir",type=str,default="images")
 parser.add_argument("--n_images",type=int,default=10)
 parser.add_argument("--prompt",type=str,default=" ")
 parser.add_argument("--base_model",type=str, default="stabilityai/stable-diffusion-2-base")
-parser.add_argument("--lora_model",type=str,default="jlbaker361/ddpo-stability-e5")
-parser.add_argument("--lora_model_dcgan",type=str,default="jlbaker361/ddpo-stability-dcgan-e5")
+parser.add_argument("--lora_model",type=str,default="jlbaker361/kmeans-test-ddpo")
+parser.add_argument("--lora_model_dcgan",type=str,default="jlbaker361/kmeans-test-ddpo")
 parser.add_argument("--seed",type=int,default=0)
 parser.add_argument("--repo_id",type=str,default="jlbaker361/negative_creativity")
 parser.add_argument("--index",type=int,default=0)
@@ -36,18 +40,33 @@ parser.add_argument("--index",type=int,default=0)
 
 #from deprectaed.call_neg import call_multi_neg, call_vanilla
 def main(args):
+    accelerator=Accelerator()
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     
     run=wandb.init(project="lora scale comparison")
 
-    pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
-    lora_pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
-    lora_pipeline.sd_pipeline.load_lora_weights(args.lora_model,weight_name="pytorch_lora_weights.safetensors")
-    lora_dcgan_pipeline=DefaultDDPOStableDiffusionPipeline(args.base_model)
-    lora_dcgan_pipeline.sd_pipeline.load_lora_weights(args.lora_model_dcgan,weight_name="pytorch_lora_weights.safetensors")
+    pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model)
+    lora_pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model)
+    weight_path=hf_hub_download(repo_id=args.lora_model,filename="pytorch_lora_weights.safetensors",repo_type="model")
+    load_lora_weights(lora_pipeline,weight_path)
+    #lora_pipeline.sd_pipeline.load_lora_weights(args.lora_model,weight_name="pytorch_lora_weights.safetensors")
+    print("loaded two models")
+    lora_dcgan_pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model)
+    weight_path=hf_hub_download(repo_id=args.lora_model_dcgan,filename="pytorch_lora_weights.safetensors",repo_type="model")
+    load_lora_weights(lora_dcgan_pipeline,weight_path)
+    #lora_dcgan_pipeline.sd_pipeline.load_lora_weights(args.lora_model_dcgan,weight_name="pytorch_lora_weights.safetensors")
     #pipeline.sd_pipeline.to(device)
     #pipeline.sd_pipeline=accelerator.prepare(pipeline.sd_pipeline)
     #generator = torch.Generator(device=accelerator.device).manual_seed(0)
+
+    def prepare_pipeline(pipe: BetterDefaultDDPOStableDiffusionPipeline):
+        pipe.sd_pipeline.unet, pipe.sd_pipeline.vae,pipe.sd_pipeline.text_encoder, pipe.sd_pipeline.tokenizer=accelerator.prepare(
+            pipe.sd_pipeline.unet, pipe.sd_pipeline.vae,pipe.sd_pipeline.text_encoder, pipe.sd_pipeline.tokenizer
+        )
+        return pipe
+    
+    for pipe in [pipeline, lora_pipeline, lora_dcgan_pipeline]:
+        prepare_pipeline(pipe)
 
     NEGATIVE="negative_image"
     VANILLA="vanilla_image"
@@ -87,6 +106,8 @@ def main(args):
         VANILLA_THIRD:[],
         VANILLA_THIRD_SCORE:[]
     }
+
+    
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
     half_generator=torch.Generator(device="cpu").manual_seed(args.seed)
     third_generator=torch.Generator(device="cpu").manual_seed(args.seed)

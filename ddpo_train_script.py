@@ -1,22 +1,53 @@
 import os
 import sys
-#cache_dir="/scratch/jlb638/trans_cache"
-#os.environ["TRANSFORMERS_CACHE"]=cache_dir
-#os.environ["HF_HOME"]=cache_dir
-#os.environ["HF_HUB_CACHE"]=cache_dir
-
 import torch
-#torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
+if "SLURM_JOB_ID" in os.environ:
+    cache_dir="/scratch/jlb638/trans_cache"
+    os.environ["TRANSFORMERS_CACHE"]=cache_dir
+    os.environ["HF_HOME"]=cache_dir
+    os.environ["HF_HUB_CACHE"]=cache_dir
+
+    torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 import argparse
 from static_globals import *
 import faulthandler
-import wandb
-from huggingface_hub import hf_hub_download
 import re
 from safetensors import safe_open
 from safetensors.torch import save_file
+from huggingface_hub import hf_hub_download
+from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
+from huggingface_hub.utils import EntryNotFoundError
+from torchvision.transforms.functional import to_pil_image
 from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 from peft import get_peft_model_state_dict
+import torch
+import time
+from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer
+from huggingface_hub import create_repo, upload_folder, ModelCard
+from datasets import load_dataset
+import random
+import numpy as np
+import wandb
+
+def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
+    state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
+    weight_path=os.path.join(output_dir, "pytorch_lora_weights.safetensors")
+    print("saving to ",weight_path)
+    save_file(state_dict, weight_path, metadata={"format": "pt"})
+
+def load_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,path:str):
+    #pipeline.get_trainable_layers()
+    print("loading from ",path)
+    state_dict={}
+    count=0
+    with safe_open(path, framework="pt", device="cpu") as f:
+        for key in f.keys():
+            state_dict[key]=f.get_tensor(key)
+    state_dict={
+        k.replace("weight","default.weight"):v for k,v in state_dict.items()
+    }
+    pipeline.sd_pipeline.unet.load_state_dict(state_dict,strict=False)
+    print("successfully loaded from")
 
 faulthandler.enable()
 
@@ -47,44 +78,6 @@ def get_image_sample_hook(image_dir):
                 pil_img.save(path)
                 tracker.log({f"{pmpt}":wandb.Image(path)},tracker.tracker.step)
     return _fn
-
-def load_weights(pipeline, weight_path,adapter_name):
-    lora_keys=[]
-    lora_dict={}
-    with safe_open(weight_path, framework="pt", device="cpu") as f:
-        for key in f.keys():
-            if "unet." in key:
-                new_key=key[5:]
-                new_key=new_key.replace("lora.up", f"lora_B.{adapter_name}")
-                new_key=new_key.replace("lora.down", f"lora_A.{adapter_name}")
-                lora_keys.append(new_key)
-                lora_dict[new_key]=f.get_tensor(key)
-    count=0
-    for name,param in pipeline.sd_pipeline.unet.named_parameters():
-        if name in lora_dict:
-            count+=1
-    print(f"{count} shared params!!!")
-    pipeline.sd_pipeline.unet.load_state_dict(lora_dict,strict=True)
-
-def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
-    state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
-    weight_path=os.path.join(output_dir, "pytorch_lora_weights.safetensors")
-    print("saving to ",weight_path)
-    save_file(state_dict, weight_path, metadata={"format": "pt"})
-
-def load_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
-    #pipeline.get_trainable_layers()
-    path=os.path.join(output_dir, "pytorch_lora_weights.safetensors")
-    print("loading from ",path)
-    state_dict={}
-    count=0
-    with safe_open(path, framework="pt", device="cpu") as f:
-        for key in f.keys():
-            state_dict[key]=f.get_tensor(key)
-    state_dict={
-        k.replace("weight","default.weight"):v for k,v in state_dict.items()
-    }
-    pipeline.sd_pipeline.unet.load_state_dict(state_dict,strict=False)
 
 parser = argparse.ArgumentParser(description="ddpo training")
 parser.add_argument(
@@ -144,26 +137,6 @@ parser.add_argument("--adapter_name",type=str,default="default")
 if __name__=='__main__':
     args = parser.parse_args()
     print(args)
-    if args.cache_dir is not None:
-        os.makedirs(args.cache_dir,exist_ok=True)
-        os.environ["TRANSFORMERS_CACHE"]=args.cache_dir
-        os.environ["HF_HOME"]=args.cache_dir
-        os.environ["HF_HUB_CACHE"]=args.cache_dir
-        torch_cache_dir=args.cache_dir+"/torch"
-        os.makedirs(torch_cache_dir,exist_ok=True)
-        import torch
-        torch.hub.set_dir(torch_cache_dir)
-    #os.symlink("~/.cache/huggingface/", cache_dir)
-    from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
-    from huggingface_hub.utils import EntryNotFoundError
-    from torchvision.transforms.functional import to_pil_image
-    import torch
-    import time
-    from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer
-    from huggingface_hub import create_repo, upload_folder, ModelCard
-    from datasets import load_dataset
-    import random
-    import numpy as np
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -183,7 +156,7 @@ if __name__=='__main__':
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
         try:
-            weight_path=hf_hub_download(repo_id=args.pretrained_model_name_or_path, filename="pytorch_lora_weights.safetensors",repo_type="model")
+            weight_path=hf_hub_download(repo_id=args.pretrained_model_name_or_path,filename="pytorch_lora_weights.safetensors", repo_type="model")
             #load_weights(pipeline,weight_path,args.adapter_name)
             load_lora_weights(pipeline,weight_path)
             print(f"loaded weights from {args.pretrained_model_name_or_path}")
@@ -213,7 +186,7 @@ if __name__=='__main__':
                 )
                 weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
                 #load_weights(pipeline,weight_path,args.adapter_name)
-                load_lora_weights(pipeline,resume_from_path)
+                load_lora_weights(pipeline,weight_path)
                 start_epoch = checkpoint_numbers[-1] + 1
     start=time.time()
     if args.image_dir==None:
