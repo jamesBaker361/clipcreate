@@ -37,12 +37,12 @@ parser.add_argument("--style_lambda",type=float,default=0.1, help="coefficient o
 parser.add_argument("--conditional", type=bool,default=False,help="whether to use conditional GAN or not")
 
 parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise for generator")
-parser.add_argument("--image_dim", type=int,default=512)
+parser.add_argument("--image_dim", type=int,default=256)
 parser.add_argument("--disc_init_dim",type=int,default=32)
 parser.add_argument("--disc_final_dim",type=int,default=512)
 
 parser.add_argument("--style_list",nargs="+",default=WIKIART_STYLES)
-parser.add_argument("--resize_dim",type=int,default=768)
+parser.add_argument("--resize_dim",type=int,default=384)
 
 parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
 parser.add_argument("--classifier_only",default=False,help="whether to only use style classifier")
