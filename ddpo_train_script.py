@@ -195,6 +195,7 @@ if __name__=='__main__':
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     if is_xformers_available():
+        print("xformers?!?!")
         import xformers
 
         xformers_version = version.parse(xformers.__version__)
