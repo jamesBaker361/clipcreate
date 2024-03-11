@@ -9,10 +9,10 @@ yes |  conda install -c conda-forge transformers
 yes |  conda install -c conda-forge huggingface_hub
 yes |  conda install -c conda-forge diffusers
 yes |  conda install -c conda-forge wandb
-yes |  conda install -c conda-forge peft
-yes |  conda install -c conda-forge sentence-transformers
 yes |  conda install -c conda-forge xformers
 yes |  conda install -c conda-forge bitsandbytes
+yes |  conda install -c conda-forge peft
+yes |  conda install -c conda-forge sentence-transformers
 #pip install trl["diffusers"]
 pip install git+https://github.com/jamesBaker361/trl-fixed.git
 # huggingface-cli login
