@@ -28,6 +28,8 @@ from datasets import load_dataset
 import random
 import numpy as np
 import wandb
+from diffusers.utils.import_utils import is_xformers_available
+from packaging import version
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
@@ -192,6 +194,15 @@ if __name__=='__main__':
     if args.image_dir==None:
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
+    if is_xformers_available():
+        import xformers
+
+        xformers_version = version.parse(xformers.__version__)
+        if xformers_version == version.parse("0.0.16"):
+            print("xFormers 0.0.16 cannot be used for training in some GPUs. If you observe problems during training, please update xFormers to at least 0.0.17. See https://huggingface.co/docs/diffusers/main/en/optimization/xformers for more details.")
+        pipeline.sd_pipeline.unet.enable_xformers_memory_efficient_attention()
+    else:
+        raise ValueError("xformers is not available. Make sure it is installed correctly")
     image_samples_hook=get_image_sample_hook(args.image_dir)
     for e in range(start_epoch,args.num_epochs):
         config=DDPOConfig(
