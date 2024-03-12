@@ -80,7 +80,7 @@ class MakeRGB:
     
 class Rescale:
     def __call__(self,image):
-        return 255*image
+        return (image-0.5)*2
     
 
 
@@ -95,7 +95,7 @@ class GANDataset(torch.utils.data.Dataset):
             SquarePad(),
             transforms.Resize(resize_dim),
             transforms.CenterCrop(image_dim),
-            transforms.Normalize([0.5], [0.5]),
+            Rescale()
         ])
         self.sentence_trans=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
         self.data = []
