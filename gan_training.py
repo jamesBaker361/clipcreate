@@ -146,7 +146,12 @@ def training_loop(args):
     if args.use_clip:
         print("using clip classifier")
         def clip_classifier(images):
-            inputs = processor(text=args.style_list, images=images, return_tensors="pt", padding=True)
+            try:
+                inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
+            except ValueError:
+                images=images+1
+                images=images/2
+                inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
             inputs['input_ids'] = inputs['input_ids'].to(device)
             inputs['attention_mask'] = inputs['attention_mask'].to(device)
             inputs['pixel_values'] = inputs['pixel_values'].to(device)
@@ -159,7 +164,12 @@ def training_loop(args):
         center_list=np.load(args.center_list_path)
         n_classes=len(center_list)
         def kmeans_classifier(images):
-            inputs = processor(text="text", images=images, return_tensors="pt", padding=True)
+            try:
+                inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
+            except ValueError:
+                images=images+1
+                images=images/2
+                inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
             inputs['input_ids'] = inputs['input_ids'].to(device)
             inputs['attention_mask'] = inputs['attention_mask'].to(device)
             inputs['pixel_values'] = inputs['pixel_values'].to(device)
