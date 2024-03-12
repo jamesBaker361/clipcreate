@@ -3,7 +3,7 @@
 # conda init
 # conda activate creativity
 
-export BNB_CUDA_VERSION=118
+#export BNB_CUDA_VERSION=118
 yes |  conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 yes |  conda install -c conda-forge  scipy matplotlib datasets
 yes |  conda install -c conda-forge transformers
@@ -11,7 +11,7 @@ yes |  conda install -c conda-forge huggingface_hub
 yes |  conda install -c conda-forge diffusers
 yes |  conda install -c conda-forge wandb
 #yes |  conda install -c conda-forge xformers
-yes |  conda install -c conda-forge bitsandbytes
+yes |  conda install -c conda-forge bitsandbytes=0.42.0
 yes |  conda install -c conda-forge peft
 yes |  conda install -c conda-forge sentence-transformers
 #pip install trl["diffusers"]
