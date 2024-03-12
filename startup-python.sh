@@ -3,7 +3,7 @@
 # conda init
 # conda activate creativity
 
-#export BNB_CUDA_VERSION=118
+export BNB_CUDA_VERSION=118
 yes |  conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 yes |  conda install -c conda-forge  scipy matplotlib datasets
 yes |  conda install -c conda-forge transformers
