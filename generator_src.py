@@ -23,13 +23,13 @@ class Generator(nn.Module):
         layers=[
             nn.ConvTranspose2d( z_dim,feature_dim, 4, 1, 0, bias=False),
             nn.BatchNorm2d(feature_dim),
-            nn.LeakyReLU(0.2)
+            nn.ReLU(0.2)
         ]
         current_dim=4
         while current_dim<(self.img_dim/2):
             layers.append(nn.ConvTranspose2d( feature_dim,feature_dim//2, 4, 2, 1, bias=False))
             layers.append(nn.BatchNorm2d(feature_dim//2))
-            layers.append(nn.LeakyReLU(0.2))
+            layers.append(nn.ReLU(0.2))
             current_dim*=2
             feature_dim//=2
         layers.append(nn.ConvTranspose2d( feature_dim,3, 4, 2, 1, bias=False))
