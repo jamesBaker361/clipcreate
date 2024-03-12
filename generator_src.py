@@ -33,7 +33,7 @@ class Generator(nn.Module):
             current_dim*=2
             feature_dim//=2
         layers.append(nn.ConvTranspose2d( feature_dim,3, 4, 2, 1, bias=False))
-        layers.append(nn.Sigmoid())
+        layers.append(nn.Tanh())
         #layers.append(ScaleLayer())
         if self.conditional:
             self.conditional_linear=nn.Sequential(
