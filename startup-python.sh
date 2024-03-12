@@ -10,7 +10,7 @@ yes |  conda install -c conda-forge transformers
 yes |  conda install -c conda-forge huggingface_hub
 yes |  conda install -c conda-forge diffusers
 yes |  conda install -c conda-forge wandb
-#yes |  conda install -c conda-forge xformers
+yes |  conda install -c conda-forge xformers
 yes |  conda install -c conda-forge bitsandbytes=0.42.0
 yes |  conda install -c conda-forge peft
 yes |  conda install -c conda-forge sentence-transformers
