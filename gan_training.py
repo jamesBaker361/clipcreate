@@ -193,6 +193,8 @@ def training_loop(args):
 
     gen_optimizer=optim.Adam(gen.parameters())
     disc_optimizer=optim.Adam(disc.parameters())
+    print("len gen.parameters()",len([gp for gp in gen.parameters()]))
+    print("len disc.parameters ", len([dp for dp in disc.parameters()]))
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
     training_dataloader=DataLoader(dataset, batch_size=args.batch_size,drop_last=True)
     util_dataloader=DataLoader(util_dataset,batch_size=args.batch_size,drop_last=True)
