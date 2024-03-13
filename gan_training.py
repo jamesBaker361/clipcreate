@@ -223,6 +223,7 @@ def training_loop(args):
         start=time.time()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
             noise,real_vector,fake_vector,uniform = util_vectors
+            noise=torch.rand(noise.size(),device=noise.device) #its possible these arent as random as they should be
             real_images, real_labels,text_encoding = batch
             real_labels=real_labels.to(torch.float64)
 
