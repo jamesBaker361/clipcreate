@@ -5,7 +5,10 @@ import torch
 class BetterDefaultDDPOStableDiffusionPipeline(DefaultDDPOStableDiffusionPipeline):
     def __init__(self, *args,**kwargs):
         super().__init__(*args, **kwargs)
+        self.sd_pipeline.vae.requires_grad_(False)
+        self.sd_pipeline.text_encoder.requires_grad_(False)
         if self.use_lora:
+            self.sd_pipeline.unet.requires_grad_(False)
             lora_config = LoraConfig(
                 r=4,
                 lora_alpha=4,
