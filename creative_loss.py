@@ -17,6 +17,7 @@ def cross_entropy_per_sample(y_pred, y_true):
     return loss
 
 def mse(y_true,y_pred):
+    assert len(y_true)==len(y_pred)
     loss=0.
     for i in range(len(y_pred)):
         loss = loss + (y_true[i]-y_pred[i])**2
@@ -42,11 +43,11 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
     @torch.no_grad()
     def _fn(images, prompts, metadata):
         try:
-            inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
+            inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
         except ValueError:
             images=images+1
             images=images/2
-            inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
+            inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
         outputs = model(**inputs)
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         probs = logits_per_image.softmax(dim=1)
