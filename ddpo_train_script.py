@@ -53,9 +53,10 @@ def load_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,path:str
 
 faulthandler.enable()
 
-def get_prompt_fn(dataset_name,split,unconditional_fraction):
+def get_prompt_fn(dataset_name,split,unconditional_fraction,text_col_name):
     hf_dataset=load_dataset(dataset_name,split=split)
-    prompt_list=[t for t in hf_dataset["text"]]
+    prompt_list=[t for t in hf_dataset[text_col_name]]
+    print("prompt list len",len(prompt_list))
 
     def _fn():
         if random.uniform(0.0,1.)<=unconditional_fraction:
@@ -128,6 +129,7 @@ parser.add_argument("--reward_function",default="clip",type=str,help="reward fun
 parser.add_argument("--center_list_path",type=str,default="test_centers.npy", help="path for np files that are centers of the clusters for k means")
 
 parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-wikiart1000")
+parser.add_argument("--text_col_name",type=str,default="text",help="name of text col for captions in dataset")
 parser.add_argument("--disc_init_dim",type=int,default=32, help="initial layer # of channels in discriminator")
 parser.add_argument("--disc_final_dim",type=int, default=512, help="final layer # of channels in discriminator")
 parser.add_argument("--resize_dim",type=int,default=512,help="dim to resize images to before cropping (for dcgan)")
@@ -153,7 +155,7 @@ if __name__=='__main__':
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
-    prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction)
+    prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
         try:
