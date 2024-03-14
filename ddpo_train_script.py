@@ -139,6 +139,14 @@ parser.add_argument("--adapter_name",type=str,default="default")
 
 
 if __name__=='__main__':
+    for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
+                      "SBATCH_PARTITION","SLURM_JOB_PARTITION",
+                      "SLURM_NODEID","SLURM_MEM_PER_GPU",
+                      "SLURM_MEM_PER_CPU","SLURM_MEM_PER_NODE"]:
+        try:
+            print(slurm_var, os.environ[slurm_var])
+        except:
+            print(slurm_var, "doesnt exist")
     args = parser.parse_args()
     print(args)
 
