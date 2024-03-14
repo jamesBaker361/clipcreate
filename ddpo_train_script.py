@@ -30,6 +30,7 @@ import numpy as np
 import wandb
 from diffusers.utils.import_utils import is_xformers_available
 from packaging import version
+from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
@@ -153,6 +154,8 @@ if __name__=='__main__':
         reward_fn=k_means_scorer(args.center_list_path)
     elif args.reward_function=="dcgan":
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
+    elif args.reward_function=="aesthetic":
+        reward_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
