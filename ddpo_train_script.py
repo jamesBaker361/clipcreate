@@ -164,7 +164,8 @@ if __name__=='__main__':
             print(f"loaded weights from {args.pretrained_model_name_or_path}")
         except:
             print(f"couldn't load lora weights from {args.pretrained_model_name_or_path}")
-
+    pipeline.sd_pipeline.vae.requires_grad_(False)
+    pipeline.sd_pipeline.text_encoder.requires_grad_(False)
     resume_from_path=None
     if args.output_dir is not None:
         os.makedirs(args.output_dir,exist_ok=True)
