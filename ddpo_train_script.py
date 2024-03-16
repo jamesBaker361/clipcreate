@@ -111,7 +111,7 @@ parser.add_argument(
         help="The output directory where the model predictions and checkpoints will be written.",
 )
 
-parser.add_argument("--image_dir",type=str,default=None)
+parser.add_argument("--image_dir",type=str,default="/scratch/jlb638/ddpo-images")
 parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
 parser.add_argument(
     "--hub_model_id",
