@@ -49,6 +49,11 @@ def load_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,path:str
     state_dict={
         k.replace("weight","default.weight"):v for k,v in state_dict.items()
     }
+    param_set=set([p[0] for p in pipeline.sd_pipeline.unet.named_parameters()])
+    for k in state_dict.keys():
+        if k in param_set:
+            count+=1
+    print(f"loaded {count} params")
     pipeline.sd_pipeline.unet.load_state_dict(state_dict,strict=False)
     print("successfully loaded from")
 
@@ -229,6 +234,7 @@ if __name__=='__main__':
             pipeline,
             image_samples_hook
         )
+        print(f"acceleerate device {trainer.accelerator.device}")
         trainer.train()
         save_lora_weights(pipeline, args.output_dir)
         checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
