@@ -191,8 +191,8 @@ def training_loop(args):
         print("retrying creating repo")
         repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
 
-    gen_optimizer=optim.Adam(gen.parameters())
-    disc_optimizer=optim.Adam(disc.parameters())
+    gen_optimizer=optim.Adam(gen.parameters(),lr=0.0002,betas=(0.5,0.999))
+    disc_optimizer=optim.Adam(disc.parameters(),lr=0.0002,betas=(0.5,0.999))
     print("len gen.parameters()",len([gp for gp in gen.parameters()]))
     print("len disc.parameters ", len([dp for dp in disc.parameters()]))
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
