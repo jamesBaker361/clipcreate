@@ -52,7 +52,7 @@ class Discriminator(nn.Module):
             nn.ReLU(True),
             nn.Dropout(0.3),
             nn.Linear(512, len(style_list)),
-            nn.Softmax(dim=-1)
+            #nn.Softmax(dim=-1)
         )
 
     def forward(self, input,text_encoding):
