@@ -21,7 +21,8 @@ class Discriminator(nn.Module):
             nn.Conv2d(3, init_dim, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True)
         ]
-        while init_dim<final_dim and image_dim>4:
+        n_head_dim=init_dim*image_dim*image_dim//4
+        '''while init_dim<final_dim and image_dim>4:
             interm_dim=int(3*init_dim/2)
             later_dim=init_dim*2
             layers.append(nn.Conv2d(init_dim, interm_dim, 4, 2, 1, bias=False))
@@ -31,12 +32,23 @@ class Discriminator(nn.Module):
             layers.append(nn.BatchNorm2d(later_dim))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             init_dim=later_dim
-            image_dim//=4
+            image_dim//=4'''
+        while init_dim<final_dim and image_dim>4:
+            print(init_dim,image_dim)
+            interm_dim=int(3*init_dim/2)
+            later_dim=init_dim*2
+            layers.append(nn.Conv2d(init_dim, later_dim, 4, 2, 1, bias=False))
+            layers.append(nn.BatchNorm2d(later_dim))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            init_dim=later_dim
+            image_dim//=2
+            n_head_dim//=2
+        print(init_dim,image_dim)
         layers.append(nn.Flatten())
         self.main = nn.Sequential(
             * layers
         )
-        n_head_dim=init_dim*image_dim*image_dim//4
+        #n_head_dim=final_dim*image_dim*image_dim
         if self.conditional:
             self.conditional_linear=nn.Linear(768,n_head_dim)
             self.conditional_mha=nn.MultiheadAttention(n_head_dim, 4) #query = image kv=text
