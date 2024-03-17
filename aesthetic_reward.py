@@ -66,7 +66,10 @@ def aesthetic_scorer(hub_model_id, model_filename):
     #scorer = scorer.xpu() if is_xpu_available() else scorer.cuda() #disabled because running on cpu
 
     def _fn(images, prompts, metadata):
-        images=torch.from_numpy(np.array(images))
+        try:
+            images=torch.from_numpy(np.array(images))
+        except:
+            pass
         scores = scorer(images)
         return scores, {}
 
