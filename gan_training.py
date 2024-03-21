@@ -217,8 +217,6 @@ def training_loop(args):
         classification_loss=torch.nn.MSELoss()
     elif args.class_loss=="mae":
         classification_loss=torch.nn.L1Loss()
-    elif args.class_loss=="nll":
-        classification_loss=torch.nn.NLLLoss()
     elif args.class_loss=="softmax_ce":
         def _ce(x):
             x=torch.nn.Softmax(1)(x)
