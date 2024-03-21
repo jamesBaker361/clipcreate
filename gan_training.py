@@ -158,7 +158,7 @@ def training_loop(args):
             inputs['pixel_values'] = inputs['pixel_values'].to(device)
             outputs = model(**inputs)
             logits_per_image = outputs.logits_per_image # this is the image-text similarity score
-            return logits_per_image.softmax(dim=1)
+            return logits_per_image
         
     if args.use_kmeans:
         print("using kmeans classifier")
@@ -182,7 +182,7 @@ def training_loop(args):
                 for center in center_list:
                     dist=np.linalg.norm(center-x)
                     y_pred.append(dist)
-                y_pred=softmax(y_pred)
+                #y_pred=softmax(y_pred)
                 y_pred_list.append(y_pred)
             return torch.tensor(y_pred_list).to(device)
     util_dataset=UtilDataset(args.gen_z_dim, len(dataset),n_classes)
