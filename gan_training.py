@@ -161,6 +161,25 @@ def training_loop(args):
             return logits_per_image
         
     if args.use_kmeans:
+        def cosine_similarity(vector1, vector2):
+            """
+            Calculate cosine similarity between two vectors.
+            
+            Args:
+            vector1 (numpy array): First vector.
+            vector2 (numpy array): Second vector.
+            
+            Returns:
+            float: Cosine similarity between the two input vectors.
+            """
+            dot_product = np.dot(vector1, vector2)
+            norm_vector1 = np.linalg.norm(vector1)
+            norm_vector2 = np.linalg.norm(vector2)
+            
+            if norm_vector1 == 0 or norm_vector2 == 0:
+                return 0  # Return 0 if one of the vectors is a zero vector
+            
+            return dot_product / (norm_vector1 * norm_vector2)
         print("using kmeans classifier")
         center_list=np.load(args.center_list_path)
         n_classes=len(center_list)
@@ -180,7 +199,10 @@ def training_loop(args):
             for x in image_embeds:
                 y_pred=[]
                 for center in center_list:
-                    dist=np.linalg.norm(center-x)
+                    try:
+                        dist=1.0/ np.linalg.norm(center - x)
+                    except ZeroDivisionError:
+                        dist=100000
                     y_pred.append(dist)
                 #y_pred=softmax(y_pred)
                 y_pred_list.append(y_pred)
