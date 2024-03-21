@@ -46,6 +46,7 @@ parser.add_argument("--resize_dim",type=int,default=768)
 
 parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
 parser.add_argument("--classifier_only",default=False,help="whether to only use style classifier")
+parser.add_argument("--class_loss",type=str,default="cross_entropy")
 
 def freeze_model(model):
     for param in model.parameters():
@@ -211,7 +212,18 @@ def training_loop(args):
         constant_noise,_real_vector,_fake_vector,_uniform = util_vectors
         _real_images, _real_labels,constant_text_encoding = batch
         break
-    cross_entropy=torch.nn.CrossEntropyLoss()
+    classification_loss=torch.nn.CrossEntropyLoss()
+    if args.class_loss=="mse":
+        classification_loss=torch.nn.MSELoss()
+    elif args.class_loss=="mae":
+        classification_loss=torch.nn.L1Loss()
+    elif args.class_loss=="nll":
+        classification_loss=torch.nn.NLLLoss()
+    elif args.class_loss=="softmax_ce":
+        def _ce(x):
+            x=torch.nn.Softmax(1)(x)
+            return torch.nn.CrossEntropyLoss()(x)
+        classification_loss=_ce
     binary_cross_entropy = torch.nn.BCELoss()
     real_label_int = 1.
     fake_label_int = 0.
@@ -227,19 +239,18 @@ def training_loop(args):
             noise,real_vector,fake_vector,uniform = util_vectors
             noise=torch.rand(noise.size(),device=noise.device) #its possible these arent as random as they should be
             real_images, real_labels,text_encoding = batch
-            real_labels=real_labels.to(torch.float64)
 
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
             
             #real loss discirinator
             real_binary,real_style=disc(real_images,text_encoding)
-            
+            real_labels=real_labels.to(real_style.dtype)
             real_binary_loss=binary_cross_entropy(real_binary,real_vector)
             if args.use_clip or args.use_kmeans:
                 style_classification_loss=torch.tensor(0.)
             else:
-                style_classification_loss=cross_entropy(real_style,real_labels)
+                style_classification_loss=classification_loss(real_style,real_labels)
             if args.classifier_only:
                 accelerator.backward(style_classification_loss)
                 disc_optimizer.step()
@@ -262,13 +273,13 @@ def training_loop(args):
             reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
             if args.use_clip:
                 fake_clip_style=clip_classifier(fake_images)
-                style_ambiguity_loss=torch.tensor(cross_entropy(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
+                style_ambiguity_loss=torch.tensor(classification_loss(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
             elif args.use_kmeans:
                 fake_kmeans_style=kmeans_classifier(fake_images)
-                style_ambiguity_loss=torch.tensor(cross_entropy(fake_kmeans_style, uniform).cpu().numpy(),requires_grad=True)
+                style_ambiguity_loss=torch.tensor(classification_loss(fake_kmeans_style, uniform).cpu().numpy(),requires_grad=True)
             else:
                 fake_binary,fake_style=disc(fake_images,text_encoding)
-                style_ambiguity_loss=cross_entropy(fake_style, uniform)
+                style_ambiguity_loss=classification_loss(fake_style, uniform)
 
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
             accelerator.backward(gen_loss)
