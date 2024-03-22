@@ -61,7 +61,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=logits_per_image[x]
-            scores.append(1.0 - classification_loss(y_pred,y_true))
+            scores.append(-1.0* classification_loss(torch.tensor(y_pred),torch.tensor(y_true)))
         
         return scores, {}
 
@@ -97,7 +97,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
-            scores.append(1.0 - classification_loss(y_pred,y_true))
+            scores.append(-1.0 * classification_loss(torch.tensor(y_pred),torch.tensor(y_true)))
         return scores, {}
     
     return _fn
@@ -131,7 +131,7 @@ def k_means_scorer(center_list_path):
                     dist=100000
                 y_pred.append(dist)
             y_pred=softmax(y_pred)
-            scores.append(1.0 - classification_loss(y_pred,y_true))
+            scores.append(-1.0 * classification_loss(torch.tensor(y_pred),torch.tensor(y_true)))
         
         return scores, {}
 
