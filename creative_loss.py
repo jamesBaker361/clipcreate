@@ -36,6 +36,8 @@ def cross_entropy_per_sample_dcgan(y_pred, y_true):
 def cross_entropy_dcgan(pred,true):
     return torch.stack([cross_entropy_per_sample(y_pred,y_true) for y_pred,y_true in zip(pred,true)])
 
+classification_loss=torch.nn.CrossEntropyLoss()
+
 def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/examples/scripts/ddpo.py#L126
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
     processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
@@ -86,7 +88,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
-        images=transform_composition(images)
+        #images=transform_composition(images)
         images=images.cpu()
         _,probs=model(images,None) #
         n_image=images.shape[0]
