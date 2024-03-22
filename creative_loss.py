@@ -52,7 +52,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
             inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
         outputs = model(**inputs)
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
-        probs = logits_per_image.softmax(dim=1)
+        #probs = logits_per_image.softmax(dim=1)
 
         n_classes=len(style_list)
         n_image=images.shape[0]
@@ -60,8 +60,8 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         scores=[]
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
-            y_pred=probs[x]
-            scores.append(-1.0 * mse(y_pred,y_true))
+            y_pred=logits_per_image[x]
+            scores.append(1.0 - classification_loss(y_pred,y_true))
         
         return scores, {}
 
@@ -97,7 +97,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
-            scores.append(-1.0 * mse(y_pred,y_true))
+            scores.append(1.0 - classification_loss(y_pred,y_true))
         return scores, {}
     
     return _fn
@@ -125,10 +125,13 @@ def k_means_scorer(center_list_path):
         for x in image_embeds:
             y_pred=[]
             for center in center_list:
-                dist=np.linalg.norm(center-x)
+                try:
+                    dist=1.0/ np.linalg.norm(center - x)
+                except ZeroDivisionError:
+                    dist=100000
                 y_pred.append(dist)
             y_pred=softmax(y_pred)
-            scores.append(-1.0 * mse(y_pred,y_true))
+            scores.append(1.0 - classification_loss(y_pred,y_true))
         
         return scores, {}
 
