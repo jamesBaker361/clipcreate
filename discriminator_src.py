@@ -94,7 +94,11 @@ class Rescale:
     def __call__(self,image):
         return (image-0.5)*2
     
-
+class ImageCenterCrop:
+    def __call__(self,image):
+        width, height = image.size
+        min_dimension = min(width, height)
+        return transforms.CenterCrop(min_dimension)(image)
 
 class GANDataset(torch.utils.data.Dataset):
     def __init__(self, hf_dataset_src,image_dim,resize_dim,batch_size,split):
