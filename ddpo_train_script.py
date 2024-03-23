@@ -32,6 +32,7 @@ from diffusers.utils.import_utils import is_xformers_available
 from packaging import version
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 import datetime
+import PIL
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
@@ -86,7 +87,10 @@ def get_image_sample_hook(image_dir):
                 print("saving at ",path)
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
-                tracker.log({f"{pmpt}":wandb.Image(path)},tracker.tracker.step)
+                try:
+                    tracker.log({f"{pmpt}":wandb.Image(path)},tracker.tracker.step)
+                except PIL.UnidentifiedImageError:
+                    pass
     return _fn
 
 parser = argparse.ArgumentParser(description="ddpo training")
