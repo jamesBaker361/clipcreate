@@ -377,5 +377,13 @@ def training_loop(args):
 
 if __name__=='__main__':
     args=parser.parse_args()
+    for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
+                      "SBATCH_PARTITION","SLURM_JOB_PARTITION",
+                      "SLURM_NODEID","SLURM_MEM_PER_GPU",
+                      "SLURM_MEM_PER_CPU","SLURM_MEM_PER_NODE","SLURM_JOB_ID"]:
+        try:
+            print(slurm_var, os.environ[slurm_var])
+        except:
+            print(slurm_var, "doesnt exist")
     print(args)
     training_loop(args)
