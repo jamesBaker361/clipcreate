@@ -31,6 +31,7 @@ import wandb
 from diffusers.utils.import_utils import is_xformers_available
 from packaging import version
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
+import datetime
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
@@ -154,7 +155,9 @@ if __name__=='__main__':
             print(slurm_var, "doesnt exist")
     args = parser.parse_args()
     print(args)
-
+    current_date_time = datetime.datetime.now()
+    formatted_date_time = current_date_time.strftime("%Y-%m-%d %H:%M:%S")
+    print("Formatted Date and Time:", formatted_date_time)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 

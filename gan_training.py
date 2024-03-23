@@ -21,6 +21,7 @@ import time
 from static_globals import *
 from scipy.special import softmax
 import numpy as np
+import datetime
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -385,5 +386,8 @@ if __name__=='__main__':
             print(slurm_var, os.environ[slurm_var])
         except:
             print(slurm_var, "doesnt exist")
+    current_date_time = datetime.datetime.now()
+    formatted_date_time = current_date_time.strftime("%Y-%m-%d %H:%M:%S")
+    print("Formatted Date and Time:", formatted_date_time)
     print(args)
     training_loop(args)
