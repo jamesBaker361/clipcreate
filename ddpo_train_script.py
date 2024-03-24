@@ -244,9 +244,10 @@ if __name__=='__main__':
         print(f"acceleerate device {trainer.accelerator.device}")
         trainer.train()
         save_lora_weights(pipeline, args.output_dir)
-        checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
-        os.makedirs(checkpoint,exist_ok=True)
-        save_lora_weights(pipeline, checkpoint)
+        if e%5==0:
+            checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
+            os.makedirs(checkpoint,exist_ok=True)
+            save_lora_weights(pipeline, checkpoint)
     end=time.time()
     seconds=end-start
     hours=seconds/(60*60)
