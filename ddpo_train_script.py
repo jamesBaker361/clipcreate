@@ -205,14 +205,16 @@ if __name__=='__main__':
             )
             if len(checkpoints) != 0:
                 checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
-                resume_from_path = os.path.join(
-                    resume_from_path,
-                    f"checkpoint_{checkpoint_numbers[-1]}",
-                )
-                weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
-                #load_weights(pipeline,weight_path,args.adapter_name)
-                load_lora_weights(pipeline,weight_path)
-                start_epoch = checkpoint_numbers[-1] + 1
+                checkpoint_numbers=[c for c in checkpoint_numbers if c<=args.num_epochs]
+                if len(checkpoint_numbers)>0:
+                    resume_from_path = os.path.join(
+                        resume_from_path,
+                        f"checkpoint_{checkpoint_numbers[-1]}",
+                    )
+                    weight_path=os.path.join(resume_from_path, "pytorch_lora_weights.safetensors")
+                    #load_weights(pipeline,weight_path,args.adapter_name)
+                    load_lora_weights(pipeline,weight_path)
+                    start_epoch = checkpoint_numbers[-1] + 1
     start=time.time()
     if args.image_dir==None:
         args.image_dir="images"
@@ -242,12 +244,26 @@ if __name__=='__main__':
             image_samples_hook
         )
         print(f"acceleerate device {trainer.accelerator.device}")
+        tracker=trainer.accelerator.get_tracker("wandb").run
         trainer.train()
         save_lora_weights(pipeline, args.output_dir)
         if e%5==0:
             checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
             os.makedirs(checkpoint,exist_ok=True)
             save_lora_weights(pipeline, checkpoint)
+        validation_prompt_list=["","painting","drawing","man","woman"]
+        for validation_prompt in validation_prompt_list:
+            generator=torch.Generator(trainer.accelerator.device)
+            generator.manual_seed(123)
+            validation_image=pipeline(validation_prompt,num_inference_steps=args.sample_num_steps,generator=generator).images[0]
+            validation_path=f"{args.image_dir}_{e}_{validation_prompt}.png"
+            validation_image.save(validation_path)
+            try:
+                tracker.log({f"{validation_prompt}":wandb.Image(validation_path)},tracker.step)
+            except PIL.UnidentifiedImageError:
+                pass
+
+        
     end=time.time()
     seconds=end-start
     hours=seconds/(60*60)
