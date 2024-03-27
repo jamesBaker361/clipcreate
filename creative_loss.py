@@ -83,12 +83,13 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     transform_composition=transforms.Compose([
             SquarePad(),
             transforms.Resize(resize_dim),
-            transforms.CenterCrop(image_dim)
+            transforms.CenterCrop(image_dim),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
-        #images=transform_composition(images)
+        images=transform_composition(images)
         images=images.cpu()
         _,probs=model(images,None) #
         n_image=images.shape[0]
