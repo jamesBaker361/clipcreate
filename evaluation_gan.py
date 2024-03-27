@@ -96,7 +96,7 @@ def evaluate(args):
         score_std=np.std(score_list)
         result_dict[model]["std"]=score_std
         result_dict[model]["mean"]=total_score/len(score_list)
-        print(f"total score {model} {total_score} std {score_std}")
+        print(f"total score {model} mean {total_score/len(score_list)} {total_score} std {score_std}")
         image_tensor=torch.cat(image_list)
         inception.update(image_tensor)
         inception_mean, inception_std=inception.compute()
