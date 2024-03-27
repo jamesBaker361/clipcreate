@@ -14,8 +14,10 @@ import faulthandler
 import re
 from safetensors import safe_open
 from safetensors.torch import save_file
+from accelerate import Accelerator
 from huggingface_hub import hf_hub_download
 from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
+from better_ddpo_trainer import BetterDDPOTrainer
 from huggingface_hub.utils import EntryNotFoundError
 from torchvision.transforms.functional import to_pil_image
 from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
@@ -220,6 +222,8 @@ if __name__=='__main__':
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
+    accelerator=Accelerator(log_with="wandb")
+    accelerator.init_trackers(project_name="ddpo-creativity")
     for e in range(start_epoch,args.num_epochs):
         config=DDPOConfig(
             num_epochs=1,
@@ -236,7 +240,7 @@ if __name__=='__main__':
             },
             #project_kwargs=project_kwargs
         )
-        trainer = DDPOTrainer(
+        trainer = BetterDDPOTrainer(
             config,
             reward_fn,
             prompt_fn,
