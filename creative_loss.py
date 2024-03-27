@@ -81,9 +81,6 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         model.to(device)
     
     transform_composition=transforms.Compose([
-            SquarePad(),
-            transforms.Resize(resize_dim),
-            transforms.CenterCrop(image_dim),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
 
