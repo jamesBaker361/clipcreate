@@ -58,6 +58,7 @@ parser.add_argument("--hf_dir",type=str,default="jlbaker361/evaluation",help="hf
 parser.add_argument("--image_root_dir",type=str,default="/scratch/jlb638/evaluation_images/")
 parser.add_argument("--limit",type=int,default=150,  help="how many samples to make")
 parser.add_argument("--lora_scale",type=float,help="lora scale 0-1 0 is the same as not using the LoRA weights, whereas 1 means only the LoRA fine-tuned weights will be used")
+parser.add_argument("--subfolder",type=str)
 
 if __name__=='__main__':
     args = parser.parse_args()
@@ -87,7 +88,10 @@ if __name__=='__main__':
     for model in args.conditional_model_list+args.model_list:
         pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
         try:
-            weight_path=hf_hub_download(repo_id=model, filename="pytorch_lora_weights.safetensors",repo_type="model")
+            if args.subfolder==None:
+                weight_path=hf_hub_download(repo_id=model, filename="pytorch_lora_weights.safetensors",repo_type="model")
+            else:
+                weight_path=hf_hub_download(repo_id=model, subfolder=args.subfolder, filename="pytorch_lora_weights.safetensors",repo_type="model")
             #load_weights(pipeline,weight_path,args.adapter_name)
             load_lora_weights(pipeline,weight_path)
             print(f"loaded weights from {model}")

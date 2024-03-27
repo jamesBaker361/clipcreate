@@ -35,11 +35,20 @@ parser.add_argument("--lora_model_dcgan",type=str,default="jlbaker361/kmeans-tes
 parser.add_argument("--seed",type=int,default=0)
 parser.add_argument("--repo_id",type=str,default="jlbaker361/negative_creativity")
 parser.add_argument("--index",type=int,default=0)
+parser.add_argument("--subfolder",type=str)
 
 #lora_generator= torch.Generator(device="cpu").manual_seed(0)
 
 #from deprectaed.call_neg import call_multi_neg, call_vanilla
 def main(args):
+    for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
+                      "SBATCH_PARTITION","SLURM_JOB_PARTITION",
+                      "SLURM_NODEID","SLURM_MEM_PER_GPU",
+                      "SLURM_MEM_PER_CPU","SLURM_MEM_PER_NODE","SLURM_JOB_ID"]:
+        try:
+            print(slurm_var, os.environ[slurm_var])
+        except:
+            print(slurm_var, "doesnt exist")
     accelerator=Accelerator()
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     
@@ -47,7 +56,10 @@ def main(args):
 
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model)
     lora_pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model)
-    weight_path=hf_hub_download(repo_id=args.lora_model,filename="pytorch_lora_weights.safetensors",repo_type="model")
+    if args.subfolder is None:
+        weight_path=hf_hub_download(repo_id=args.lora_model,filename="pytorch_lora_weights.safetensors",repo_type="model")
+    else:
+        weight_path=hf_hub_download(repo_id=args.lora_model,subfolder=args.subfolder,filename="pytorch_lora_weights.safetensors",repo_type="model")
     load_lora_weights(lora_pipeline,weight_path)
     #lora_pipeline.sd_pipeline.load_lora_weights(args.lora_model,weight_name="pytorch_lora_weights.safetensors")
     print("loaded two models")
