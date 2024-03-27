@@ -70,7 +70,11 @@ def aesthetic_scorer(hub_model_id, model_filename):
             images=torch.from_numpy(np.array(images))
         except:
             pass
-        scores = scorer(images)
+        try:
+            scores = scorer(images)
+        except ValueError:
+            images=torch.from_numpy(0.5+np.array(images)/2.0)
+            scores = scorer(images)
         return scores, {}
 
     return _fn
