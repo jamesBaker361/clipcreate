@@ -54,7 +54,7 @@ class Discriminator(nn.Module):
             self.conditional_mha=nn.MultiheadAttention(n_head_dim, 4) #query = image kv=text
         self.binary_layers=nn.Sequential(
             nn.Linear(n_head_dim,1),
-            nn.Sigmoid()
+            #nn.Sigmoid()
         )
         self.style_layers=nn.Sequential(
             nn.Linear(n_head_dim,1024),
@@ -154,6 +154,7 @@ class UtilDataset(torch.utils.data.Dataset):
         self.n_classes=n_classes
 
     def __getitem__(self, index):
+        #noise,real_vector,fake_vector,uniform
         return torch.randn(self.noise_dim, 1, 1),torch.tensor([1.]),torch.tensor([0.]),torch.tensor([1.0/self.n_classes for _ in range(self.n_classes)])
     
     def __len__(self):
