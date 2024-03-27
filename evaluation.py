@@ -160,6 +160,7 @@ if __name__=='__main__':
     for model,metric_dict in result_dict.items():
         model_card_content+="\n"+model
         for m_name,m_value in metric_dict.items():
+            m_value=round(m_value,3)
             model_card_content+=f" {m_name}: {m_value} "
     with open("tmp.md","w+") as file:
         file.write(model_card_content)
