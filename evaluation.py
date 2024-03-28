@@ -130,12 +130,7 @@ if __name__=='__main__':
             #table_data.append([wandb.Image(image), model, prompt, score])
             total_score+=score
             score_list.append(score)
-            try:
-                slurm_job_id=os.environ["SLURM_JOB_ID"]
-                with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
-                    print("\n",prompt,score,file=file)
-            except:
-                print(prompt,score)
+            print(prompt,score)
         score_std=np.std(score_list)
         result_dict[model]["std"]=score_std
         result_dict[model]["mean"]=total_score/len(score_list)
@@ -145,12 +140,7 @@ if __name__=='__main__':
         print("inception mean", inception_mean, "inception std", inception_std)
         result_dict[model]["inception_mean"]=float(inception_mean)
         result_dict[model]["inception_src"]=float(inception_std)
-        try:
-            slurm_job_id=os.environ["SLURM_JOB_ID"]
-            with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
-                print(f"\ntotal score {model} {total_score} std {score_std}",file=file)
-        except:
-            print(f"total score {model} {total_score} std {score_std}")
+        print(f"total score {model} {total_score} std {score_std}")
 
     #run = wandb.init(project="creative_clip")
     #table=wandb.Table(columns=columns,data=table_data)
@@ -168,11 +158,4 @@ if __name__=='__main__':
                 path_in_repo="README.md",
                 repo_id=args.hf_dir,
                 repo_type="dataset")
-    try:
-        slurm_job_id=os.environ["SLURM_JOB_ID"]
-        with open(f"slurm/out/{slurm_job_id}.out","a+") as file:
-            print(result_dict,file=file)
-            print("all done :)))",file=file)
-    except:
-        print(result_dict)
-        print("all done :)))")
+    print("all done :)))")
