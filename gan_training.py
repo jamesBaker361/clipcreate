@@ -48,6 +48,11 @@ parser.add_argument("--resize_dim",type=int,default=768)
 parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
 parser.add_argument("--classifier_only",default=False,help="whether to only use style classifier")
 parser.add_argument("--class_loss",type=str,default="cross_entropy")
+parser.add_argument("--reverse_fake_binary_loss_weight",type=float,default=1.0)
+parser.add_argument("--style_ambiguity_loss_weight",type=float,default=1.0)
+parser.add_argument("--wasserstein",type=bool,default=False)
+parser.add_argument("--n_disc_steps",type=int,default=1,help="how many extra times to train discriminatir")
+parser.add_argument("--use_gp",default=False,type=bool,help="whether to use gradient penalty for wasserstein")
 
 def freeze_model(model):
     for param in model.parameters():
@@ -89,7 +94,7 @@ def training_loop(args):
     os.makedirs(args.output_dir,exist_ok=True)
     gen=Generator(args.gen_z_dim,args.image_dim,args.conditional)
     gen.apply(weights_init)
-    disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list,args.conditional)
+    disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list,args.conditional,args.wasserstein)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
 
     start_epoch=0
@@ -246,6 +251,10 @@ def training_loop(args):
             return torch.nn.CrossEntropyLoss()(x)
         classification_loss=_ce
     binary_cross_entropy = torch.nn.BCELoss()
+    def modified_generator_entropy(predictions,labels):
+        #https://github.com/tensorflow/tensorflow/blob/2007e1ba474030fcce840b0b8a599558e7d5998f/tensorflow/contrib/gan/python/losses/python/losses_impl.py#L563
+        #L = -log(sigmoid(D(G(z))))
+        return
     real_label_int = 1.
     fake_label_int = 0.
     print(f"starting at epoch {start_epoch}")
@@ -255,6 +264,7 @@ def training_loop(args):
         real_binary_loss_sum=0.
         style_ambiguity_loss_sum=0.
         reverse_fake_binary_loss_sum=0.
+        difference_loss_sum=0.
         start=time.time()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
             noise,real_vector,fake_vector,uniform = util_vectors
@@ -264,10 +274,11 @@ def training_loop(args):
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
             
+
             #real loss discirinator
             real_binary,real_style=disc(real_images,text_encoding)
             real_labels=real_labels.to(real_style.dtype)
-            real_binary_loss=binary_cross_entropy(real_binary,real_vector)
+            
             if args.use_clip or args.use_kmeans:
                 style_classification_loss=torch.tensor(0.)
             else:
@@ -282,16 +293,28 @@ def training_loop(args):
             #fake image loss discrikinator
             fake_images=gen(noise, text_encoding)
             fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
-            fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
-
             
-            disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
+            
+
+            if args.wasserstein:
+                difference_loss=torch.mean(fake_binary-real_binary)
+                #https://github.com/tensorflow/gan/blob/656e4332d1e6d7f398f0968966c753e44397fc60/tensorflow_gan/python/losses/losses_impl.py#L111
+                disc_loss=style_classification_loss+difference_loss
+            else:
+                fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
+                real_binary_loss=binary_cross_entropy(real_binary,real_vector)
+                disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
             accelerator.backward(disc_loss)
             disc_optimizer.step()
             disc_optimizer.zero_grad()
 
             fake_binary,fake_style=disc(fake_images,text_encoding)
-            reverse_fake_binary_loss=binary_cross_entropy(fake_binary, real_vector)
+            
+            if args.wasserstein:
+                reverse_fake_binary_loss=torch.mean(fake_binary)
+            else:
+                reverse_fake_binary_loss= binary_cross_entropy(fake_binary, real_vector)
+            reverse_fake_binary_loss=args.reverse_fake_binary_loss_weight * reverse_fake_binary_loss
             if args.use_clip:
                 fake_clip_style=clip_classifier(fake_images)
                 style_ambiguity_loss=torch.tensor(classification_loss(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
@@ -302,6 +325,7 @@ def training_loop(args):
                 fake_binary,fake_style=disc(fake_images,text_encoding)
                 style_ambiguity_loss=classification_loss(fake_style, uniform)
 
+            style_ambiguity_loss=args.style_ambiguity_loss_weight * style_ambiguity_loss
             gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
             accelerator.backward(gen_loss)
             gen_optimizer.step()
@@ -309,8 +333,11 @@ def training_loop(args):
 
             
             style_classification_loss_sum+=torch.sum(style_classification_loss)
-            fake_binary_loss_sum+=torch.sum(fake_binary_loss)
-            real_binary_loss_sum+=torch.sum(real_binary_loss)
+            if args.wasserstein:
+                difference_loss_sum+=torch.sum(difference_loss)
+            else:
+                fake_binary_loss_sum+=torch.sum(fake_binary_loss)
+                real_binary_loss_sum+=torch.sum(real_binary_loss)
             style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
             reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)
         
@@ -320,6 +347,7 @@ def training_loop(args):
         pil_test_image.save(path)
 
         accelerator.log({
+            "difference_loss":difference_loss_sum,
             "style_classification":style_classification_loss_sum,
             "fake_binary": fake_binary_loss_sum,
             "real_binary":real_binary_loss_sum,
