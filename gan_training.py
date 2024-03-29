@@ -70,6 +70,11 @@ def weights_init(m):
         torch.nn.init.normal_(m.weight, 1.0, 0.02)
         torch.nn.init.zeros_(m.bias)
 
+def get_gradients():
+    return None
+
+def get_gradient_penalty(gradients):
+    return 0.0
 
 def training_loop(args):
     accelerator = Accelerator(log_with="wandb")
@@ -274,39 +279,43 @@ def training_loop(args):
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
             
+            for _ in range(args.n_disc_steps):
+                #real loss discirinator
+                real_binary,real_style=disc(real_images,text_encoding)
+                real_labels=real_labels.to(real_style.dtype)
+                
+                if args.use_clip or args.use_kmeans:
+                    style_classification_loss=torch.tensor(0.)
+                else:
+                    style_classification_loss=classification_loss(real_style,real_labels)
+                if args.classifier_only:
+                    accelerator.backward(style_classification_loss)
+                    disc_optimizer.step()
+                    disc_optimizer.zero_grad()
+                    style_classification_loss_sum+=torch.sum(style_classification_loss)
+                    continue
 
-            #real loss discirinator
-            real_binary,real_style=disc(real_images,text_encoding)
-            real_labels=real_labels.to(real_style.dtype)
-            
-            if args.use_clip or args.use_kmeans:
-                style_classification_loss=torch.tensor(0.)
-            else:
-                style_classification_loss=classification_loss(real_style,real_labels)
-            if args.classifier_only:
-                accelerator.backward(style_classification_loss)
+                #fake image loss discrikinator
+                fake_images=gen(noise, text_encoding)
+                fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
+                
+                
+
+                if args.wasserstein:
+                    difference_loss=torch.mean(fake_binary-real_binary)
+                    #https://github.com/tensorflow/gan/blob/656e4332d1e6d7f398f0968966c753e44397fc60/tensorflow_gan/python/losses/losses_impl.py#L111
+                    disc_loss=style_classification_loss+difference_loss
+                    if args.use_gp:
+                        gradients=get_gradients()
+                        gradient_penalty=get_gradient_penalty(gradients)
+                        disc_loss+=gradient_penalty
+                else:
+                    fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
+                    real_binary_loss=binary_cross_entropy(real_binary,real_vector)
+                    disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
+                accelerator.backward(disc_loss)
                 disc_optimizer.step()
                 disc_optimizer.zero_grad()
-                style_classification_loss_sum+=torch.sum(style_classification_loss)
-                continue
-
-            #fake image loss discrikinator
-            fake_images=gen(noise, text_encoding)
-            fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
-            
-            
-
-            if args.wasserstein:
-                difference_loss=torch.mean(fake_binary-real_binary)
-                #https://github.com/tensorflow/gan/blob/656e4332d1e6d7f398f0968966c753e44397fc60/tensorflow_gan/python/losses/losses_impl.py#L111
-                disc_loss=style_classification_loss+difference_loss
-            else:
-                fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
-                real_binary_loss=binary_cross_entropy(real_binary,real_vector)
-                disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
-            accelerator.backward(disc_loss)
-            disc_optimizer.step()
-            disc_optimizer.zero_grad()
 
             fake_binary,fake_style=disc(fake_images,text_encoding)
             
