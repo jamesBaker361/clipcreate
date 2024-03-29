@@ -22,6 +22,7 @@ from static_globals import *
 from scipy.special import softmax
 import numpy as np
 import datetime
+import random
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -53,6 +54,7 @@ parser.add_argument("--style_ambiguity_loss_weight",type=float,default=1.0)
 parser.add_argument("--wasserstein",type=bool,default=False)
 parser.add_argument("--n_disc_steps",type=int,default=1,help="how many extra times to train discriminatir")
 parser.add_argument("--use_gp",default=False,type=bool,help="whether to use gradient penalty for wasserstein")
+parser.add_argument("--gp_weight",type=float,default=10)
 
 def freeze_model(model):
     for param in model.parameters():
@@ -70,11 +72,33 @@ def weights_init(m):
         torch.nn.init.normal_(m.weight, 1.0, 0.02)
         torch.nn.init.zeros_(m.bias)
 
-def get_gradients():
-    return None
+def get_gradients(disc,fake_images,real_images,text_encoding):
+    #https://necromuralist.github.io/Neurotic-Networking/posts/gans/wasserstein-gan-with-gradient-penalty/index.html
+    epsilon= random.random()
+    fake_images=epsilon*fake_images
+    real_images=(1.0-epsilon) *real_images
+    mixed_images=fake_images+real_images
+    mixed_scores,_mixed_class = disc(mixed_images,text_encoding)
+    gradients = torch.autograd.grad(
+        # Note: You need to take the gradient of outputs with respect to inputs.
+        inputs = mixed_images,
+        outputs = mixed_scores,
+        # These other parameters have to do with how the pytorch autograd engine works
+        grad_outputs=torch.ones_like(mixed_scores), 
+        create_graph=True,
+        retain_graph=True,
+    )[0]
+    return gradients
 
-def get_gradient_penalty(gradients):
-    return 0.0
+def get_gradient_penalty(gradients,gp_weight):
+
+    gradients = gradients.view(len(gradients), -1)
+    # Derivatives of the gradient close to 0 can cause problems because of
+    # the square root, so manually calculate norm and add epsilon
+    gradients_norm = torch.sqrt(torch.sum(gradients ** 2, dim=1) + 1e-12)
+
+    # Return gradient penalty
+    return ((gradients_norm - 1) ** 2).mean()
 
 def training_loop(args):
     accelerator = Accelerator(log_with="wandb")
@@ -272,6 +296,7 @@ def training_loop(args):
         difference_loss_sum=0.
         start=time.time()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
+            torch.cuda.empty_cache()
             noise,real_vector,fake_vector,uniform = util_vectors
             noise=torch.rand(noise.size(),device=noise.device) #its possible these arent as random as they should be
             real_images, real_labels,text_encoding = batch
@@ -306,8 +331,8 @@ def training_loop(args):
                     #https://github.com/tensorflow/gan/blob/656e4332d1e6d7f398f0968966c753e44397fc60/tensorflow_gan/python/losses/losses_impl.py#L111
                     disc_loss=style_classification_loss+difference_loss
                     if args.use_gp:
-                        gradients=get_gradients()
-                        gradient_penalty=get_gradient_penalty(gradients)
+                        gradients=get_gradients(disc,fake_images,real_images,text_encoding)
+                        gradient_penalty=get_gradient_penalty(gradients,args.gp_weight)
                         disc_loss+=gradient_penalty
                 else:
                     fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
@@ -317,6 +342,7 @@ def training_loop(args):
                 disc_optimizer.step()
                 disc_optimizer.zero_grad()
 
+            fake_images=gen(noise, text_encoding)
             fake_binary,fake_style=disc(fake_images,text_encoding)
             
             if args.wasserstein:
@@ -423,6 +449,30 @@ if __name__=='__main__':
             print(slurm_var, os.environ[slurm_var])
         except:
             print(slurm_var, "doesnt exist")
+    try:
+        print('torch.cuda.get_device_name()',torch.cuda.get_device_name())
+    except Exception as e:
+        print("couldnt print torch.cuda.get_device_name()")
+        print(e)
+    try:
+        print('torch.cuda.get_device_capability()',torch.cuda.get_device_capability())
+    except Exception as e:
+        print("couldnt print torch.cuda.get_device_capability()")
+        print(e)
+    try:
+        current_device = torch.cuda.current_device()
+    except Exception as e:
+        print("couldnt get torch.cuda.current_device()")
+        print(e)
+    try:
+        gpu = torch.cuda.get_device_properties(current_device)
+        print(f"GPU Name: {gpu.name}")
+        print(f"GPU Memory Total: {gpu.total_memory / 1024**2} MB")
+        print(f"GPU Memory Free: {torch.cuda.memory_allocated(current_device) / 1024**2} MB")
+        print(f"GPU Memory Used: {torch.cuda.memory_reserved(current_device) / 1024**2} MB")
+    except Exception as e:
+        print("couldnt get gpu properties")
+        print(e)
     current_date_time = datetime.datetime.now()
     formatted_date_time = current_date_time.strftime("%Y-%m-%d %H:%M:%S")
     print("Formatted Date and Time:", formatted_date_time)
