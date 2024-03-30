@@ -91,7 +91,11 @@ if __name__=='__main__':
             if args.subfolder==None:
                 weight_path=hf_hub_download(repo_id=model, filename="pytorch_lora_weights.safetensors",repo_type="model")
             else:
-                weight_path=hf_hub_download(repo_id=model, subfolder=args.subfolder, filename="pytorch_lora_weights.safetensors",repo_type="model")
+                try:
+                    weight_path=hf_hub_download(repo_id=model, subfolder=args.subfolder, filename="pytorch_lora_weights.safetensors",repo_type="model")
+                except:
+                    weight_path=hf_hub_download(repo_id=model, filename="pytorch_lora_weights.safetensors",repo_type="model")
+                    print("coluldnt load from subfolder, loaded main weights instead")
             #load_weights(pipeline,weight_path,args.adapter_name)
             load_lora_weights(pipeline,weight_path)
             print(f"loaded weights from {model}")
