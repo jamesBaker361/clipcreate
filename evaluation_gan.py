@@ -21,6 +21,7 @@ import argparse
 from static_globals import *
 
 random.seed(1234)
+torch.manual_seed(0)
 
 parser = argparse.ArgumentParser(description="evaluation")
 parser.add_argument(
@@ -46,6 +47,7 @@ parser.add_argument("--limit",type=int,default=150,  help="how many samples to m
 
 parser.add_argument("--gen_z_dim",type=int,default=100,help="dim latent noise for generator")
 parser.add_argument("--image_dim", type=int,default=512)
+parser.add_argument("--image_dir",type=str,default="/scratch/jlb638/gan-eval/")
 
 def evaluate(args):
     aesthetic_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
@@ -69,8 +71,11 @@ def evaluate(args):
     prompt_list=[[t,n] for t,n in zip(hf_dataset["text"], hf_dataset["name"])]
     random.shuffle(prompt_list)
     prompt_list=prompt_list[:args.limit]
+    prompt_list=["null" for _ in range(args.limit)]
     sentence_encoder=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
     for model,gen in model_dict.items():
+        model_name=model[model.rfind("/")+1:]
+        os.makedirs(f"{args.image_dir}{model_name}",exist_ok=True)
         weights_location=hf_hub_download(model, filename="gen-weights.pickle")
         if torch.cuda.is_available():
             state_dict=torch.load(weights_location)
@@ -81,12 +86,14 @@ def evaluate(args):
         total_score=0.0
         score_list=[]
         image_list=[]
-        for prompt in prompt_list:
+        for i,prompt in enumerate(prompt_list):
             noise=torch.randn(1,args.gen_z_dim, 1, 1)
             text_encoding=torch.tensor(sentence_encoder.encode(prompt))
             image=gen(noise,text_encoding )
             image_list.append(image)
-            src_dict["image"].append(ToPILImage()( image[0]))
+            pil_image=ToPILImage()( image[0])
+            pil_image.save(f"{args.image_dir}{model_name}/{i}.png")
+            src_dict["image"].append(pil_image)
             src_dict["model"].append(model)
             score,_=aesthetic_fn(image.detach(),{},{})
             score=score.detach().numpy()[0]
