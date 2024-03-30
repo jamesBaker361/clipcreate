@@ -11,7 +11,7 @@ from datasets import Dataset,load_dataset
 import torchvision.transforms.functional as functional
 
 class Discriminator(nn.Module):
-    def __init__(self, image_dim,init_dim,final_dim,style_list,conditional):
+    def __init__(self, image_dim,init_dim,final_dim,style_list,conditional,wasserstein):
         super(Discriminator, self).__init__()
         self.image_dim=image_dim
         self.init_dim=init_dim
@@ -52,10 +52,16 @@ class Discriminator(nn.Module):
         if self.conditional:
             self.conditional_linear=nn.Linear(768,n_head_dim)
             self.conditional_mha=nn.MultiheadAttention(n_head_dim, 4) #query = image kv=text
-        self.binary_layers=nn.Sequential(
-            nn.Linear(n_head_dim,1),
-            #nn.Sigmoid()
-        )
+        if wasserstein:
+            self.binary_layers=nn.Sequential(
+                nn.Linear(n_head_dim,1),
+                #nn.Sigmoid()
+            )
+        else:
+            self.binary_layers=nn.Sequential(
+                nn.Linear(n_head_dim,1),
+                nn.Sigmoid()
+            )
         self.style_layers=nn.Sequential(
             nn.Linear(n_head_dim,1024),
             nn.ReLU(True),
