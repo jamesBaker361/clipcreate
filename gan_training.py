@@ -98,7 +98,7 @@ def get_gradient_penalty(gradients,gp_weight):
     gradients_norm = torch.sqrt(torch.sum(gradients ** 2, dim=1) + 1e-12)
 
     # Return gradient penalty
-    return ((gradients_norm - 1) ** 2).mean()
+    return gp_weight * ((gradients_norm - 1) ** 2).mean()
 
 def training_loop(args):
     accelerator = Accelerator(log_with="wandb")
