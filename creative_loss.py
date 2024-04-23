@@ -6,8 +6,40 @@ import torch
 import numpy as np
 import torch
 from scipy.special import softmax
+import random
+import ImageReward as reward
+import string
+import PIL
+from typing import List
+def generate_random_string(length):
+    return ''.join(random.choice(string.ascii_letters) for _ in range(length))
+reward_cache="/scratch/jlb638/reward_symbolic/"+generate_random_string(10)
+
+from PIL import Image
 
 cache_dir="/scratch/jlb638/trans_cache"
+
+def pt_to_numpy(images: torch.FloatTensor) -> np.ndarray:
+    """
+    Convert a PyTorch tensor to a NumPy image.
+    """
+    images = images.cpu().permute(0, 2, 3, 1).float().numpy()
+    return images
+
+def numpy_to_pil(images: np.ndarray) -> List[PIL.Image.Image]:
+    """
+    Convert a numpy image or a batch of images to a PIL image.
+    """
+    if images.ndim == 3:
+        images = images[None, ...]
+    images = (images * 255).round().astype("uint8")
+    if images.shape[-1] == 1:
+        # special case for grayscale (single channel) images
+        pil_images = [Image.fromarray(image.squeeze(), mode="L") for image in images]
+    else:
+        pil_images = [Image.fromarray(image) for image in images]
+
+    return pil_images
 
 def cross_entropy_per_sample(y_pred, y_true):
     loss = 0.0
@@ -44,18 +76,26 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
-        try:
-            inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
-        except ValueError:
-            images=images+1
-            images=images/2
-            inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
+        if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
+            images=pt_to_numpy(images)
+            images=numpy_to_pil(images)
+        elif type(images)==list:
+            if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
+                images=[
+                    numpy_to_pil(pt_to_numpy(image)) for image in images
+                ]
+            elif type(images[0])!=Image:
+                print(f"image of type {type(images[0])}")
+        else:
+            print("type(images)",type(images))
+
+        inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
         outputs = model(**inputs)
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         #probs = logits_per_image.softmax(dim=1)
 
         n_classes=len(style_list)
-        n_image=images.shape[0]
+        n_image=len(images)
 
         scores=[]
         for x in range(n_image):
@@ -106,17 +146,24 @@ def k_means_scorer(center_list_path):
     center_list=np.load(center_list_path)
     @torch.no_grad()
     def _fn(images, prompts, metadata):
-        try:
-            inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
-        except ValueError:
-            images=images+1
-            images=images/2
-            inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
+        if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
+            images=pt_to_numpy(images)
+            images=numpy_to_pil(images)
+        elif type(images)==list:
+            if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
+                images=[
+                    numpy_to_pil(pt_to_numpy(image)) for image in images
+                ]
+            elif type(images[0])!=Image:
+                print(f"image of type {type(images[0])}")
+        else:
+            print("type(images)",type(images))
+
+        inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
         outputs = model(**inputs)
         image_embeds=outputs.image_embeds.detach().numpy()
 
         n_classes=len(center_list)
-        n_image=images.shape[0]
 
         scores=[]
         y_true=[1.0/n_classes] * n_classes
@@ -133,4 +180,33 @@ def k_means_scorer(center_list_path):
         
         return scores, {}
 
+    return _fn
+
+def image_reward_scorer():
+    model=reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json")
+
+    @torch.no_grad()
+    def _fn(images, prompts, metadata):
+        if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
+            images=pt_to_numpy(images)
+            images=numpy_to_pil(images)
+        elif type(images)==list:
+            if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
+                images=[
+                    numpy_to_pil(pt_to_numpy(image)) for image in images
+                ]
+            elif type(images[0])!=Image:
+                print(f"image of type {type(images[0])}")
+        else:
+            print("type(images)",type(images))
+
+        try:
+            return [model.score( prompt,image) for image,prompt in zip(images,prompts)],{}
+        except:
+            print("failed for [model.score( prompt,image) for image,prompt in zip(images,prompts)],{}")
+        try:
+            return [model.score( prompt,Image.fromarray(image)) for image,prompt in zip(images,prompts)],{}
+        except:
+            print("failed for [model.score( prompt,Image.fromarray(image)) for image,prompt in zip(images,prompts)],{}")
+        
     return _fn
