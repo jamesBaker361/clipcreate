@@ -55,6 +55,7 @@ parser.add_argument("--wasserstein",type=bool,default=False)
 parser.add_argument("--n_disc_steps",type=int,default=1,help="how many extra times to train discriminatir")
 parser.add_argument("--use_gp",default=False,type=bool,help="whether to use gradient penalty for wasserstein")
 parser.add_argument("--gp_weight",type=float,default=10)
+parser.add_argument("--beta_0",type=float,default=0.5)
 
 def freeze_model(model):
     for param in model.parameters():
@@ -249,8 +250,8 @@ def training_loop(args):
         print("retrying creating repo")
         repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
 
-    gen_optimizer=optim.Adam(gen.parameters(),lr=0.0002,betas=(0.5,0.999))
-    disc_optimizer=optim.Adam(disc.parameters(),lr=0.0002,betas=(0.5,0.999))
+    gen_optimizer=optim.Adam(gen.parameters(),lr=0.0002,betas=(args.beta_0,0.999))
+    disc_optimizer=optim.Adam(disc.parameters(),lr=0.0002,betas=(args.beta_0,0.999))
     print("len gen.parameters()",len([gp for gp in gen.parameters()]))
     print("len disc.parameters ", len([dp for dp in disc.parameters()]))
     #scheduler=optim.lr_scheduler.LinearLR(optimizer)
@@ -295,8 +296,9 @@ def training_loop(args):
         reverse_fake_binary_loss_sum=0.
         difference_loss_sum=0.
         start=time.time()
+        torch.cuda.empty_cache()
+        accelerator.free_memory()
         for batch,util_vectors in zip(training_dataloader,util_dataloader):
-            torch.cuda.empty_cache()
             noise,real_vector,fake_vector,uniform = util_vectors
             noise=torch.rand(noise.size(),device=noise.device) #its possible these arent as random as they should be
             real_images, real_labels,text_encoding = batch
@@ -394,7 +396,7 @@ def training_loop(args):
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
-        if e%10==0:
+        if e%5==0:
             checkpoint_dir=f"{args.output_dir}/checkpoint_{e}"
             os.makedirs(checkpoint_dir,exist_ok=True)
             torch.save(gen.state_dict(),f"{checkpoint_dir}/gen-weights.pickle")
