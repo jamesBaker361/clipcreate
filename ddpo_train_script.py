@@ -24,7 +24,7 @@ from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 from peft import get_peft_model_state_dict
 import torch
 import time
-from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer
+from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer
 from huggingface_hub import create_repo, upload_folder, ModelCard
 from datasets import load_dataset
 import random
@@ -178,6 +178,8 @@ if __name__=='__main__':
         reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
     elif args.reward_function=="aesthetic":
         reward_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
+    elif args.reward_function=="image_reward":
+        reward_fn =image_reward_scorer()
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
