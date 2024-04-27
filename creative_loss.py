@@ -173,7 +173,7 @@ def k_means_scorer(center_list_path):
                 try:
                     dist=1.0/ np.linalg.norm(center - x)
                 except ZeroDivisionError:
-                    dist=100000
+                    dist=1000000
                 y_pred.append(dist)
             #y_pred=softmax(y_pred)
             scores.append(-1.0 * classification_loss(torch.tensor(y_pred),torch.tensor(y_true)))
