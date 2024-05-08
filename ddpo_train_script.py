@@ -152,6 +152,7 @@ parser.add_argument("--disc_final_dim",type=int, default=512, help="final layer 
 parser.add_argument("--resize_dim",type=int,default=512,help="dim to resize images to before cropping (for dcgan)")
 parser.add_argument("--image_dim",type=int,default=512,help="image dim for dcgan")
 parser.add_argument("--adapter_name",type=str,default="default")
+parser.add_argument("--project_name",type=str,default="ddpo-creativity")
 
 
 if __name__=='__main__':
@@ -229,7 +230,7 @@ if __name__=='__main__':
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
     accelerator=Accelerator(log_with="wandb")
-    accelerator.init_trackers(project_name="ddpo-creativity")
+    accelerator.init_trackers(project_name=args.project_name)
     for e in range(start_epoch,args.num_epochs):
         config=DDPOConfig(
             num_epochs=1,
