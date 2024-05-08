@@ -264,12 +264,13 @@ if __name__=='__main__':
             checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
             os.makedirs(checkpoint,exist_ok=True)
             save_lora_weights(pipeline, checkpoint)
-        validation_prompt_list=["","painting","drawing","man","woman"]
+        validation_prompt_list=["painting of a man","picture of nature"]
         for validation_prompt in validation_prompt_list:
             generator=torch.Generator(trainer.accelerator.device)
             generator.manual_seed(123)
             validation_image=pipeline(validation_prompt,num_inference_steps=args.sample_num_steps,generator=generator).images[0]
-            validation_path=f"{args.image_dir}_{e}_{validation_prompt}.png"
+            validation_prompt=validation_prompt.replace(" ","_")
+            validation_path=f"{args.image_dir}{validation_prompt}.png"
             validation_image.save(validation_path)
             try:
                 tracker.log({f"{validation_prompt}":wandb.Image(validation_path)},tracker.step)
@@ -281,26 +282,4 @@ if __name__=='__main__':
     seconds=end-start
     hours=seconds/(60*60)
     print(f"successful training :) time elapsed: {seconds} seconds = {hours} hours")
-
-    #trainer._save_pretrained(args.output_dir)
-    repo_id = create_repo(repo_id=args.hub_model_id, exist_ok=True).repo_id
-    upload_folder(
-        repo_id=repo_id,
-        folder_path=args.output_dir,
-        commit_message="End of training",
-        ignore_patterns=["step_*", "epoch_*"],
-    )
-    model_card_content=f"""
-    # DDPO trained model
-    num_epochs={args.num_epochs} \n
-    train_gradient_accumulation_steps={args.train_gradient_accumulation_steps} \n
-    sample_num_steps={args.sample_num_steps} \n
-    sample_batch_size={args.sample_batch_size} \n 
-    train_batch_size={args.train_batch_size} \n
-    sample_num_batches_per_epoch={args.sample_num_batches_per_epoch} \n
-    based off of stabilityai/stable-diffusion-2-base
-    and then trained off of {args.pretrained_model_name_or_path}
-    """
-    card=ModelCard(model_card_content)
-    card.push_to_hub(repo_id)
     print("successful saving :)")
