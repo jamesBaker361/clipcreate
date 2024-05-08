@@ -1,6 +1,6 @@
 from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
 from discriminator_src import Discriminator,SquarePad
-from torchvision import transforms
+from torchvision.transforms import PILToTensor
 from huggingface_hub import hf_hub_download
 import torch
 import numpy as np
@@ -32,6 +32,8 @@ def numpy_to_pil(images: np.ndarray) -> List[PIL.Image.Image]:
     """
     if images.ndim == 3:
         images = images[None, ...]
+    if np.max(images)<=1 and np.min(images)<0: #between -1,1
+        images=(images*0.5)+0.5
     images = (images * 255).round().astype("uint8")
     if images.shape[-1] == 1:
         # special case for grayscale (single channel) images
@@ -72,7 +74,7 @@ classification_loss=torch.nn.CrossEntropyLoss()
 
 def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/examples/scripts/ddpo.py#L126
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
@@ -89,7 +91,7 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
         else:
             print("type(images)",type(images))
 
-        inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
+        inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
         outputs = model(**inputs)
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         #probs = logits_per_image.softmax(dim=1)
@@ -120,9 +122,23 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     if device is not None:
         model.to(device)
     
-    transform_composition=transforms.Compose([
-            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    ])
+    def transform_composition(images):
+        pil_to_tensor=PILToTensor()
+        if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
+            if torch.max(images)<=1.0 and torch.min(images)>=0: #between [0,1] -> [-1,1]
+                images=(images*2)-1.0
+        elif type(images)==list:
+            if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
+                if torch.max(images[0])<=1.0 and torch.min(images[0])>=0:
+                    images=[
+                        (img*2.0)-1.0 for img in images
+                    ]
+            if type(images[0])==Image:
+                images=[
+                    pil_to_tensor(img)/128 -1.0 for img in images
+                ]
+
+
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
@@ -142,7 +158,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
 
 def k_means_scorer(center_list_path):
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
     center_list=np.load(center_list_path)
     @torch.no_grad()
     def _fn(images, prompts, metadata):
