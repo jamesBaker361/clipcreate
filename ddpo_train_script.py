@@ -147,7 +147,7 @@ parser.add_argument("--resume_from",type=str,default=None)
 parser.add_argument("--reward_function",default="clip",type=str,help="reward function: resnet dcgan or clip kmeans")
 parser.add_argument("--center_list_path",type=str,default="test_centers.npy", help="path for np files that are centers of the clusters for k means")
 
-parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-wikiart1000")
+parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-vanilla")
 parser.add_argument("--text_col_name",type=str,default="text",help="name of text col for captions in dataset")
 parser.add_argument("--disc_init_dim",type=int,default=32, help="initial layer # of channels in discriminator")
 parser.add_argument("--disc_final_dim",type=int, default=512, help="final layer # of channels in discriminator")
