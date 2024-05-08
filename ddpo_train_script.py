@@ -231,7 +231,7 @@ if __name__=='__main__':
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
-    accelerator=Accelerator(log_with="wandb")
+    accelerator=Accelerator(log_with="wandb",config=vars(args))
     accelerator.init_trackers(project_name=args.project_name)
     for e in range(start_epoch,args.num_epochs):
         config=DDPOConfig(
