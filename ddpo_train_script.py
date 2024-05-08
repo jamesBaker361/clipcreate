@@ -64,18 +64,20 @@ def load_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,path:str
 faulthandler.enable()
 
 def get_prompt_fn(dataset_name,split,unconditional_fraction,text_col_name):
-    try:
+    '''try:
         hf_dataset=load_dataset(dataset_name,split=split)
     except:
         time.sleep(120.0)
         hf_dataset=load_dataset(dataset_name,split=split)
     prompt_list=[t for t in hf_dataset[text_col_name]]
-    print("prompt list len",len(prompt_list))
+    print("prompt list len",len(prompt_list))'''
+    medium_list=["painting of ","picture of ","drawing of "]
+    subject_list=["a man"," a woman"," a landscape"," nature"," a building"," an animal"," shapes", " an object"]
 
     def _fn():
         if random.uniform(0.0,1.)<=unconditional_fraction:
             return " ",{}
-        return random.choice(prompt_list),{}
+        return random.choice(medium_list)+random.choice(subject_list),{}
     
     return _fn
 
