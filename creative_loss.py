@@ -122,21 +122,29 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     if device is not None:
         model.to(device)
     
-    def transform_composition(images):
+    def transform_composition(images)->torch.tensor:
         pil_to_tensor=PILToTensor()
         if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
             if torch.max(images)<=1.0 and torch.min(images)>=0: #between [0,1] -> [-1,1]
                 images=(images*2)-1.0
+            elif torch.max(images)>1.0:
+                images=(images/128.0)-1.0
         elif type(images)==list:
             if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
                 if torch.max(images[0])<=1.0 and torch.min(images[0])>=0:
                     images=[
                         (img*2.0)-1.0 for img in images
                     ]
+                elif torch.max(images)>1.0:
+                    images=[
+                        (img/128)-1.0 for img in images
+                    ]
             if type(images[0])==Image:
                 images=[
                     pil_to_tensor(img)/128 -1.0 for img in images
                 ]
+            images=torch.stack(images)
+        return images
 
 
 
