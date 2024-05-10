@@ -1,13 +1,14 @@
 import os
 import sys
 import torch
-if "SLURM_JOB_ID" in os.environ:
-    cache_dir="/scratch/jlb638/trans_cache"
-    os.environ["TRANSFORMERS_CACHE"]=cache_dir
-    os.environ["HF_HOME"]=cache_dir
-    os.environ["HF_HUB_CACHE"]=cache_dir
+cache_dir="/scratch/jlb638/trans_cache"
+os.environ["TRANSFORMERS_CACHE"]=cache_dir
+os.environ["HF_HOME"]=cache_dir
+os.environ["HF_HUB_CACHE"]=cache_dir
+os.environ["WANDB_DIR"]="/scratch/jlb638/wandb"
+os.environ["WANDB_CACHE_DIR"]="/scratch/jlb638/wandb_cache"
 
-    torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
+torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 import argparse
 from static_globals import *
 import faulthandler
@@ -25,13 +26,9 @@ from peft import get_peft_model_state_dict
 import torch
 import time
 from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer
-from huggingface_hub import create_repo, upload_folder, ModelCard
-from datasets import load_dataset
 import random
 import numpy as np
 import wandb
-from diffusers.utils.import_utils import is_xformers_available
-from packaging import version
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 import datetime
 import PIL
@@ -97,7 +94,7 @@ def get_image_sample_hook(image_dir):
                 pil_img.save(path)
                 try:
                     tracker.log({f"{pmpt}":wandb.Image(path)},tracker.tracker.step)
-                except PIL.UnidentifiedImageError:
+                except (PIL.UnidentifiedImageError,OSError):
                     pass
     return _fn
 
