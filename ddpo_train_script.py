@@ -100,7 +100,7 @@ def get_image_sample_hook(image_dir):
                 except PIL.UnidentifiedImageError:
                     pass
     return _fn
-
+ 
 parser = argparse.ArgumentParser(description="ddpo training")
 parser.add_argument(
     "--pretrained_model_name_or_path",

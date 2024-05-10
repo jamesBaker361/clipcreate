@@ -14,6 +14,8 @@ from sentence_transformers import SentenceTransformer
 from torchvision.transforms import ToPILImage
 from datasets import Dataset,load_dataset
 import numpy as np
+from accelerate import Accelerator
+import wandb
 
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 import random
