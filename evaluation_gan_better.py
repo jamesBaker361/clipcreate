@@ -81,7 +81,7 @@ def evaluate(args):
         path=f"{args.image_dir}/{model_name}/{i}.png"
         image.save(path)
         accelerator.log({
-            f"{model_name}_{i}":wandb.Image(path)
+            f"{model_name}/{i}":wandb.Image(path)
         })
     metric_dict=get_metric_dict(prompt_list, image_list, [image],accelerator)
     for metric in [AESTHETIC_SCORE, IMAGE_REWARD]:
