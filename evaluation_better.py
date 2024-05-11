@@ -25,6 +25,7 @@ parser.add_argument("--limit",type=int,default=100,  help="how many samples to m
 parser.add_argument("--project_name",type=str,default="ddpo-evaluation")
 parser.add_argument("--seed",type=int,default=123)
 parser.add_argument("--image_dir",type=str,default="/scratch/jlb638/ddpo-eval-images/")
+parser.add_argument("--num_inferences_steps",type=int,default=30)
 
 def evaluate(args):
     os.makedirs(args.image_dir,exist_ok=True)
@@ -57,7 +58,7 @@ def evaluate(args):
         accelerator.log({
             path:wandb.Image(path)
         })
-    metric_dict=get_metric_dict(evaluation_prompt_list, evaluation_image_list, [],accelerator)
+    metric_dict=get_metric_dict(evaluation_prompt_list, evaluation_image_list, evaluation_image_list[0],accelerator)
     for metric in [AESTHETIC_SCORE, IMAGE_REWARD]:
         accelerator.log({
             metric:metric_dict[metric]
