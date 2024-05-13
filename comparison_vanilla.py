@@ -67,7 +67,7 @@ def main(args):
             [vanilla_image_list, half_image_list, third_image_list]
         ):
             generator=torch.Generator().manual_seed(i)
-            image=pipeline(prompt,num_inference_steps=steps,generator=generator)
+            image=pipeline(prompt,num_inference_steps=steps,generator=generator).images[0]
             path=f"{args.image_dir}/i/{name}.png"
             image.save(path)
             accelerator.log({
