@@ -3,6 +3,7 @@ cache_dir="/scratch/jlb638/trans_cache"
 os.environ["TRANSFORMERS_CACHE"]=cache_dir
 os.environ["HF_HOME"]=cache_dir
 os.environ["HF_HUB_CACHE"]=cache_dir
+os.environ["WANDB__SERVICE_WAIT"]="300"
 from accelerate import Accelerator
 from experiment_helpers.measuring import get_metric_dict
 from experiment_helpers.static_globals import AESTHETIC_SCORE,IMAGE_REWARD
@@ -39,7 +40,9 @@ def main(args):
         prompt_list.append(" ")
     accelerator=Accelerator(log_with="wandb")
     accelerator.init_trackers(args.project_name,config=vars(args))
-    creative_pipeline=BetterDefaultDDPOStableDiffusionPipeline.from_pretrained(args.model)
+    creative_pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
+    weight_path=hf_hub_download(repo_id=args.model, filename="pytorch_lora_weights.safetensors",repo_type="model")
+    load_lora_weights(creative_pipeline,weight_path)
     pipeline=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
     creative_image_list=[]
     vanilla_image_list=[]
@@ -52,7 +55,7 @@ def main(args):
         prompt=prompt_list[i %len(prompt_list)]
         evaluation_prompt_list.append(prompt)
         creative_image=creative_pipeline(prompt,num_inference_steps=args.num_inference_steps,generator=generator).images[0]
-        creative_path=f"{args.image_dir}i/creative.png"
+        creative_path=f"{args.image_dir}{i}/creative.png"
         creative_image.save(creative_path)
         accelerator.log({
             f"{i}/creative":wandb.Image(creative_path)
@@ -65,7 +68,7 @@ def main(args):
         ):
             generator=torch.Generator().manual_seed(i)
             image=pipeline(prompt,num_inference_steps=steps,generator=generator)
-            path=f"{args.image_dir}i/{name}.png"
+            path=f"{args.image_dir}/i/{name}.png"
             image.save(path)
             accelerator.log({
                 f"{i}/{name}":wandb.Image(path)
