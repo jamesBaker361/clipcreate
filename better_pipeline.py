@@ -1,4 +1,4 @@
-from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
+from trl import DefaultDDPOStableDiffusionPipeline
 from peft import LoraConfig
 import torch
 
