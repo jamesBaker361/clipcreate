@@ -17,9 +17,8 @@ from safetensors import safe_open
 from safetensors.torch import save_file
 from accelerate import Accelerator
 from huggingface_hub import hf_hub_download
-from trl import DDPOConfig, DDPOTrainer, DefaultDDPOStableDiffusionPipeline
+from trl import DDPOConfig
 from better_ddpo_trainer import BetterDDPOTrainer
-from huggingface_hub.utils import EntryNotFoundError
 from torchvision.transforms.functional import to_pil_image
 from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 from peft import get_peft_model_state_dict

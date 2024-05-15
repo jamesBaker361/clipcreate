@@ -1,5 +1,5 @@
-from transformers import CLIPProcessor, CLIPModel, CLIPVisionModel, CLIPTextModel
-from discriminator_src import Discriminator,SquarePad
+from transformers import CLIPProcessor, CLIPModel
+from discriminator_src import Discriminator
 from torchvision.transforms import PILToTensor
 from huggingface_hub import hf_hub_download
 import torch
