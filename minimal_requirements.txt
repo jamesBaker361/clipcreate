@@ -1,0 +1,10 @@
+torch
+numpy
+wandb
+accelerate
+diffusers
+transformers
+safetensors
+trl
+huggingface-hub
+torchvision
