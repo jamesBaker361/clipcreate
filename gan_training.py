@@ -50,6 +50,7 @@ parser.add_argument("--n_disc_steps",type=int,default=1,help="how many extra tim
 parser.add_argument("--use_gp",default=False,type=bool,help="whether to use gradient penalty for wasserstein")
 parser.add_argument("--gp_weight",type=float,default=10)
 parser.add_argument("--beta_0",type=float,default=0.5)
+parser.add_argument("--project_name",type=str,default="creativity")
 
 def freeze_model(model):
     for param in model.parameters():
@@ -97,7 +98,7 @@ def get_gradient_penalty(gradients,gp_weight):
 
 def training_loop(args):
     accelerator = Accelerator(log_with="wandb")
-    accelerator.init_trackers(project_name="creativity",init_kwargs={
+    accelerator.init_trackers(project_name=args.project_name,init_kwargs={
         "wandb":
             {"config":{
                 "dataset_name":args.dataset_name,
