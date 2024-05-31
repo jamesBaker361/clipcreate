@@ -98,19 +98,7 @@ def get_gradient_penalty(gradients,gp_weight):
 
 def training_loop(args):
     accelerator = Accelerator(log_with="wandb")
-    accelerator.init_trackers(project_name=args.project_name,init_kwargs={
-        "wandb":
-            {"config":{
-                "dataset_name":args.dataset_name,
-                "batch_size": args.batch_size,
-                "repo_id":args.repo_id,
-                "style_list": args.style_list,
-                "gen_z_dim":args.gen_z_dim,
-                "image_dim":args.image_dim,
-                "resize_dim":args.resize_dim
-            }
-        }
-    })
+    accelerator.init_trackers(project_name=args.project_name,config=vars(args))
     device=accelerator.device
     print(f"acceleerate device = {device}")
     torch.manual_seed(args.seed)
