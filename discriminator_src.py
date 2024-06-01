@@ -44,6 +44,10 @@ class Discriminator(nn.Module):
             image_dim//=2
             n_head_dim//=2
         print(init_dim,image_dim)
+        for _ in range(2):
+            layers.append(nn.Conv2d(later_dim, later_dim, 4, 2, 1, bias=False))
+            layers.append(nn.BatchNorm2d(later_dim))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
         layers.append(nn.Flatten())
         self.main = nn.Sequential(
             * layers
