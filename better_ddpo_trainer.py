@@ -61,11 +61,13 @@ class BetterDDPOTrainer(DDPOTrainer):
         prompt_function: Callable[[], Tuple[str, Any]],
         sd_pipeline: DDPOStableDiffusionPipeline,
         image_samples_hook: Optional[Callable[[Any, Any, Any], Any]] = None,
-        accelerator: Optional[Accelerator] =None
+        accelerator: Optional[Accelerator] =None,
+        image_dim: Optional[float] =512
     ):
         if image_samples_hook is None:
             warn("No image_samples_hook provided; no images will be logged")
 
+        self.image_dim=image_dim
         self.prompt_fn = prompt_function
         self.reward_fn = reward_function
         self.config = config
@@ -198,3 +200,67 @@ class BetterDDPOTrainer(DDPOTrainer):
             self.first_epoch = int(config.resume_from.split("_")[-1]) + 1
         else:
             self.first_epoch = 0
+    
+    def _generate_samples(self, iterations, batch_size):
+        """
+        Generate samples from the model
+
+        Args:
+            iterations (int): Number of iterations to generate samples for
+            batch_size (int): Batch size to use for sampling
+
+        Returns:
+            samples (List[Dict[str, torch.Tensor]]), prompt_image_pairs (List[List[Any]])
+        """
+        samples = []
+        prompt_image_pairs = []
+        self.sd_pipeline.unet.eval()
+
+        sample_neg_prompt_embeds = self.neg_prompt_embed.repeat(batch_size, 1, 1)
+
+        for _ in range(iterations):
+            prompts, prompt_metadata = zip(*[self.prompt_fn() for _ in range(batch_size)])
+
+            prompt_ids = self.sd_pipeline.tokenizer(
+                prompts,
+                return_tensors="pt",
+                padding="max_length",
+                truncation=True,
+                max_length=self.sd_pipeline.tokenizer.model_max_length,
+            ).input_ids.to(self.accelerator.device)
+            prompt_embeds = self.sd_pipeline.text_encoder(prompt_ids)[0]
+
+            with self.autocast():
+                sd_output = self.sd_pipeline(
+                    prompt_embeds=prompt_embeds,
+                    negative_prompt_embeds=sample_neg_prompt_embeds,
+                    num_inference_steps=self.config.sample_num_steps,
+                    guidance_scale=self.config.sample_guidance_scale,
+                    eta=self.config.sample_eta,
+                    output_type="pt",
+                    height=self.image_dim,
+                    width=self.image_dim
+                )
+
+                images = sd_output.images
+                latents = sd_output.latents
+                log_probs = sd_output.log_probs
+
+            latents = torch.stack(latents, dim=1)  # (batch_size, num_steps + 1, ...)
+            log_probs = torch.stack(log_probs, dim=1)  # (batch_size, num_steps, 1)
+            timesteps = self.sd_pipeline.scheduler.timesteps.repeat(batch_size, 1)  # (batch_size, num_steps)
+
+            samples.append(
+                {
+                    "prompt_ids": prompt_ids,
+                    "prompt_embeds": prompt_embeds,
+                    "timesteps": timesteps,
+                    "latents": latents[:, :-1],  # each entry is the latent before timestep t
+                    "next_latents": latents[:, 1:],  # each entry is the latent after timestep t
+                    "log_probs": log_probs,
+                    "negative_prompt_embeds": sample_neg_prompt_embeds,
+                }
+            )
+            prompt_image_pairs.append([images, prompts, prompt_metadata])
+
+        return samples, prompt_image_pairs

@@ -248,6 +248,7 @@ if __name__=='__main__':
             prompt_fn,
             pipeline,
             image_samples_hook
+            ,image_dim=args.image_dim
         )
         print(f"acceleerate device {trainer.accelerator.device}")
         tracker=trainer.accelerator.get_tracker("wandb").run
