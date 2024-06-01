@@ -32,18 +32,11 @@ if __name__=='__main__':
     print("unet lora params ", print_trainable_parameters(vanilla_pipeline.sd_pipeline.unet))
     #print("unet params trainable ", vanilla_pipeline.sd_pipeline.unet.print_trainable_parameters())
 
-    disc=Discriminator(64, 32,512,["f{i}" for i in range(27)],False,True)
-    print("disc params ", print_trainable_parameters(disc))
-    print(disc.main)
-    print_children(disc.main)
-    print("binary")
-    print(disc.binary_layers)
-    print("style")
-    print(disc.style_layers)
-
-
-
-    gen=Generator(100,64,False)
-    print("gen params ",print_trainable_parameters(gen))
-    print(gen.main)
-    print_children(gen.main)
+    for dim in [64,128,256,512]:
+        print("dim",dim)
+        disc=Discriminator(dim, 32,512,["f{i}" for i in range(27)],False,True)
+        print("disc params ")
+        print(disc.main)
+        gen=Generator(100,dim,False)
+        print("gen params")
+        print(gen.main)
