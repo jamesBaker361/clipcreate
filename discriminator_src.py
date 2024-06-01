@@ -33,10 +33,11 @@ class Discriminator(nn.Module):
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             init_dim=later_dim
             image_dim//=4'''
-        while init_dim<final_dim and image_dim>4:
+        intermediate={64:2,128:3,256:4,512:5}
+        for _ in range(intermediate[image_dim]):
             print(init_dim,image_dim)
             interm_dim=int(3*init_dim/2)
-            later_dim=init_dim*2
+            later_dim=min(init_dim*2,512)
             layers.append(nn.Conv2d(init_dim, later_dim, 4, 2, 1, bias=False))
             layers.append(nn.BatchNorm2d(later_dim))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
