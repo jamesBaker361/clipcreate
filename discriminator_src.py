@@ -19,6 +19,7 @@ class Discriminator(nn.Module):
         self.conditional=conditional
         layers=[
             nn.Conv2d(3, init_dim, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(init_dim),
             nn.LeakyReLU(0.2, inplace=True)
         ]
         n_head_dim=init_dim*image_dim*image_dim//4
