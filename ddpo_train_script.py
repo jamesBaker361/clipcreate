@@ -262,7 +262,7 @@ if __name__=='__main__':
         for validation_prompt in validation_prompt_list:
             generator=torch.Generator(trainer.accelerator.device)
             generator.manual_seed(123)
-            validation_image=pipeline(validation_prompt,num_inference_steps=args.sample_num_steps,generator=generator).images[0]
+            validation_image=pipeline(validation_prompt,num_inference_steps=args.sample_num_steps,generator=generator,height=args.image_dim,width=args.image_dim).images[0]
             validation_prompt=validation_prompt.replace(" ","_")
             validation_path=f"{args.image_dir}{validation_prompt}.png"
             validation_image.save(validation_path)
