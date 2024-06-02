@@ -22,7 +22,7 @@ class Discriminator(nn.Module):
             nn.BatchNorm2d(init_dim),
             nn.LeakyReLU(0.2, inplace=True)
         ]
-        n_head_dim=init_dim*image_dim*image_dim//4
+        n_head_dim=4*4*512
         '''while init_dim<final_dim and image_dim>4:
             interm_dim=int(3*init_dim/2)
             later_dim=init_dim*2
