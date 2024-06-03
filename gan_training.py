@@ -403,6 +403,8 @@ def training_loop(args):
                 commit_message=f"epoch {e}",
                 ignore_patterns=["step_*", "epoch_*"],
             )
+        accelerator.free_memory()
+        torch.cuda.empty_cache()
     tracker_url=accelerator.get_tracker("wandb").run.get_url()
     accelerator.end_training()
     torch.save(gen.state_dict(),args.output_dir+"/gen-weights.pickle")
