@@ -80,13 +80,16 @@ def get_image_sample_hook(image_dir):
                 pmpt=re.sub(r'\W+', '', pmpt)
                 pmpt=pmpt[:45]
                 path=image_dir+pmpt+str(global_step)+".png"
-                print("saving at ",path)
                 pil_img=to_pil_image(img)
                 pil_img.save(path)
+                print("saved at ",path)
                 try:
-                    tracker.log({f"{pmpt}":wandb.Image(path)},tracker.tracker.step)
+                    tracker.log({f"{pmpt}":wandb.Image(path)})
                 except (PIL.UnidentifiedImageError,OSError):
-                    pass
+                    try:
+                        tracker.log({f"{pmpt}":wandb.Image(pil_img)})
+                    except Exception as err:
+                        print("couldnt log image??? because", err)
     return _fn
 
 
