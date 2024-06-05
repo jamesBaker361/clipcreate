@@ -23,6 +23,7 @@ import wandb
 from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_aesthetic_model_filename
 import datetime
 import PIL
+from huggingface_hub import HfApi,snapshot_download
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
@@ -274,9 +275,15 @@ if __name__=='__main__':
             except PIL.UnidentifiedImageError:
                 pass
 
-        
     end=time.time()
     seconds=end-start
     hours=seconds/(60*60)
     print(f"successful training :) time elapsed: {seconds} seconds = {hours} hours")
+    api = HfApi()
+    api.upload_folder(
+    folder_path=args.output_dir,
+    repo_id=args.hub_model_id,
+    repo_type="model",
+    )
+    snapshot_download(args.hub_model_id,"model")
     print("successful saving :)")
