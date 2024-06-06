@@ -280,7 +280,7 @@ if __name__=='__main__':
     hours=seconds/(60*60)
     print(f"successful training :) time elapsed: {seconds} seconds = {hours} hours")
     api = HfApi()
-    create_repo(args.hub_model_id,repo_type="model")
+    create_repo(args.hub_model_id,repo_type="model",exist_ok=True)
     api.upload_folder(
         folder_path=args.output_dir,
         repo_id=args.hub_model_id,
