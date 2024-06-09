@@ -48,8 +48,9 @@ def evaluate(args):
     evaluation_image_list=[
         pipeline(prompt, num_inference_steps=args.num_inference_steps,generator=generator).images[0] for prompt in evaluation_prompt_list
     ]
-    for prompt,image in zip(evaluation_prompt_list, evaluation_image_list):
-        path=prompt.replace(" ","_")[:50]+"_.png"
+    for i,(prompt,image) in enumerate(zip(evaluation_prompt_list, evaluation_image_list)):
+        unique_path=f"_{i}_"+prompt.replace(" ","_")[:50]+"_.png"
+        path=os.path.join(args.image_dir, unique_path)
         image.save(path)
         accelerator.log({
             path:wandb.Image(path)
