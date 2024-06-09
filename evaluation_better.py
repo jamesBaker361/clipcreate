@@ -43,14 +43,15 @@ def evaluate(args):
         model.eval()
         model.to(accelerator.device)
     unet,text_encoder,vae=accelerator.prepare(unet,text_encoder,vae)
-    
+    model_name=args.model.split("/")[:1]
+    os.makedirs(os.path.join(args.image_dir, model_name),exist_ok=True)
     evaluation_prompt_list=[prompt_fn()[0] for _ in range(args.limit)]
     evaluation_image_list=[
         pipeline(prompt, num_inference_steps=args.num_inference_steps,generator=generator).images[0].resize((512,512)) for prompt in evaluation_prompt_list
     ]
     for i,(prompt,image) in enumerate(zip(evaluation_prompt_list, evaluation_image_list)):
         unique_path=f"_{i}_"+prompt.replace(" ","_")[:50]+"_.png"
-        path=os.path.join(args.image_dir, unique_path)
+        path=os.path.join(args.image_dir, model_name,unique_path)
         image.save(path)
         accelerator.log({
             path:wandb.Image(path)
