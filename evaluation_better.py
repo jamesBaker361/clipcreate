@@ -1,7 +1,7 @@
 import os
 from accelerate import Accelerator
 from experiment_helpers.measuring import get_metric_dict
-from experiment_helpers.static_globals import AESTHETIC_SCORE,IMAGE_REWARD
+from experiment_helpers.static_globals import AESTHETIC_SCORE,IMAGE_REWARD,PROMPT_SIMILARITY
 
 import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
@@ -60,7 +60,7 @@ def evaluate(args):
     accelerator.free_memory()
     torch.cuda.empty_cache()
     metric_dict=get_metric_dict(evaluation_prompt_list, evaluation_image_list, evaluation_image_list[:1],accelerator)
-    for metric in [AESTHETIC_SCORE, IMAGE_REWARD]:
+    for metric in [AESTHETIC_SCORE, IMAGE_REWARD,PROMPT_SIMILARITY]:
         accelerator.log({
             metric:metric_dict[metric]
         })
