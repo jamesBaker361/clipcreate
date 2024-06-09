@@ -46,7 +46,7 @@ def evaluate(args):
     
     evaluation_prompt_list=[prompt_fn()[0] for _ in range(args.limit)]
     evaluation_image_list=[
-        pipeline(prompt, num_inference_steps=args.num_inference_steps,generator=generator).images[0] for prompt in evaluation_prompt_list
+        pipeline(prompt, num_inference_steps=args.num_inference_steps,generator=generator).images[0].resize((512,512)) for prompt in evaluation_prompt_list
     ]
     for i,(prompt,image) in enumerate(zip(evaluation_prompt_list, evaluation_image_list)):
         unique_path=f"_{i}_"+prompt.replace(" ","_")[:50]+"_.png"
