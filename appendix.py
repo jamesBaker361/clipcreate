@@ -23,7 +23,7 @@ import numpy as np
 
 parser = argparse.ArgumentParser(description="appendix images")
 
-parser.add_argument("--limit",type=int,default=5,  help="how many samples to make")
+parser.add_argument("--limit",type=int,default=50,  help="how many samples to make")
 parser.add_argument("--project_name",type=str,default="ddpo-appendix")
 parser.add_argument("--seed",type=int,default=123)
 parser.add_argument("--image_dir",type=str,default="/ddpo-appendix-images/")
@@ -50,7 +50,7 @@ def main(args):
         prompt_list.append(" ")
     random.seed(args.seed)
     np.random.seed(args.seed)
-    random.shuffle(prompt_list)
+    #random.shuffle(prompt_list)
     accelerator=Accelerator(log_with="wandb")
     accelerator.init_trackers(args.project_name,config=vars(args))
     model_dict={
