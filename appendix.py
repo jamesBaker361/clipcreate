@@ -19,6 +19,7 @@ from static_globals import *
 from ddpo_train_script import get_prompt_fn,load_lora_weights
 from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 import random
+import numpy as np
 
 parser = argparse.ArgumentParser(description="appendix images")
 
@@ -47,6 +48,8 @@ def main(args):
             prompt=medium+subject
             prompt_list.append(prompt)
         prompt_list.append(" ")
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     random.shuffle(prompt_list)
     accelerator=Accelerator(log_with="wandb")
     accelerator.init_trackers(args.project_name,config=vars(args))
