@@ -43,7 +43,7 @@ def evaluate(args):
         model.eval()
         model.to(accelerator.device)
     unet,text_encoder,vae=accelerator.prepare(unet,text_encoder,vae)
-    model_name=args.model.split("/")[:1]
+    model_name=args.model.split("/")[1]
     os.makedirs(os.path.join(args.image_dir, model_name),exist_ok=True)
     evaluation_prompt_list=[prompt_fn()[0] for _ in range(args.limit)]
     evaluation_image_list=[
@@ -52,6 +52,7 @@ def evaluate(args):
     for i,(prompt,image) in enumerate(zip(evaluation_prompt_list, evaluation_image_list)):
         unique_path=f"_{i}_"+prompt.replace(" ","_")[:50]+"_.png"
         path=os.path.join(args.image_dir, model_name,unique_path)
+        print("\includegraphics[scale=0.2]{"+ path.replace("/scratch/jlb638/","") +"}")
         image.save(path)
         accelerator.log({
             path:wandb.Image(path)
