@@ -1,0 +1,30 @@
+SLURMD_NODENAME pascal006
+SBATCH_CLUSTERS doesnt exist
+SBATCH_PARTITION doesnt exist
+SLURM_JOB_PARTITION gpu
+SLURM_NODEID 0
+SLURM_MEM_PER_GPU doesnt exist
+SLURM_MEM_PER_CPU doesnt exist
+SLURM_MEM_PER_NODE 96000
+SLURM_JOB_ID 37021158
+Namespace(limit=10, project_name='ddpo-appendix', seed=23, image_dir='/scratch/jlb638/ddpo-appendix-images/', num_inference_steps=30, model_list=['jlbaker361/ddpo-clip-256', 'jlbaker361/ddpo-kmeans-text-256', 'jlbaker361/ddpo-kmeans-image-256'])
+loading from  /scratch/jlb638/trans_cache/models--jlbaker361--ddpo-clip-256/snapshots/9b6804b08776a23d41f96397c5c3b985117f45e7/pytorch_lora_weights.safetensors
+loaded 256 params
+successfully loaded from
+loading from  /scratch/jlb638/trans_cache/models--jlbaker361--ddpo-kmeans-text-256/snapshots/d8ae24cf981d3f4827b47d8d79ef31cf1b7f63f5/pytorch_lora_weights.safetensors
+loaded 256 params
+successfully loaded from
+loading from  /scratch/jlb638/trans_cache/models--jlbaker361--ddpo-kmeans-image-256/snapshots/3e74e929b95689c98171a19111dcbb9aa4c206a3/pytorch_lora_weights.safetensors
+loaded 256 params
+successfully loaded from
+picture of  nature
+painting of  an animal
+picture of  a building
+picture of  an object
+painting of a man
+picture of  a woman
+picture of  a landscape
+painting of  nature
+picture of  an animal
+drawing of a man
+all done :)))

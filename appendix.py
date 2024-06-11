@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(description="appendix images")
 parser.add_argument("--limit",type=int,default=5,  help="how many samples to make")
 parser.add_argument("--project_name",type=str,default="ddpo-appendix")
 parser.add_argument("--seed",type=int,default=123)
-parser.add_argument("--image_dir",type=str,default="/scratch/jlb638/ddpo-appendix-images/")
+parser.add_argument("--image_dir",type=str,default="/ddpo-appendix-images/")
 parser.add_argument("--num_inference_steps",type=int,default=30)
 parser.add_argument("--model_list",nargs="*")
 
@@ -53,20 +53,29 @@ def main(args):
     model_dict={
     model: get_pipeline(model,accelerator.device) for model in args.model_list
     }
+    image_dir=os.path.join("/scratch/jlb638",args.image_dir)
+    top=" & ".join([model for model in model_dict.keys()])
+    print(top," \\\\")
+
     for x in range(args.limit):
-        os.makedirs(f"{args.image_dir}{x}",exist_ok=True)
+        os.makedirs(image_dir,exist_ok=True)
         prompt=prompt_list[x %(len(prompt_list))]
         print(prompt)
         clean_prompt=prompt.replace(" ","_")
+        table_str=f"{prompt} "
         for model_name, pipeline in model_dict.items():
+            model_id=model_name.split("/")[1]
             generator=torch.Generator(accelerator.device).manual_seed(args.seed)
-            image=pipeline(prompt, num_inference_steps=args.num_inference_steps,generator=generator).images[0]
-            path=f"{args.image_dir}{x}/img.png"
+            image=pipeline(prompt, num_inference_steps=args.num_inference_steps,generator=generator).images[0].resize((512,512))
+            file_path=f"{model_id}_{x}.png"
+            path=os.path.join(image_dir,file_path)
             image.save(path)
-            
+            table_str+=f" & {os.path.join(args.image_dir,file_path)}"
             accelerator.log({
                 f"{x}/{clean_prompt}":wandb.Image(path)
             })
+        table_str+=" \\\\"
+        print(table_str)
 
 
 
