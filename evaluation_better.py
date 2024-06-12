@@ -64,9 +64,6 @@ def evaluate(args):
     torch.cuda.empty_cache()
     metric_dict=get_metric_dict(evaluation_prompt_list, evaluation_image_list, evaluation_image_list[:1],accelerator)
     for metric in [AESTHETIC_SCORE, IMAGE_REWARD,PROMPT_SIMILARITY]:
-        '''accelerator.log({
-            metric:metric_dict[metric]
-        })'''
         print(metric, metric_dict[metric])
 
 
