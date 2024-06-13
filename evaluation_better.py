@@ -22,6 +22,8 @@ parser.add_argument("--project_name",type=str,default="ddpo-evaluation")
 parser.add_argument("--seed",type=int,default=123)
 parser.add_argument("--image_dir",type=str,default="/scratch/jlb638/ddpo-eval-images/")
 parser.add_argument("--num_inference_steps",type=int,default=30)
+parser.add_argument("--use_subfolder",action="store_true")
+parser.add_argument("--subfolder",type=str,default="checkpoint_25")
 
 def evaluate(args):
     os.makedirs(args.image_dir,exist_ok=True)
@@ -34,7 +36,10 @@ def evaluate(args):
 
     generator=torch.Generator(accelerator.device).manual_seed(args.seed)
     pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
-    weight_path=hf_hub_download(repo_id=args.model, filename="pytorch_lora_weights.safetensors",repo_type="model")
+    if args.use_subfolder:
+        weight_path=hf_hub_download(repo_id=args.model, subfolder=args.subfolder,filename="pytorch_lora_weights.safetensors",repo_type="model")
+    else:
+        weight_path=hf_hub_download(repo_id=args.model, filename="pytorch_lora_weights.safetensors",repo_type="model")
     load_lora_weights(pipeline,weight_path)
     unet=pipeline.sd_pipeline.unet
     vae=pipeline.sd_pipeline.vae
