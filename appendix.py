@@ -29,10 +29,15 @@ parser.add_argument("--seed",type=int,default=123)
 parser.add_argument("--image_dir",type=str,default="/ddpo-appendix-images/")
 parser.add_argument("--num_inference_steps",type=int,default=30)
 parser.add_argument("--model_list",nargs="*")
+parser.add_argument("--use_subfolder",action="store_true")
+parser.add_argument("--subfolder",type=str,default="checkpoint_25")
 
-def get_pipeline(model,device):
+def get_pipeline(model,args,device):
     pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base")
-    weight_path=hf_hub_download(repo_id=model, filename="pytorch_lora_weights.safetensors",repo_type="model")
+    if args.use_subfolder:
+        weight_path=hf_hub_download(repo_id=model, subfolder=args.subfolder,filename="pytorch_lora_weights.safetensors",repo_type="model")
+    else:
+        weight_path=hf_hub_download(repo_id=model, filename="pytorch_lora_weights.safetensors",repo_type="model")
     load_lora_weights(pipeline,weight_path)
     pipeline.sd_pipeline.unet.to(device)
     pipeline.sd_pipeline.text_encoder.to(device)
@@ -54,7 +59,7 @@ def main(args):
     accelerator=Accelerator(log_with="wandb")
     accelerator.init_trackers(args.project_name,config=vars(args))
     model_dict={
-    model: get_pipeline(model,accelerator.device) for model in args.model_list
+    model: get_pipeline(model,args,accelerator.device) for model in args.model_list
     }
     image_dir=os.path.join("/scratch/jlb638",args.image_dir)
     top=" & ".join([model for model in model_dict.keys()])
