@@ -11,6 +11,8 @@ import ImageReward as reward
 import string
 import PIL
 from typing import List
+from accelerate import Accelerator
+from experiment_helpers.measuring import cos_sim
 def generate_random_string(length):
     return ''.join(random.choice(string.ascii_letters) for _ in range(length))
 reward_cache="/scratch/jlb638/reward_symbolic/"+generate_random_string(10)
@@ -235,6 +237,47 @@ def image_reward_scorer():
         
     return _fn
 
+def clip_prompt_alignment(accelerator:Accelerator=None):
+    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+    if accelerator is not None:
+        model.to(accelerator.device)
+        model=accelerator.prepare(model)
+    
+    @torch.no_grad()
+    def _fn(images, prompts, metadata):
+        if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
+            images=pt_to_numpy(images)
+            images=numpy_to_pil(images)
+        elif type(images)==list:
+            if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
+                images=[
+                    numpy_to_pil(pt_to_numpy(image)) for image in images
+                ]
+            elif type(images[0])!=Image:
+                print(f"image of type {type(images[0])}")
+        else:
+            print("type(images)",type(images))
+        inputs = processor(images=images,text=prompts, return_tensors="pt", padding=True)
+        if accelerator is not None:
+            
+            inputs["input_ids"]=inputs["input_ids"].to(model.device)
+            inputs["pixel_values"]=inputs["pixel_values"].to(model.device)
+            inputs["attention_mask"]=inputs["attention_mask"].to(model.device)
+            try:
+                inputs["position_ids"]=inputs["position_ids"].to(model.device)
+            except:
+                pass
+        outputs = model(**inputs)
+        image_embeds=outputs.image_embeds.detach().cpu().numpy()
+        text_embeds=outputs.text_embeds.detach().cpu().numpy()
+        
+        scores=[cos_sim(t,i) for t,i in zip(text_embeds,image_embeds) ]
+        
+        return scores,{}
+    return _fn
+        
+    
 def fuse_rewards(first_fn,second_fn,first_fn_weight,second_fn_weight):
     
     @torch.no_grad()
