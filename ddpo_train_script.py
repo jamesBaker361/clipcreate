@@ -16,7 +16,7 @@ from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 from peft import get_peft_model_state_dict
 import torch
 import time
-from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer,fuse_rewards
+from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer,fuse_rewards,clip_prompt_alignment
 import random
 import numpy as np
 import wandb
@@ -157,6 +157,9 @@ parser.add_argument("--use_image_reward_extra",action="store_true",default="whet
 parser.add_argument("--creativity_weight",type=float,default=0.5)
 parser.add_argument("--image_reward_weight",type=float,default=0.5)
 
+parser.add_argument("--use_clip_prompt_alignment_extra",action="store_true")
+parser.add_argument("--clip_prompt_alignment_weight",type=float,default=0.5)
+
 if __name__=='__main__':
     for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
                       "SBATCH_PARTITION","SLURM_JOB_PARTITION",
@@ -187,11 +190,16 @@ if __name__=='__main__':
         reward_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     elif args.reward_function=="image_reward":
         reward_fn =image_reward_scorer()
+    elif args.reward_function=="clip_prompt":\
+        reward_fn=clip_prompt_alignment()
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     if args.use_image_reward_extra:
         ir_reward_fn=image_reward_scorer()
         reward_fn=fuse_rewards(reward_fn,ir_reward_fn, args.creativity_weight,args.image_reward_weight)
+    if args.use_prompt_alignment_extra:
+        clip_prompt_alignment_fn=clip_prompt_alignment()
+        reward_fn=fuse_rewards(reward_fn,clip_prompt_alignment_fn, args.creativity_weight,args.clip_prompt_alignment_weight)
     prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
