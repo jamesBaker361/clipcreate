@@ -234,3 +234,16 @@ def image_reward_scorer():
             print("failed for [model.score( prompt,Image.fromarray(image)) for image,prompt in zip(images,prompts)],{}")
         
     return _fn
+
+def fuse_rewards(first_fn,second_fn,first_fn_weight,second_fn_weight):
+    
+    @torch.no_grad()
+    def _fn(images, prompts, metadata):
+        first_scores,_=first_fn(images, prompts, metadata)
+        second_scores,_=second_fn(images, prompts, metadata)
+        first_scores=[first_fn_weight * score for score in first_scores]
+        second_scores=[second_fn_weight * score for score in second_scores]
+        final_scores=[f+s for f,s in zip(first_scores,second_scores)]
+        return final_scores,{}
+    
+    return _fn
