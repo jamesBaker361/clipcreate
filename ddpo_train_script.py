@@ -197,7 +197,7 @@ if __name__=='__main__':
     if args.use_image_reward_extra:
         ir_reward_fn=image_reward_scorer()
         reward_fn=fuse_rewards(reward_fn,ir_reward_fn, args.creativity_weight,args.image_reward_weight)
-    if args.use_prompt_alignment_extra:
+    if args.use_clip_prompt_alignment_extra:
         clip_prompt_alignment_fn=clip_prompt_alignment()
         reward_fn=fuse_rewards(reward_fn,clip_prompt_alignment_fn, args.creativity_weight,args.clip_prompt_alignment_weight)
     prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
