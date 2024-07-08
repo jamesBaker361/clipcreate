@@ -16,7 +16,7 @@ from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 from peft import get_peft_model_state_dict
 import torch
 import time
-from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer
+from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer,fuse_rewards
 import random
 import numpy as np
 import wandb
@@ -153,6 +153,9 @@ parser.add_argument("--image_dim",type=int,default=512,help="image dim for dcgan
 parser.add_argument("--adapter_name",type=str,default="default")
 parser.add_argument("--project_name",type=str,default="ddpo-creativity")
 
+parser.add_argument("--use_image_reward_extra",action="store_true",default="whether to use image reward in addition")
+parser.add_argument("--creativity_weight",type=float,default=0.5)
+parser.add_argument("--image_reward_weight",type=float,default=0.5)
 
 if __name__=='__main__':
     for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
@@ -186,6 +189,9 @@ if __name__=='__main__':
         reward_fn =image_reward_scorer()
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
+    if args.use_image_reward_extra:
+        ir_reward_fn=image_reward_scorer()
+        reward_fn=fuse_rewards(reward_fn,ir_reward_fn, args.creativity_weight,args.image_reward_weight)
     prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
