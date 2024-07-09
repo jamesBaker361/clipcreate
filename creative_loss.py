@@ -1,4 +1,4 @@
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel,AutoProcessor, LlavaForConditionalGeneration
 from discriminator_src import Discriminator
 from torchvision.transforms import PILToTensor
 from huggingface_hub import hf_hub_download
@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from scipy.special import softmax
 import random
-import ImageReward as reward
+import ImageReward as img_reward
 import string
 import PIL
 from typing import List
@@ -20,6 +20,7 @@ reward_cache="/scratch/jlb638/reward_symbolic/"+generate_random_string(10)
 from PIL import Image
 
 cache_dir="/scratch/jlb638/trans_cache"
+from bert_score.scorer import BERTScorer
 
 def pt_to_numpy(images: torch.FloatTensor) -> np.ndarray:
     """
@@ -209,7 +210,7 @@ def k_means_scorer(center_list_path):
     return _fn
 
 def image_reward_scorer():
-    model=reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json")
+    model=img_reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json")
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
@@ -288,5 +289,33 @@ def fuse_rewards(first_fn,second_fn,first_fn_weight,second_fn_weight):
         second_scores=[second_fn_weight * score for score in second_scores]
         final_scores=[f+s for f,s in zip(first_scores,second_scores)]
         return final_scores,{}
+    
+    return _fn
+
+def llava_prompt_alignment(accelerator:Accelerator=None):
+    model = LlavaForConditionalGeneration.from_pretrained("llava-hf/llava-1.5-7b-hf")
+    processor = AutoProcessor.from_pretrained("llava-hf/llava-1.5-7b-hf")
+    if accelerator is not None:
+        model=model.to(accelerator.device)
+        model=accelerator.prepare(model)
+        b_scorer_object=BERTScorer(accelerator.device)
+    else:
+        b_scorer_object=BERTScorer()
+    query_prompt = "USER: <image>\nWhat's the content of the image? ASSISTANT:"
+    
+    @torch.no_grad()
+    def _fn(images, prompts, metadata):
+        inputs = processor(text=[query_prompt for _ in images], images=images, return_tensors="pt")
+        generate_ids = model.generate(**inputs, max_new_tokens=15)
+        predicted_prompts=processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        target="ASSISTANT: In the image,"
+        def get_response(text):
+            index=text.find(target)+len(target)
+            return text[index:]
+        cands=[get_response(text) for text in predicted_prompts]
+        p,r,f=b_scorer_object.score(cands,prompts)
+        rewards=f.cpu().detach().numpy()
+        
+        return rewards,{}
     
     return _fn
