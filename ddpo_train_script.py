@@ -16,7 +16,7 @@ from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 from peft import get_peft_model_state_dict
 import torch
 import time
-from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer,fuse_rewards,clip_prompt_alignment
+from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer,fuse_rewards,clip_prompt_alignment,llava_prompt_alignment
 import random
 import numpy as np
 import wandb
@@ -198,6 +198,8 @@ if __name__=='__main__':
         reward_fn =image_reward_scorer()
     elif args.reward_function=="clip_prompt":
         reward_fn=clip_prompt_alignment()
+    elif args.reward_function=="llava_prompt":
+        reward_fn=llava_prompt_alignment(accelerator)
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     if args.use_image_reward_extra:
@@ -206,6 +208,9 @@ if __name__=='__main__':
     if args.use_clip_prompt_alignment_extra:
         clip_prompt_alignment_fn=clip_prompt_alignment()
         reward_fn=fuse_rewards(reward_fn,clip_prompt_alignment_fn, args.creativity_weight,args.clip_prompt_alignment_weight)
+    if args.use_llava_prompt_alignment_extra:
+        llava_prompt_alignment_fn=llava_prompt_alignment(accelerator)
+        reward_fn=fuse_rewards(reward_fn,llava_prompt_alignment_fn,args.creativity_weight,args.llava_prompt_alignment_weight)
     prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
