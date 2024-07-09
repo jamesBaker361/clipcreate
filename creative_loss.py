@@ -209,8 +209,13 @@ def k_means_scorer(center_list_path):
 
     return _fn
 
-def image_reward_scorer():
-    model=img_reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json")
+def image_reward_scorer(accelerator:Accelerator=None):
+    if accelerator is not None:
+        model=img_reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json",device=accelerator.device)
+        model=accelerator.prepare(accelerator.device)
+    else:
+        model=img_reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json")
+
 
     @torch.no_grad()
     def _fn(images, prompts, metadata):
@@ -242,7 +247,7 @@ def clip_prompt_alignment(accelerator:Accelerator=None):
     model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
     processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
     if accelerator is not None:
-        model.to(accelerator.device)
+        model=model.to(accelerator.device)
         model=accelerator.prepare(model)
     
     @torch.no_grad()
