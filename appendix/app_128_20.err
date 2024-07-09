@@ -1,50 +1,0 @@
-/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/transformers/utils/hub.py:124: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
-  warnings.warn(
-2024-06-05 22:17:04.233587: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
-To enable the following instructions: AVX2 AVX512F FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2024-06-05 22:17:17.856552: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
-Detected kernel version 3.10.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
-wandb: Currently logged in as: jlbaker361. Use `wandb login --relogin` to force relogin
-wandb: wandb version 0.17.0 is available!  To upgrade, please run:
-wandb:  $ pip install wandb --upgrade
-wandb: Tracking run with wandb version 0.16.1
-wandb: Run data is saved locally in /scratch/jlb638/wandb/wandb/run-20240605_221744-e39a7965
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run helpful-mountain-61
-wandb: ⭐️ View project at https://wandb.ai/jlbaker361/ddpo-appendix
-wandb: 🚀 View run at https://wandb.ai/jlbaker361/ddpo-appendix/runs/e39a7965
-Loading pipeline components...:   0%|          | 0/6 [00:00<?, ?it/s]Loading pipeline components...:  17%|█▋        | 1/6 [00:00<00:00,  6.58it/s]Loading pipeline components...:  33%|███▎      | 2/6 [00:05<00:11,  2.95s/it]Loading pipeline components...:  50%|█████     | 3/6 [00:05<00:05,  1.67s/it]Loading pipeline components...:  67%|██████▋   | 4/6 [00:05<00:02,  1.29s/it]Loading pipeline components...: 100%|██████████| 6/6 [00:11<00:00,  2.03s/it]Loading pipeline components...: 100%|██████████| 6/6 [00:11<00:00,  1.88s/it]
-Loading pipeline components...:   0%|          | 0/6 [00:00<?, ?it/s]Loading pipeline components...:  33%|███▎      | 2/6 [00:00<00:00, 18.15it/s]Loading pipeline components...: 100%|██████████| 6/6 [00:00<00:00, 10.48it/s]Loading pipeline components...: 100%|██████████| 6/6 [00:00<00:00, 10.92it/s]
-Loading pipeline components...:   0%|          | 0/6 [00:00<?, ?it/s]Loading pipeline components...:  33%|███▎      | 2/6 [00:00<00:00, 18.76it/s]Loading pipeline components...: 100%|██████████| 6/6 [00:00<00:00, 10.76it/s]Loading pipeline components...: 100%|██████████| 6/6 [00:00<00:00, 11.21it/s]
-Traceback (most recent call last):
-  File "/cache/home/jlb638/Desktop/clipcreat/appendix.py", line 87, in <module>
-    main(args)
-  File "/cache/home/jlb638/Desktop/clipcreat/appendix.py", line 53, in main
-    model_dict={
-               ^
-  File "/cache/home/jlb638/Desktop/clipcreat/appendix.py", line 54, in <dictcomp>
-    model: get_pipeline(model,accelerator.device) for model in args.model_list
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/cache/home/jlb638/Desktop/clipcreat/appendix.py", line 36, in get_pipeline
-    pipeline.sd_pipeline.unet.to(device)
-  File "/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1160, in to
-    return self._apply(convert)
-           ^^^^^^^^^^^^^^^^^^^^
-  File "/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/torch/nn/modules/module.py", line 810, in _apply
-    module._apply(fn)
-  File "/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/torch/nn/modules/module.py", line 810, in _apply
-    module._apply(fn)
-  File "/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/torch/nn/modules/module.py", line 810, in _apply
-    module._apply(fn)
-  [Previous line repeated 7 more times]
-  File "/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/torch/nn/modules/module.py", line 833, in _apply
-    param_applied = fn(param)
-                    ^^^^^^^^^
-  File "/home/jlb638/.conda/envs/clip/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1158, in convert
-    return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacty of 11.91 GiB of which 9.62 MiB is free. Including non-PyTorch memory, this process has 11.90 GiB memory in use. Of the allocated memory 11.54 GiB is allocated by PyTorch, and 114.08 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
-wandb: 🚀 View run helpful-mountain-61 at: https://wandb.ai/jlbaker361/ddpo-appendix/runs/e39a7965
-wandb: Synced 6 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
-wandb: Find logs at: /scratch/jlb638/wandb/wandb/run-20240605_221744-e39a7965/logs
-srun: error: pascal010: task 0: Exited with exit code 1
