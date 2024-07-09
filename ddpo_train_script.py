@@ -176,6 +176,9 @@ if __name__=='__main__':
     print("Formatted Date and Time:", formatted_date_time)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+    
+    accelerator=Accelerator(log_with="wandb")
+    accelerator.init_trackers(project_name=args.project_name,config=vars(args))
 
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
@@ -242,8 +245,7 @@ if __name__=='__main__':
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
-    accelerator=Accelerator(log_with="wandb")
-    accelerator.init_trackers(project_name=args.project_name,config=vars(args))
+    
     for e in range(start_epoch,args.num_epochs):
         config=DDPOConfig(
             num_epochs=1,
