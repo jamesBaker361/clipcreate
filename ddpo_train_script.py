@@ -160,6 +160,9 @@ parser.add_argument("--image_reward_weight",type=float,default=0.5)
 parser.add_argument("--use_clip_prompt_alignment_extra",action="store_true")
 parser.add_argument("--clip_prompt_alignment_weight",type=float,default=0.5)
 
+parser.add_argument("--use_llava_prompt_alignment_extra",action="store_true")
+parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
+
 if __name__=='__main__':
     for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
                       "SBATCH_PARTITION","SLURM_JOB_PARTITION",
@@ -193,7 +196,7 @@ if __name__=='__main__':
         reward_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     elif args.reward_function=="image_reward":
         reward_fn =image_reward_scorer()
-    elif args.reward_function=="clip_prompt":\
+    elif args.reward_function=="clip_prompt":
         reward_fn=clip_prompt_alignment()
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
