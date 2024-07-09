@@ -164,6 +164,7 @@ parser.add_argument("--use_llava_prompt_alignment_extra",action="store_true")
 parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
 
 parser.add_argument("--use_accelerator_reward_fn",action="store_true")
+parser.add_argument("--n_validation",type=int,default=2)
 
 if __name__=='__main__':
     for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
@@ -292,7 +293,7 @@ if __name__=='__main__':
             checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
             os.makedirs(checkpoint,exist_ok=True)
             save_lora_weights(pipeline, checkpoint)
-        validation_prompt_list=["painting of a man","picture of nature"]
+        validation_prompt_list=["painting of a man","picture of nature","a drawing of a woman","painting","drawing"][:args.n_validation]
         for validation_prompt in validation_prompt_list:
             generator=torch.Generator(trainer.accelerator.device)
             generator.manual_seed(123)
