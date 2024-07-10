@@ -303,9 +303,9 @@ def llava_prompt_alignment(accelerator:Accelerator=None):
     if accelerator is not None:
         model=model.to(accelerator.device)
         model=accelerator.prepare(model)
-        b_scorer_object=BERTScorer(accelerator.device)
+        b_scorer_object=BERTScorer(lang="en",device=accelerator.device)
     else:
-        b_scorer_object=BERTScorer()
+        b_scorer_object=BERTScorer(lang="en")
     query_prompt = "USER: <image>\nWhat's the content of the image? ASSISTANT:"
     
     @torch.no_grad()
