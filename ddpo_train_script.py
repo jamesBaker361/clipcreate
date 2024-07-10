@@ -296,6 +296,7 @@ if __name__=='__main__':
         mixed_precision=args.mixed_precision,
         tracker_project_name="ddpo",
         log_with="wandb",
+        save_freq=args.num_epochs+1,
         accelerator_kwargs={
             #"project_dir":args.output_dir
         },
