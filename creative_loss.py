@@ -311,6 +311,18 @@ def llava_prompt_alignment(accelerator:Accelerator=None):
     
     @torch.no_grad()
     def _fn(images, prompts, metadata):
+        if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
+            images=pt_to_numpy(images)
+            images=numpy_to_pil(images)
+        elif type(images)==list:
+            if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
+                images=[
+                    numpy_to_pil(pt_to_numpy(image)) for image in images
+                ]
+            elif type(images[0])!=Image:
+                print(f"image of type {type(images[0])}")
+        else:
+            print("type(images)",type(images))
         inputs = processor(text=[query_prompt for _ in images], images=images, return_tensors="pt")
         generate_ids = model.generate(**inputs, max_new_tokens=15)
         predicted_prompts=processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
