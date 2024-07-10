@@ -144,6 +144,7 @@ parser.add_argument("--resume_from",type=str,default=None)
 parser.add_argument("--reward_function",default="clip",type=str,help="reward function: resnet dcgan or clip kmeans")
 parser.add_argument("--center_list_path",type=str,default="test_centers.npy", help="path for np files that are centers of the clusters for k means")
 parser.add_argument("--lr",type=float,default=3e-4)
+parser.add_argument("--loss_coefficient",type=float,default=1.0)
 
 parser.add_argument("--dcgan_repo_id",type=str,help="hf repo whre dcgan discriminator weights are",default="jlbaker361/dcgan-vanilla")
 parser.add_argument("--text_col_name",type=str,default="text",help="name of text col for captions in dataset")
@@ -285,7 +286,8 @@ if __name__=='__main__':
             prompt_fn,
             pipeline,
             image_samples_hook
-            ,image_dim=args.image_dim
+            ,image_dim=args.image_dim,
+            loss_coefficient=args.loss_coefficient
         )
         print(f"acceleerate device {trainer.accelerator.device}")
         tracker=trainer.accelerator.get_tracker("wandb").run
