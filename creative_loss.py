@@ -21,6 +21,7 @@ from PIL import Image
 
 cache_dir="/scratch/jlb638/trans_cache"
 from bert_score.scorer import BERTScorer
+from bert_score import score
 
 def pt_to_numpy(images: torch.FloatTensor) -> np.ndarray:
     """
@@ -303,9 +304,10 @@ def llava_prompt_alignment(accelerator:Accelerator=None):
     if accelerator is not None:
         model=model.to(accelerator.device)
         model=accelerator.prepare(model)
-        b_scorer_object=BERTScorer(lang="en",device=accelerator.device)
+        #b_scorer_object=BERTScorer(lang="en",device=accelerator.device)
     else:
-        b_scorer_object=BERTScorer(lang="en")
+        pass
+        #b_scorer_object=BERTScorer(lang="en")
     query_prompt = "USER: <image>\nWhat's the content of the image? ASSISTANT:"
     
     @torch.no_grad()
@@ -313,12 +315,18 @@ def llava_prompt_alignment(accelerator:Accelerator=None):
         inputs = processor(text=[query_prompt for _ in images], images=images, return_tensors="pt")
         generate_ids = model.generate(**inputs, max_new_tokens=15)
         predicted_prompts=processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        target="ASSISTANT: In the image,"
+        target="ASSISTANT:"
         def get_response(text):
             index=text.find(target)+len(target)
             return text[index:]
+        print(predicted_prompts)
         cands=[get_response(text) for text in predicted_prompts]
-        p,r,f=b_scorer_object.score(cands,prompts)
+        print(cands)
+        print(prompts)
+        if accelerator is not None:
+            p,r,f=score(cands,prompts,device=accelerator.device,lang="en")
+        else:
+            p,r,f=score(cands,prompts,leng="en")
         rewards=f.cpu().detach().numpy()
         
         return rewards,{}
