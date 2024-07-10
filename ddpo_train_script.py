@@ -262,36 +262,10 @@ if __name__=='__main__':
         args.image_dir="images"
         os.makedirs(args.image_dir, exist_ok=True)
     image_samples_hook=get_image_sample_hook(args.image_dir)
+
     
-    for e in range(start_epoch,args.num_epochs):
-        config=DDPOConfig(
-            num_epochs=1,
-            train_learning_rate=args.lr,
-            train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
-            sample_num_steps=args.sample_num_steps,
-            sample_batch_size=args.sample_batch_size,
-            train_batch_size=args.train_batch_size,
-            sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
-            mixed_precision=args.mixed_precision,
-            tracker_project_name="ddpo",
-            log_with="wandb",
-            accelerator_kwargs={
-                #"project_dir":args.output_dir
-            },
-            #project_kwargs=project_kwargs
-        )
-        trainer = BetterDDPOTrainer(
-            config,
-            reward_fn,
-            prompt_fn,
-            pipeline,
-            image_samples_hook
-            ,image_dim=args.image_dim,
-            loss_coefficient=args.loss_coefficient
-        )
-        print(f"acceleerate device {trainer.accelerator.device}")
-        tracker=trainer.accelerator.get_tracker("wandb").run
-        trainer.train()
+    
+    def post_epoch_fn(e:int, trainer:BetterDDPOTrainer):
         save_lora_weights(pipeline, args.output_dir)
         if e%5==0:
             checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
@@ -309,6 +283,37 @@ if __name__=='__main__':
                 tracker.log({f"{validation_prompt}":wandb.Image(validation_path)},tracker.step)
             except PIL.UnidentifiedImageError:
                 pass
+
+    #for e in range(start_epoch,args.num_epochs):
+    config=DDPOConfig(
+        num_epochs=args.num_epochs,
+        train_learning_rate=args.lr,
+        train_gradient_accumulation_steps=args.train_gradient_accumulation_steps,
+        sample_num_steps=args.sample_num_steps,
+        sample_batch_size=args.sample_batch_size,
+        train_batch_size=args.train_batch_size,
+        sample_num_batches_per_epoch=args.sample_num_batches_per_epoch,
+        mixed_precision=args.mixed_precision,
+        tracker_project_name="ddpo",
+        log_with="wandb",
+        accelerator_kwargs={
+            #"project_dir":args.output_dir
+        },
+        per_prompt_stat_tracking=True,
+        #project_kwargs=project_kwargs
+    )
+    trainer = BetterDDPOTrainer(
+        config,
+        reward_fn,
+        prompt_fn,
+        pipeline,
+        image_samples_hook
+        ,image_dim=args.image_dim,
+        loss_coefficient=args.loss_coefficient
+    )
+    print(f"acceleerate device {trainer.accelerator.device}")
+    tracker=trainer.accelerator.get_tracker("wandb").run
+    trainer.train(post_epoch_fn=post_epoch_fn)
 
     end=time.time()
     seconds=end-start

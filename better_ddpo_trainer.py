@@ -433,3 +433,15 @@ class BetterDDPOTrainer(DDPOTrainer):
                     global_step += 1
                     info = defaultdict(list)
         return global_step
+    
+    def train(self, epochs: Optional[int] = None, post_epoch_fn: Optional[Callable]=None):
+        """
+        Train the model for a given number of epochs
+        """
+        global_step = 0
+        if epochs is None:
+            epochs = self.config.num_epochs
+        for epoch in range(self.first_epoch, epochs):
+            global_step = self.step(epoch, global_step)
+            if post_epoch_fn is not None:
+                post_epoch_fn(epoch,self)
