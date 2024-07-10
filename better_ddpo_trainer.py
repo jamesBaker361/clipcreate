@@ -63,7 +63,8 @@ class BetterDDPOTrainer(DDPOTrainer):
         sd_pipeline: DDPOStableDiffusionPipeline,
         image_samples_hook: Optional[Callable[[Any, Any, Any], Any]] = None,
         accelerator: Optional[Accelerator] =None,
-        image_dim: Optional[float] =512
+        image_dim: Optional[float] =512,
+        loss_coefficient: Optional[float] =1.0
     ):
         if image_samples_hook is None:
             warn("No image_samples_hook provided; no images will be logged")
@@ -73,6 +74,7 @@ class BetterDDPOTrainer(DDPOTrainer):
         self.reward_fn = reward_function
         self.config = config
         self.image_samples_callback = image_samples_hook
+        self.loss_coefficient=loss_coefficient
 
         accelerator_project_config = ProjectConfiguration(**self.config.project_kwargs)
 
@@ -410,7 +412,7 @@ class BetterDDPOTrainer(DDPOTrainer):
                     info["clipfrac"].append(clipfrac)
                     info["loss"].append(loss)
 
-                    self.accelerator.backward(loss)
+                    self.accelerator.backward(self.loss_coefficient*loss)
                     if self.accelerator.sync_gradients:
                         self.accelerator.clip_grad_norm_(
                             self.trainable_layers.parameters()
