@@ -326,7 +326,7 @@ def llava_prompt_alignment(accelerator:Accelerator=None):
         if accelerator is not None:
             p,r,f=score(cands,prompts,device=accelerator.device,lang="en")
         else:
-            p,r,f=score(cands,prompts,leng="en")
+            p,r,f=score(cands,prompts,lang="en")
         rewards=f.cpu().detach().numpy()
         
         return rewards,{}
