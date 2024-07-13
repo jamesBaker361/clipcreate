@@ -24,6 +24,7 @@ from aesthetic_reward import aesthetic_scorer,hf_hub_aesthetic_model_id,hf_hub_a
 import datetime
 import PIL
 from huggingface_hub import HfApi,snapshot_download,create_repo
+from experiment_helpers.gpu_details import print_details
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
@@ -169,14 +170,7 @@ parser.add_argument("--use_accelerator_reward_fn",action="store_true")
 parser.add_argument("--n_validation",type=int,default=2)
 
 if __name__=='__main__':
-    for slurm_var in ["SLURMD_NODENAME","SBATCH_CLUSTERS", 
-                      "SBATCH_PARTITION","SLURM_JOB_PARTITION",
-                      "SLURM_NODEID","SLURM_MEM_PER_GPU",
-                      "SLURM_MEM_PER_CPU","SLURM_MEM_PER_NODE","SLURM_JOB_ID"]:
-        try:
-            print(slurm_var, os.environ[slurm_var])
-        except:
-            print(slurm_var, "doesnt exist")
+    print_details()
     args = parser.parse_args()
     print(args)
     current_date_time = datetime.datetime.now()
