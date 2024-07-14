@@ -18,6 +18,7 @@ import numpy as np
 import datetime
 import random
 from count_params import print_trainable_parameters
+import torch.nn.functional as F
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -98,6 +99,9 @@ def get_gradient_penalty(gradients,gp_weight):
     return gp_weight * ((gradients_norm - 1) ** 2).mean()
 
 def training_loop(args):
+    softmax = torch.nn.Softmax(dim=1) # discriminator doesn't have softmax layer()
+    loss_bce = torch.nn.BCELoss()
+    loss_cls = torch.nn.CrossEntropyLoss()  # includes logSoftmax
     accelerator = Accelerator(log_with="wandb")
     accelerator.init_trackers(project_name=args.project_name,config=vars(args))
     device=accelerator.device
@@ -285,12 +289,11 @@ def training_loop(args):
     fake_label_int = 0.
     print(f"starting at epoch {start_epoch}")
     for e in range(start_epoch,args.epochs):
-        style_classification_loss_sum=0.
-        fake_binary_loss_sum=0.
-        real_binary_loss_sum=0.
-        style_ambiguity_loss_sum=0.
-        reverse_fake_binary_loss_sum=0.
-        difference_loss_sum=0.
+        D_x_binary_sum=0.0
+        D_x_style_sum=0.0
+        D_g_binary_sum=0.0
+        G_g_binary_sum=0.0
+        G_g_style_sum=0.0
         start=time.time()
         torch.cuda.empty_cache()
         accelerator.free_memory()
@@ -301,8 +304,55 @@ def training_loop(args):
 
             gen_optimizer.zero_grad()
             disc_optimizer.zero_grad()
+
+            real_binary,real_style=disc(real_images,text_encoding)
+            fake_images=gen(noise, text_encoding)
+            fake_binary,fake_style=disc(fake_images.detach(),text_encoding)
+
+            err_d_r=loss_bce(real_binary, real_vector)
+            err_d_cls=loss_cls(real_style, real_labels)
+
+            err = err_d_r + err_d_cls
+            err.backward()
+
+            D_x_binary = real_binary.mean().item()
+            D_g_binary_sum+=D_x_binary
+            D_x_style=real_style.mean().item()
+            D_x_style_sum+=D_x_style
+
+            err_d_f=loss_bce(fake_binary,fake_vector)
+            err_d_f.backward()
+
+            D_g_binary=fake_binary.mean().item()
+            D_g_binary_sum+=D_g_binary
+
+            disc_optimizer.step()
+
+            #gen training?
+            fake_binary,fake_style=disc(fake_images,text_encoding)
+            err_g_r = loss_bce(fake_binary, real_vector)
+            err_g_ambiguity = loss_bce( F.softmax(F.sigmoid(fake_style), dim=1), uniform)
+
+            G_g_style=err_g_ambiguity.mean().item()
+            G_g_style_sum+=G_g_style
+
+            err_g = err_g_r + err_g_ambiguity
+            err_g.backward()
+
+            G_g_binary = fake_binary.mean().item()
+            G_g_binary_sum+=G_g_binary
+            gen_optimizer.step()
+
+
+            accelerator.log({
+                "Discriminator_real_binary":D_x_binary,
+                "Discriminator_real_style":D_x_style,
+                "Discriminator_fake_binary":D_g_binary,
+                "Generator_fake_style":G_g_style,
+                "Generator_fake_binary":G_g_binary
+            })
             
-            for _ in range(args.n_disc_steps):
+            '''for _ in range(args.n_disc_steps):
                 #real loss discirinator
                 real_binary,real_style=disc(real_images,text_encoding)
                 real_labels=real_labels.to(real_style.dtype)
@@ -372,7 +422,7 @@ def training_loop(args):
                 fake_binary_loss_sum+=torch.sum(fake_binary_loss)
                 real_binary_loss_sum+=torch.sum(real_binary_loss)
             style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
-            reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)
+            reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)'''
         
         test_image=gen(constant_noise, constant_text_encoding)
         pil_test_image=ToPILImage()( test_image[0])
@@ -380,15 +430,13 @@ def training_loop(args):
         pil_test_image.save(path)
 
         accelerator.log({
-            "difference_loss":difference_loss_sum,
-            "style_classification":style_classification_loss_sum,
-            "fake_binary": fake_binary_loss_sum,
-            "real_binary":real_binary_loss_sum,
-            "style_ambiguity":style_ambiguity_loss_sum,
-            "reverse_fake_binary":reverse_fake_binary_loss_sum,
-            "test_image": wandb.Image(path)
-
-        },step=e)
+                "Discriminator_real_binary_sum":D_x_binary_sum,
+                "Discriminator_real_style_sum":D_x_style_sum,
+                "Discriminator_fake_binary_sum":D_g_binary_sum,
+                "Generator_fake_style_sum":G_g_style_sum,
+                "Generator_fake_binary_sum":G_g_binary_sum,
+                "test_image": wandb.Image(path)
+            })
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
