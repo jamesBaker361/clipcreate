@@ -53,6 +53,7 @@ parser.add_argument("--use_gp",default=False,type=bool,help="whether to use grad
 parser.add_argument("--gp_weight",type=float,default=10)
 parser.add_argument("--beta_0",type=float,default=0.5)
 parser.add_argument("--project_name",type=str,default="creativity")
+parser.add_argument("--n_test_images",type=int,default=3)
 
 def freeze_model(model):
     for param in model.parameters():
@@ -266,10 +267,14 @@ def training_loop(args):
                                                                                                            disc, disc_optimizer, training_dataloader,
                                                                                                            util_dataloader)
     
-    for batch,util_vectors in zip(training_dataloader,util_dataloader):
+    constant_noise_list=[]
+    for x,(batch,util_vectors) in enumerate(zip(training_dataloader,util_dataloader)):
+        if x>=args.n_test_images:
+            break
         constant_noise,_real_vector,_fake_vector,_uniform = util_vectors
         _real_images, _real_labels,constant_text_encoding = batch
-        break
+        constant_noise_list.append(constant_noise)
+
     classification_loss=torch.nn.CrossEntropyLoss()
     if args.class_loss=="mse":
         classification_loss=torch.nn.MSELoss()
@@ -423,11 +428,19 @@ def training_loop(args):
                 real_binary_loss_sum+=torch.sum(real_binary_loss)
             style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
             reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)'''
-        
-        test_image=gen(constant_noise, constant_text_encoding)
-        pil_test_image=ToPILImage()( test_image[0])
-        path="tmp.png"
-        pil_test_image.save(path)
+        for i in range(args.n_test_images):
+            test_image=gen(constant_noise_list[i], constant_text_encoding)
+            pil_test_image=ToPILImage()( test_image[0])
+            path=f"tmp.png_{i}"
+            pil_test_image.save(path)
+            try:
+                accelerator.log({
+                    f"test_image_{i}":wandb.Image(path)
+                })
+            except:
+                accelerator.log({
+                    f"test_image_{i}":wandb.Image(pil_test_image)
+                })
 
         accelerator.log({
                 "Discriminator_real_binary_sum":D_x_binary_sum,
@@ -435,7 +448,6 @@ def training_loop(args):
                 "Discriminator_fake_binary_sum":D_g_binary_sum,
                 "Generator_fake_style_sum":G_g_style_sum,
                 "Generator_fake_binary_sum":G_g_binary_sum,
-                "test_image": wandb.Image(path)
             })
 
         end=time.time()
