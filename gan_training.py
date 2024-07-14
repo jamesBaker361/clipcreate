@@ -331,7 +331,7 @@ def training_loop(args):
             #gen training?
             fake_binary,fake_style=disc(fake_images,text_encoding)
             err_g_r = loss_bce(fake_binary, real_vector)
-            err_g_ambiguity = loss_bce( F.softmax(F.sigmoid(fake_style), dim=1), uniform)
+            err_g_ambiguity = args.style_lambda * loss_bce( F.softmax(F.sigmoid(fake_style), dim=1), uniform)
 
             G_g_style=err_g_ambiguity.mean().item()
             G_g_style_sum+=G_g_style
