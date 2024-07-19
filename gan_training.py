@@ -111,12 +111,14 @@ def training_loop(args):
     np.random.seed(args.seed)
 
     os.makedirs(args.output_dir,exist_ok=True)
+    dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
+    style_list=list(dataset.style_set)
     gen=Generator(args.gen_z_dim,args.image_dim,args.conditional)
     gen.apply(weights_init)
     print("gen main:")
     print(gen.main)
     print_trainable_parameters(gen.main)
-    disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,args.style_list,args.conditional,args.wasserstein)
+    disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,style_list,args.conditional,args.wasserstein)
     print("disc main")
     print(disc.main)
     print_trainable_parameters(disc.main)
@@ -126,7 +128,6 @@ def training_loop(args):
     print("style")
     print(disc.style_layers)
     print_trainable_parameters(disc.style_layers)
-    dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
 
     start_epoch=0
 
@@ -185,11 +186,11 @@ def training_loop(args):
         print("using clip classifier")
         def clip_classifier(images):
             try:
-                inputs = processor(images=images,text=args.style_list, return_tensors="pt", padding=True)
+                inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
             except ValueError:
                 images=images+1
                 images=images/2
-                inputs = processor(images=images,text=args.style_list, return_tensors="pt", padding=True)
+                inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
             inputs['input_ids'] = inputs['input_ids'].to(device)
             inputs['attention_mask'] = inputs['attention_mask'].to(device)
             inputs['pixel_values'] = inputs['pixel_values'].to(device)
@@ -431,7 +432,7 @@ def training_loop(args):
         for i in range(args.n_test_images):
             test_image=gen(constant_noise_list[i], constant_text_encoding)
             pil_test_image=ToPILImage()( test_image[0])
-            path=f"tmp.png_{i}"
+            path=f"tmp_{i}.png"
             pil_test_image.save(path)
             try:
                 accelerator.log({

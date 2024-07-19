@@ -137,15 +137,16 @@ class GANDataset(torch.utils.data.Dataset):
                 print(f"runtime error for image {i} / {len(self.data)}")
         self.batch_size=batch_size
         limit=(len(self.data) // batch_size) *batch_size
+        print("data limit =",limit, "n batches = ", len(self.data) // batch_size)
         self.data=self.data[:limit]
-        style_set=set([style for style in hf_dataset["style"]])
-        encoding_dict={
-            style:[0.0 for _ in range(len(style_set))] for style in style_set
+        self.style_set=set([style for style in hf_dataset["style"]])
+        self.encoding_dict={
+            style:[0.0 for _ in range(len(self.style_set))] for style in self.style_set
         }
-        for i,style in enumerate(style_set):
-            encoding_dict[style][i]=1.0
-        targets=[encoding_dict[style] for style in hf_dataset["style"]][:limit]
-        self.targets = torch.LongTensor(targets)
+        for i,style in enumerate(self.style_set):
+            self.encoding_dict[style][i]=1.0
+        targets=[self.encoding_dict[style] for style in hf_dataset["style"]][:limit]
+        self.targets = torch.Tensor(targets)
         self.text_encoding_data=[torch.Tensor(self.sentence_trans.encode(t)) for t in hf_dataset["text"]][:limit]
         
     def __getitem__(self, index):
