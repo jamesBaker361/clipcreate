@@ -113,6 +113,9 @@ def training_loop(args):
     os.makedirs(args.output_dir,exist_ok=True)
     dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
     style_list=list(dataset.style_set)
+    print("style_list:")
+    for s in style_list:
+        print("\t",s)
     gen=Generator(args.gen_z_dim,args.image_dim,args.conditional)
     gen.apply(weights_init)
     print("gen main:")
