@@ -119,12 +119,13 @@ class GANDataset(torch.utils.data.Dataset):
         hf_dataset=load_dataset(hf_dataset_src,split=split)
 
         self.transform = transforms.Compose([
+            ImageCenterCrop(),
             MakeRGB(),
             transforms.ToTensor(),
+            transforms.Normalize( mean=[0.5,0.5,0.5], std=[0.5,0.5,0.5] ),
             SquarePad(),
             transforms.Resize(resize_dim),
-            transforms.CenterCrop(image_dim),
-            Rescale()
+            #transforms.CenterCrop(image_dim),
         ])
         self.sentence_trans=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
         self.data = []
