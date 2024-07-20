@@ -159,11 +159,11 @@ parser.add_argument("--adapter_name",type=str,default="default")
 parser.add_argument("--project_name",type=str,default="ddpo-creativity")
 
 parser.add_argument("--use_image_reward_extra",action="store_true",default="whether to use image reward in addition")
-parser.add_argument("--creativity_weight",type=float,default=0.5)
-parser.add_argument("--image_reward_weight",type=float,default=0.5)
+parser.add_argument("--creativity_weight",type=float,default=1.0)
+parser.add_argument("--image_reward_weight",type=float,default=1.0)
 
 parser.add_argument("--use_clip_prompt_alignment_extra",action="store_true")
-parser.add_argument("--clip_prompt_alignment_weight",type=float,default=0.5)
+parser.add_argument("--clip_prompt_alignment_weight",type=float,default=1.0)
 
 parser.add_argument("--use_llava_prompt_alignment_extra",action="store_true")
 parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
