@@ -8,7 +8,7 @@ adjective_list=["a","a cool","a happy","a sad"]
 subject_list=["man","woman","person"]
 verb_list=["walking", "reading", "eating", "running", "posing"]
 location_list=["in a park", "at home", "at work", "in the forest", "in a city"]
-style_list=["graffiti", "pop art", "disney", "anime", "comic book", "picture book", "medieval art"]
+style_list=["graffiti", "pop art", "anime", "comic book", "picture book"]
 negative="ugly, low resolution, blurry, horror"
 
 limit=700
@@ -49,14 +49,17 @@ for step in range(limit):
         num_inference_steps=40,
         denoising_end=0.8,
         output_type="latent",
+        negative_prompt=negative
     ).images
     image = refiner(
         prompt=text,
         num_inference_steps=40,
         denoising_start=0.8,
         image=image,
+        negative_prompt=negative
     ).images[0]
     src_dict["image"].append(image)
     if step % 100==0:
         Dataset.from_dict(src_dict).push_to_hub(target_dataset)
+        print("pushed at step ",step)
 print("all done :)))")
