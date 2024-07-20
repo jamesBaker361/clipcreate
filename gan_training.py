@@ -315,10 +315,12 @@ def training_loop(args):
             disc_optimizer.zero_grad()
 
             real_binary,real_style=disc(real_images,text_encoding)
+            real_style=torch.nn.Softmax(1)(real_style)
             fake_images=gen(noise, text_encoding)
             fake_binary,fake_style=disc(fake_images.detach(),text_encoding)
 
             err_d_r=loss_bce(real_binary, real_vector)
+            
             err_d_cls=loss_cls(real_style, real_labels)
 
             err = err_d_r + err_d_cls
@@ -340,12 +342,12 @@ def training_loop(args):
             #gen training?
             fake_binary,fake_style=disc(fake_images,text_encoding)
             err_g_r = loss_bce(fake_binary, real_vector)
-            err_g_ambiguity = args.style_lambda * loss_bce( F.softmax(F.sigmoid(fake_style), dim=1), uniform)
+            #err_g_ambiguity = args.style_lambda * loss_bce( F.softmax(fake_style, dim=1), uniform)
 
-            G_g_style=err_g_ambiguity.mean().item()
-            G_g_style_sum+=G_g_style
+            #G_g_style=err_g_ambiguity.mean().item()
+            #G_g_style_sum+=G_g_style
 
-            err_g = err_g_r + err_g_ambiguity
+            err_g = err_g_r #+ err_g_ambiguity
             err_g.backward()
 
             G_g_binary = fake_binary.mean().item()
@@ -357,7 +359,7 @@ def training_loop(args):
                 "Discriminator_real_binary":D_x_binary,
                 "Discriminator_real_style":D_x_style,
                 "Discriminator_fake_binary":D_g_binary,
-                "Generator_fake_style":G_g_style,
+                #"Generator_fake_style":G_g_style,
                 "Generator_fake_binary":G_g_binary
             })
             
