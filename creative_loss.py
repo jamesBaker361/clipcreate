@@ -265,6 +265,7 @@ def clip_prompt_alignment(accelerator:Accelerator=None):
                 print(f"image of type {type(images[0])}")
         else:
             print("type(images)",type(images))
+        #images[0].save(f"test_clip_images/{prompts[0]}.png")
         inputs = processor(images=images,text=prompts, return_tensors="pt", padding=True)
         if accelerator is not None:
             
