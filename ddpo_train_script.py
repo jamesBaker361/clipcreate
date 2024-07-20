@@ -13,6 +13,7 @@ from trl import DDPOConfig
 from better_ddpo_trainer import BetterDDPOTrainer
 from torchvision.transforms.functional import to_pil_image
 from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
+from datasets import load_dataset
 from peft import get_peft_model_state_dict
 import torch
 import time
@@ -138,6 +139,7 @@ parser.add_argument("--sample_num_steps",type=int,default=10, help="Number of sa
 parser.add_argument("--sample_batch_size",type=int,default=4, help="batch size for all gpus, must be >= train_batch_size")
 parser.add_argument("--train_gradient_accumulation_steps", type=int, default=1)
 parser.add_argument("--style_list",nargs="*",help="styles to be used")
+parser.add_argument("--dataset",type=str,default="jlbaker361/wikiart",help="dataset src of styles")
 parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
 parser.add_argument("--use_lora",type=bool,default=True)
 parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
@@ -188,7 +190,11 @@ if __name__=='__main__':
 
     style_list=args.style_list
     if style_list is None or len(style_list)<2:
-        style_list=WIKIART_STYLES
+        dataset=load_dataset(args.dataset,split="train")
+        style_set=set()
+        for row in dataset:
+            style_set.add(row["style"])
+        style_list=list(style_set)
     if args.reward_function == "clip":
         reward_fn=clip_scorer_ddpo(style_list)
     elif args.reward_function=="kmeans":
