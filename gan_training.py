@@ -279,6 +279,9 @@ def training_loop(args):
         _real_images, _real_labels,constant_text_encoding = batch
         constant_noise_list.append(constant_noise)
 
+    for x in range(5):
+        print(_real_labels[x])
+
     classification_loss=torch.nn.CrossEntropyLoss()
     if args.class_loss=="mse":
         classification_loss=torch.nn.MSELoss()
@@ -326,9 +329,9 @@ def training_loop(args):
             err = err_d_r + err_d_cls
             err.backward()
 
-            D_x_binary = real_binary.mean().item()
+            D_x_binary = err_d_r.mean().item()
             D_g_binary_sum+=D_x_binary
-            D_x_style=real_style.mean().item()
+            D_x_style=err_d_cls.mean().item()
             D_x_style_sum+=D_x_style
 
             err_d_f=loss_bce(fake_binary,fake_vector)
@@ -350,7 +353,7 @@ def training_loop(args):
             err_g = err_g_r + err_g_ambiguity
             err_g.backward()
 
-            G_g_binary = fake_binary.mean().item()
+            G_g_binary = err_g_r.mean().item()
             G_g_binary_sum+=G_g_binary
             gen_optimizer.step()
 
