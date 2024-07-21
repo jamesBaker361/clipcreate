@@ -315,7 +315,7 @@ def training_loop(args):
             disc_optimizer.zero_grad()
 
             real_binary,real_style=disc(real_images,text_encoding)
-            real_style=torch.nn.Softmax(1)(real_style)
+            #real_style=torch.nn.Softmax(1)(real_style)
             fake_images=gen(noise, text_encoding)
             fake_binary,fake_style=disc(fake_images.detach(),text_encoding)
 
