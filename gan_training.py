@@ -54,6 +54,7 @@ parser.add_argument("--gp_weight",type=float,default=10)
 parser.add_argument("--beta_0",type=float,default=0.5)
 parser.add_argument("--project_name",type=str,default="creativity")
 parser.add_argument("--n_test_images",type=int,default=3)
+parser.add_argument("--load_from_output",action="store_true")
 
 def freeze_model(model):
     for param in model.parameters():
@@ -146,7 +147,7 @@ def training_loop(args):
             print(f"No checkpoints found in {args.output_dir}")
             disc.apply(weights_init)
             gen.apply(weights_init)
-        else:
+        elif args.load_from_output:
             checkpoint_numbers = sorted([int(x.split("_")[-1]) for x in checkpoints])
             print(f"loading from checkpoint_{checkpoint_numbers[-1]}")
             disc_weight_path = os.path.join(
