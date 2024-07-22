@@ -31,9 +31,9 @@ def main(args):
     accelerator=Accelerator(log_with="wandb",mixed_precision=args.mixed_precision)
     accelerator.init_trackers(project_name=args.project_name,config=vars(args))
     if args.hub_model_id=="jlbaker361/vanilla":
-        pipe=StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
+        pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
     else:
-        pipe=get_pipeline_from_hf(args.hub_model_id,False,False,True,False,use_lora=True,pretrained_model_name="runwayml/stable-diffusion-v1-5").sd_pipeline
+        pipe=get_pipeline_from_hf(args.hub_model_id,False,False,True,False,use_lora=True,pretrained_model_name="stabilityai/stable-diffusion-2-base").sd_pipeline
     
     pipe=StableDiffusionPipeline(
         vae=pipe.vae,
