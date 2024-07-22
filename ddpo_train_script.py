@@ -54,7 +54,7 @@ def load_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,path:str
 
 faulthandler.enable()
 
-def get_prompt_fn(dataset_name,split,unconditional_fraction,text_col_name):
+def get_prompt_fn(prompt_set):
     '''try:
         hf_dataset=load_dataset(dataset_name,split=split)
     except:
@@ -66,9 +66,7 @@ def get_prompt_fn(dataset_name,split,unconditional_fraction,text_col_name):
     subject_list=["a man"," a woman"," a landscape"," nature"," a building"," an animal"," shapes", " an object"]
 
     def _fn():
-        if random.uniform(0.0,1.)<=unconditional_fraction:
-            return " ",{}
-        return random.choice(medium_list)+random.choice(subject_list),{}
+        return random.choice(prompt_set)
     
     return _fn
 
@@ -170,6 +168,13 @@ parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
 
 parser.add_argument("--use_accelerator_reward_fn",action="store_true")
 parser.add_argument("--n_validation",type=int,default=2)
+parser.add_argument("--prompt_set",type=str,default="all")
+
+prompt_set_dict={
+    "mediums":["painting","art","drawing"],
+    "subjects":["person","man","woman"],
+    "all":["painting","art","drawing","person","man","woman"]
+}
 
 if __name__=='__main__':
     print_details()
@@ -220,7 +225,7 @@ if __name__=='__main__':
     if args.use_llava_prompt_alignment_extra:
         llava_prompt_alignment_fn=llava_prompt_alignment(reward_accelerator)
         reward_fn=fuse_rewards(reward_fn,llava_prompt_alignment_fn,args.creativity_weight,args.llava_prompt_alignment_weight)
-    prompt_fn=get_prompt_fn(args.dataset_name, "train",args.unconditional_fraction,args.text_col_name)
+    prompt_fn=get_prompt_fn(prompt_set_dict[args.prompt_set])
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
         try:
