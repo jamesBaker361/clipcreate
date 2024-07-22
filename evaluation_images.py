@@ -49,7 +49,7 @@ def main(args):
     for i in range(args.limit):
         gen=torch.Generator()
         gen.manual_seed(i)
-        prompt=prompt_set[i%args.limit]
+        prompt=prompt_set[i%len(prompt_set)]
         image=pipe(prompt, num_inference_steps=args.num_inference_steps,generator=gen).images[0]
         
         src_dict["image"].append(image)
