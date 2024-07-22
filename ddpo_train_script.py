@@ -161,7 +161,7 @@ parser.add_argument("--creativity_weight",type=float,default=1.0)
 parser.add_argument("--image_reward_weight",type=float,default=1.0)
 
 parser.add_argument("--use_clip_prompt_alignment_extra",action="store_true")
-parser.add_argument("--clip_prompt_alignment_weight",type=float,default=1.0)
+parser.add_argument("--clip_prompt_alignment_weight",type=float,default=0.25)
 
 parser.add_argument("--use_llava_prompt_alignment_extra",action="store_true")
 parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
