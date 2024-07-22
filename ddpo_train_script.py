@@ -238,11 +238,9 @@ if __name__=='__main__':
     resume_from_path=None
     if args.output_dir is not None:
         os.makedirs(args.output_dir,exist_ok=True)
-    if args.resume_from is not None:
-        os.makedirs(args.resume_from,exist_ok=True)
     start_epoch=0
     if args.resume_from:
-        resume_from_path = os.path.normpath(os.path.expanduser(args.resume_from))
+        resume_from_path = os.path.normpath(os.path.expanduser(args.output_dir))
         if os.path.exists(resume_from_path):
             checkpoints = list(
                 filter(
