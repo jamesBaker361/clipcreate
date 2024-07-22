@@ -141,7 +141,7 @@ parser.add_argument("--dataset",type=str,default="jlbaker361/wikiart",help="data
 parser.add_argument("--sample_num_batches_per_epoch",type=int,default=8)
 parser.add_argument("--use_lora",type=bool,default=True)
 parser.add_argument("--mixed_precision",type=str, default="no",help="precision, one of no, fp16, bf16")
-parser.add_argument("--resume_from",type=str,default=None)
+parser.add_argument("--resume_from",action="store_true")
 parser.add_argument("--reward_function",default="clip",type=str,help="reward function: resnet dcgan or clip kmeans")
 parser.add_argument("--center_list_path",type=str,default="test_centers.npy", help="path for np files that are centers of the clusters for k means")
 parser.add_argument("--lr",type=float,default=3e-4)
