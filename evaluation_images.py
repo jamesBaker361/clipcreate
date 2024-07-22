@@ -72,8 +72,8 @@ def main(args):
         if i%10==0:
             print("finished image ",i)
 
-    Dataset.from_dict(src_dict).push_to_hub(f"jlbaker361/{args.output_hf_dataset}")
-    load_dataset(f"jlbaker361/{args.output_hf_dataset}")
+    Dataset.from_dict(src_dict).push_to_hub(args.output_hf_dataset)
+    load_dataset(args.output_hf_dataset)
 
 
 
