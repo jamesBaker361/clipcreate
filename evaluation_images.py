@@ -34,6 +34,19 @@ def main(args):
         pipe=StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
     else:
         pipe=get_pipeline_from_hf(args.hub_model_id,False,False,True,False,use_lora=True,pretrained_model_name="runwayml/stable-diffusion-v1-5").sd_pipeline
+    
+    pipe=StableDiffusionPipeline(
+        vae=pipe.vae,
+        text_encoder=pipe.text_encoder,
+        tokenizer=pipe.tokenizer,
+        unet=pipe.unet,
+        scheduler=pipe.scheduler,
+        safety_checker=None,
+        feature_extractor=None,
+        image_encoder=pipe.image_encoder,
+        requires_safety_checker=False
+    )
+    
     torch_dtype={
             "no":torch.float16,
             "fp16":torch.float16}[args.mixed_precision]
@@ -50,7 +63,7 @@ def main(args):
         gen=torch.Generator()
         gen.manual_seed(i)
         prompt=prompt_set[i%len(prompt_set)]
-        image=pipe(prompt, num_inference_steps=args.num_inference_steps,generator=gen).images[0]
+        image=pipe(prompt, num_inference_steps=args.num_inference_steps,generator=gen,safety_checker=None).images[0]
         
         src_dict["image"].append(image)
         src_dict["prompt"].append(prompt)
