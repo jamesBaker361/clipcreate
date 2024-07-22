@@ -225,7 +225,9 @@ if __name__=='__main__':
     if args.use_llava_prompt_alignment_extra:
         llava_prompt_alignment_fn=llava_prompt_alignment(reward_accelerator)
         reward_fn=fuse_rewards(reward_fn,llava_prompt_alignment_fn,args.creativity_weight,args.llava_prompt_alignment_weight)
-    prompt_fn=get_prompt_fn(prompt_set_dict[args.prompt_set])
+    prompt_set=prompt_set_dict[args.prompt_set]
+    print("using prompts ",prompt_set)
+    prompt_fn=get_prompt_fn(prompt_set)
     pipeline=BetterDefaultDDPOStableDiffusionPipeline(args.base_model,use_lora=True)
     if args.pretrained_model_name_or_path is not None:
         try:
