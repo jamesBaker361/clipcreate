@@ -66,7 +66,7 @@ def get_prompt_fn(prompt_set):
     subject_list=["a man"," a woman"," a landscape"," nature"," a building"," an animal"," shapes", " an object"]
 
     def _fn():
-        return random.choice(prompt_set)
+        return random.choice(prompt_set),{}
     
     return _fn
 
