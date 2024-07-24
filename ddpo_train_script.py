@@ -276,7 +276,7 @@ if __name__=='__main__':
             checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
             os.makedirs(checkpoint,exist_ok=True)
             save_lora_weights(pipeline, checkpoint)
-        validation_prompt_list=["painting of a man","picture of nature","a drawing of a woman","painting","drawing"][:args.n_validation]
+        validation_prompt_list=["painting","art","drawing","person","man","woman"]
         for validation_prompt in validation_prompt_list:
             generator=torch.Generator(trainer.accelerator.device)
             generator.manual_seed(123)
