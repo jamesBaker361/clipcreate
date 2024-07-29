@@ -170,7 +170,7 @@ parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
 parser.add_argument("--use_accelerator_reward_fn",action="store_true")
 parser.add_argument("--n_validation",type=int,default=2)
 parser.add_argument("--prompt_set",type=str,default="all")
-parser.add_argument("--n_evaluation",type=int,default=100)
+parser.add_argument("--n_evaluation",type=int,default=128)
 parser.add_argument("--output_hf_dataset",type=str,default="evaluation")
 
 prompt_set_dict={
