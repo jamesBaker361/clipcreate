@@ -26,6 +26,7 @@ import datetime
 import PIL
 from huggingface_hub import HfApi,snapshot_download,create_repo
 from experiment_helpers.gpu_details import print_details
+from datasets import Dataset,load_dataset
 
 def save_lora_weights(pipeline:BetterDefaultDDPOStableDiffusionPipeline,output_dir:str):
     state_dict=get_peft_model_state_dict(pipeline.sd_pipeline.unet, unwrap_compiled=True)
@@ -170,6 +171,7 @@ parser.add_argument("--use_accelerator_reward_fn",action="store_true")
 parser.add_argument("--n_validation",type=int,default=2)
 parser.add_argument("--prompt_set",type=str,default="all")
 parser.add_argument("--n_evaluation",type=int,default=100)
+parser.add_argument("--output_hf_dataset",type=str,default="evaluation")
 
 prompt_set_dict={
     "mediums":["painting","art","drawing"],
@@ -337,3 +339,27 @@ if __name__=='__main__':
     )
     snapshot_download(args.hub_model_id,repo_type="model")
     print("successful saving :)")
+    steps=[10,30]
+    for step in steps:
+        output_dataset=args.output_hf_dataset+f"_{step}"
+        src_dict={
+            "image":[],
+            "prompt":[],
+            "index":[]
+        }
+        for i in range(args.n_evaluation):
+            gen=torch.Generator()
+            gen.manual_seed(i)
+            prompt=prompt_set[i%len(prompt_set)]
+            image=pipeline.sd_pipeline(prompt, num_inference_steps=step,generator=gen,safety_checker=None).images[0]
+            
+            src_dict["image"].append(image)
+            src_dict["prompt"].append(prompt)
+            src_dict["index"].append(i)
+
+            if i%10==0:
+                print("finished image ",i)
+
+        Dataset.from_dict(src_dict).push_to_hub(output_dataset)
+        load_dataset(output_dataset)
+    print("made all images! :)))")
