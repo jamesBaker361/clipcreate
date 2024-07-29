@@ -169,6 +169,7 @@ parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
 parser.add_argument("--use_accelerator_reward_fn",action="store_true")
 parser.add_argument("--n_validation",type=int,default=2)
 parser.add_argument("--prompt_set",type=str,default="all")
+parser.add_argument("--n_evaluation",type=int,default=100)
 
 prompt_set_dict={
     "mediums":["painting","art","drawing"],
@@ -273,9 +274,11 @@ if __name__=='__main__':
     def post_epoch_fn(e:int, trainer:BetterDDPOTrainer):
         save_lora_weights(pipeline, args.output_dir)
         if e%5==0:
+            pipeline.sd_pipeline.unet.push_to_hub(args.hub_model_id)
             checkpoint=os.path.join(args.output_dir, f"checkpoint_{e}")
             os.makedirs(checkpoint,exist_ok=True)
             save_lora_weights(pipeline, checkpoint)
+            
         validation_prompt_list=["painting","art","drawing","person","man","woman"]
         for validation_prompt in validation_prompt_list:
             generator=torch.Generator(trainer.accelerator.device)
