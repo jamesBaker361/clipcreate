@@ -3,12 +3,16 @@
 import os
 import argparse
 from experiment_helpers.gpu_details import print_details
-from experiment_helpers.lora_loading import load_lora_weights,get_pipeline_from_hf
+from experiment_helpers.utils import print_trainable_parameters
+from experiment_helpers.lora_loading import load_lora_weights,get_pipeline_from_hf,fix_lora_weights
+from better_pipeline import BetterDefaultDDPOStableDiffusionPipeline
 from accelerate import Accelerator
 from diffusers import StableDiffusionPipeline
 from datasets import Dataset,load_dataset
+from huggingface_hub import hf_hub_download
 import torch
 import time
+from peft import PeftModel, PeftConfig
 
 parser=argparse.ArgumentParser()
 
@@ -33,8 +37,23 @@ def main(args):
     if args.hub_model_id=="jlbaker361/vanilla":
         pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
     else:
-        pipe=get_pipeline_from_hf(args.hub_model_id,False,False,True,False,use_lora=True,pretrained_model_name="stabilityai/stable-diffusion-2-base").sd_pipeline
+        #pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
+        pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base",use_lora=True)
+        print_trainable_parameters(pipeline.sd_pipeline.unet)
+        weight_path=hf_hub_download(repo_id=args.hub_model_id,filename="pytorch_lora_weights.safetensors", repo_type="model")
+        #load_weights(pipeline,weight_path,args.adapter_name)
+        load_lora_weights(pipeline,weight_path,["weight","default.weight"])
+        #print_trainable_parameters(pipeline.sd_pipeline.unet)
+        pipe=pipeline.sd_pipeline
     
+    '''try:
+        pipe.unet=PeftModel.from_pretrained(pipe.unet,args.hub_model_id)
+    except:
+        fix_lora_weights(args.hub_model_id)
+        pipe.unet=PeftModel.from_pretrained(pipe.unet,args.hub_model_id)'''
+    print("after loading???")
+    print_trainable_parameters(pipe.unet)
+
     pipe=StableDiffusionPipeline(
         vae=pipe.vae,
         text_encoder=pipe.text_encoder,
@@ -46,6 +65,11 @@ def main(args):
         image_encoder=pipe.image_encoder,
         requires_safety_checker=False
     )
+    
+
+    print("after loading???")
+    print_trainable_parameters(pipe.unet)
+
     
     torch_dtype={
             "no":torch.float16,
