@@ -94,6 +94,8 @@ def get_image_embeddings(image_list):
 
 parser=argparse.ArgumentParser()
 parser.add_argument("--dataset_list",nargs="*",default=None)
+parser.add_argument("--name",type=str,default="groups")
+parser.add_argument("--size",type=int,default=100)
 
 def main(args):
     all_images=[]
@@ -198,16 +200,18 @@ def main(args):
             label=cls,
         )
 
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    plt.title('Scatter Plot with Different Classes')
+    #plt.xlabel('X-axis')
+    #plt.ylabel('Y-axis')
+    #plt.title('Scatter Plot with Different Classes')
 
     # Add a legend
     plt.legend(title='Classes')
-    plt.savefig(f'plots/scatter_plot_all.png') 
+    plt.savefig(f'plots/scatter_plot_all_{args.name}.png') 
 
-    image_grid=create_image_grid_with_labels(grid, ["a","b","c"],["a","b","c"],(250,250))
-    image_grid.save("plots/grid.png")
+    label_list=[f"M{i}" for i in range(len(args.dataset_list))]
+
+    image_grid=create_image_grid_with_labels(grid,label_list,label_list,(args.size,args.size))
+    image_grid.save(f"plots/grid_{args.name}.png")
 
 
 
@@ -220,4 +224,4 @@ if __name__=="__main__":
     end=time.time()
     seconds=end-start
     hours=seconds/(60*60)
-    print(f"successful training :) time elapsed: {seconds} seconds = {hours} hours")
+    print(f"successful :) time elapsed: {seconds} seconds = {hours} hours")
