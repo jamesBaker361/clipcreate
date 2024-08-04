@@ -362,5 +362,8 @@ if __name__=='__main__':
                 print("finished image ",i)
 
         Dataset.from_dict(src_dict).push_to_hub(output_dataset)
-        load_dataset("jlbaker361/"+output_dataset)
+        try:
+            load_dataset("jlbaker361/"+output_dataset)
+        except:
+            pass
     print("made all images! :)))")
