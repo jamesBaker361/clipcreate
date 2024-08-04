@@ -342,6 +342,7 @@ if __name__=='__main__':
     steps=[10,30]
     for step in steps:
         output_dataset=args.output_hf_dataset+f"_{step}"
+        print("output_dataset",output_dataset)
         src_dict={
             "image":[],
             "prompt":[],
@@ -361,5 +362,5 @@ if __name__=='__main__':
                 print("finished image ",i)
 
         Dataset.from_dict(src_dict).push_to_hub(output_dataset)
-        load_dataset(output_dataset)
+        load_dataset("jlbaker361/"+output_dataset)
     print("made all images! :)))")
