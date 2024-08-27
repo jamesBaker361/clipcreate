@@ -127,7 +127,7 @@ class GANDataset(torch.utils.data.Dataset):
             transforms.Resize(resize_dim),
             #transforms.CenterCrop(image_dim),
         ])
-        self.sentence_trans=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
+        #self.sentence_trans=SentenceTransformer('sentence-transformers/msmarco-distilbert-cos-v5')
         self.data = []
         for i,(img, text) in enumerate(zip(hf_dataset["image"],hf_dataset["text"])):
             try:
@@ -148,7 +148,7 @@ class GANDataset(torch.utils.data.Dataset):
             self.encoding_dict[style][i]=1.0
         targets=[self.encoding_dict[style] for style in hf_dataset["style"]][:limit]
         self.targets = torch.Tensor(targets)
-        self.text_encoding_data=[torch.Tensor(self.sentence_trans.encode(t)) for t in hf_dataset["text"]][:limit]
+        self.text_encoding_data=[t for t in hf_dataset["text"]][:limit]
         
     def __getitem__(self, index):
 
