@@ -280,8 +280,6 @@ def training_loop(args):
         _real_images, _real_labels,constant_text_encoding = batch
         constant_noise_list.append(constant_noise)
 
-    for x in range(5):
-        print(_real_labels[x])
 
     classification_loss=torch.nn.CrossEntropyLoss()
     if args.class_loss=="mse":
