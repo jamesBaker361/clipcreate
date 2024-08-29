@@ -112,7 +112,7 @@ def training_loop(args):
     np.random.seed(args.seed)
 
     os.makedirs(args.output_dir,exist_ok=True)
-    dataset=GANDataset(args.dataset_name,args.image_dim,args.resize_dim,args.batch_size,"train")
+    dataset=GANDataset(args.dataset_name,args.image_dim,args.image_dim,args.batch_size,"train")
     style_list=list(dataset.style_set)
     print("style_list:")
     for s in style_list:
