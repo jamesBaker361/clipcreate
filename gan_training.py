@@ -40,7 +40,7 @@ parser.add_argument("--disc_init_dim",type=int,default=32)
 parser.add_argument("--disc_final_dim",type=int,default=512)
 
 parser.add_argument("--style_list",nargs="+",default=WIKIART_STYLES)
-parser.add_argument("--resize_dim",type=int,default=768)
+parser.add_argument("--resize_dim",type=int,default=512)
 
 parser.add_argument("--seed", type=int, default=1234, help="A seed for reproducible training.")
 parser.add_argument("--classifier_only",default=False,help="whether to only use style classifier")
@@ -213,6 +213,10 @@ def training_loop(args):
         _real_images, _real_labels,constant_text_encoding = batch
         constant_noise_list.append(constant_noise)
 
+    for batch in training_dataloader:
+        print(len(batch))
+        print(batch[0].size())
+        break
 
     classification_loss=torch.nn.CrossEntropyLoss()
     if args.class_loss=="mse":
