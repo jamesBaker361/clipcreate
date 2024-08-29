@@ -90,8 +90,8 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
                 images=[
                     numpy_to_pil(pt_to_numpy(image)) for image in images
                 ]
-            elif type(images[0])!=Image:
-                print(f"image of type {type(images[0])}")
+            '''elif type(images[0])!=Image:
+                print(f"image of type {type(images[0])}")'''
         else:
             print("type(images)",type(images))
 
@@ -128,6 +128,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     
     def transform_composition(images)->torch.tensor:
         pil_to_tensor=PILToTensor()
+        #print(type(images))
         if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
             if torch.max(images)<=1.0 and torch.min(images)>=0: #between [0,1] -> [-1,1]
                 images=(images*2)-1.0
@@ -143,11 +144,14 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
                     images=[
                         (img/128)-1.0 for img in images
                     ]
-            if type(images[0])==Image:
+            if type(images[0])==Image or type(images[0])==Image.Image:
                 images=[
                     pil_to_tensor(img)/128 -1.0 for img in images
                 ]
+            #print(type(images[0]))
             images=torch.stack(images)
+        if device is not None:
+            images=images.to(device)
         return images
 
 
@@ -155,7 +159,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
     @torch.no_grad()
     def _fn(images, prompts, metadata):
         images=transform_composition(images)
-        images=images.cpu()
+        #images=images.cpu()
         _,probs=model(images,None) #
         n_image=images.shape[0]
         uniform=torch.full((n_image, n_classes), fill_value=1.0/n_classes,device=device)
@@ -163,7 +167,7 @@ def elgammal_dcgan_scorer_ddpo(style_list,image_dim, resize_dim, disc_init_dim,d
         for x in range(n_image):
             y_true=[1.0/n_classes] * n_classes
             y_pred=probs[x]
-            scores.append(-1.0 * classification_loss(torch.tensor(y_pred),torch.tensor(y_true)))
+            scores.append(-1.0 * classification_loss(torch.tensor(y_pred).cpu(),torch.tensor(y_true).cpu()))
         return scores, {}
     
     return _fn
