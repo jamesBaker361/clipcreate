@@ -181,74 +181,7 @@ def training_loop(args):
     print(y.size())
     print(y.size()[-1])
     n_classes=y.size()[-1]
-    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14",do_rescale=False)
-
-    model,processor=accelerator.prepare(model,processor)
-    freeze_model(model)
-    if args.use_clip:
-        print("using clip classifier")
-        def clip_classifier(images):
-            try:
-                inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
-            except ValueError:
-                images=images+1
-                images=images/2
-                inputs = processor(images=images,text=style_list, return_tensors="pt", padding=True)
-            inputs['input_ids'] = inputs['input_ids'].to(device)
-            inputs['attention_mask'] = inputs['attention_mask'].to(device)
-            inputs['pixel_values'] = inputs['pixel_values'].to(device)
-            outputs = model(**inputs)
-            logits_per_image = outputs.logits_per_image # this is the image-text similarity score
-            return logits_per_image
-        
-    if args.use_kmeans:
-        def cosine_similarity(vector1, vector2):
-            """
-            Calculate cosine similarity between two vectors.
-            
-            Args:
-            vector1 (numpy array): First vector.
-            vector2 (numpy array): Second vector.
-            
-            Returns:
-            float: Cosine similarity between the two input vectors.
-            """
-            dot_product = np.dot(vector1, vector2)
-            norm_vector1 = np.linalg.norm(vector1)
-            norm_vector2 = np.linalg.norm(vector2)
-            
-            if norm_vector1 == 0 or norm_vector2 == 0:
-                return 0  # Return 0 if one of the vectors is a zero vector
-            
-            return dot_product / (norm_vector1 * norm_vector2)
-        print("using kmeans classifier")
-        center_list=np.load(args.center_list_path)
-        n_classes=len(center_list)
-        def kmeans_classifier(images):
-            try:
-                inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
-            except ValueError:
-                images=images+1
-                images=images/2
-                inputs = processor(images=images,text="text", return_tensors="pt", padding=True)
-            inputs['input_ids'] = inputs['input_ids'].to(device)
-            inputs['attention_mask'] = inputs['attention_mask'].to(device)
-            inputs['pixel_values'] = inputs['pixel_values'].to(device)
-            outputs = model(**inputs)
-            image_embeds=outputs.image_embeds.cpu().numpy()
-            y_pred_list=[]
-            for x in image_embeds:
-                y_pred=[]
-                for center in center_list:
-                    try:
-                        dist=1.0/ np.linalg.norm(center - x)
-                    except ZeroDivisionError:
-                        dist=100000
-                    y_pred.append(dist)
-                #y_pred=softmax(y_pred)
-                y_pred_list.append(y_pred)
-            return torch.tensor(y_pred_list).to(device)
+    
     util_dataset=UtilDataset(args.gen_z_dim, len(dataset),n_classes)
     try:
         repo_id=create_repo(repo_id=args.repo_id, exist_ok=True).repo_id
