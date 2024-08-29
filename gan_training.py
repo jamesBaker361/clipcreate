@@ -397,17 +397,20 @@ def training_loop(args):
 
         end=time.time()
         print(f"epoch {e} elapsed {end-start} seconds")
-        if e%5==0:
+        if e%10==0:
             checkpoint_dir=f"{args.output_dir}/checkpoint_{e}"
             os.makedirs(checkpoint_dir,exist_ok=True)
             torch.save(gen.state_dict(),f"{checkpoint_dir}/gen-weights.pickle")
             torch.save(disc.state_dict(),f"{checkpoint_dir}/disc-weights.pickle")
-            upload_folder(
-                repo_id=repo_id,
-                folder_path=args.output_dir,
-                commit_message=f"epoch {e}",
-                ignore_patterns=["step_*", "epoch_*"],
-            )
+            try:
+                upload_folder(
+                    repo_id=repo_id,
+                    folder_path=args.output_dir,
+                    commit_message=f"epoch {e}",
+                    ignore_patterns=["step_*", "epoch_*"],
+                )
+            except:
+                pass
         accelerator.free_memory()
         torch.cuda.empty_cache()
     tracker_url=accelerator.get_tracker("wandb").run.get_url()
