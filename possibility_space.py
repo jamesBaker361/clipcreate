@@ -10,6 +10,11 @@ from sklearn.manifold import TSNE
 import time
 import matplotlib.pyplot as plt
 from PIL import Image,ImageDraw,ImageFont
+import matplotlib.font_manager as fm
+
+#font_prop = fm.FontProperties(fname="times_new_roman.ttf")
+#fm.fontManager.ttflist.append(font_prop)
+#plt.rcParams['font.family'] = font_prop.get_name()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -52,9 +57,10 @@ def create_image_grid_with_labels(images, row_labels, col_labels, image_size, la
     # Create a new blank image with a white background
     grid_img = Image.new('RGB', (grid_width, grid_height), 'white')
     draw = ImageDraw.Draw(grid_img)
-
+    font=ImageFont.truetype("/home/jlb638/Desktop/clipcreat/times_new_roman.ttf")
+    #font=ImageFont.load("/home/jlb638/Desktop/clipcreat/times_new_roman.ttf")
     # Load a default font
-    font = ImageFont.load_default()
+    #font = ImageFont.load_default()
 
     # Place each image in the correct position based on the labels
     for i in range(len(images)):
@@ -209,9 +215,10 @@ def main(args):
     plt.savefig(f'plots/scatter_plot_all_{args.name}.png') 
 
     label_list=[f"M{i}" for i in range(len(args.dataset_list))]
+    label_list=["disc\n-full","clip\n-full","kmeans\n-full","disc\n-med","clip\n-med","kmeans\n-med","utility\n-30","utility\n-10","basic\n-30","basic\n-10"][:len(args.dataset_list)]
 
     image_grid=create_image_grid_with_labels(grid,label_list,label_list,(args.size,args.size))
-    image_grid.save(f"plots/grid_{args.name}.png")
+    image_grid.save(f"final_plots/grid_{args.name}.png")
 
 
 
