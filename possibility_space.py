@@ -36,8 +36,8 @@ def create_image_grid_with_labels(images, row_labels, col_labels, image_size, la
     :return: PIL Image object representing the grid.
     """
     # Find unique row and column labels
-    unique_row_labels = sorted(set(row_labels))
-    unique_col_labels = sorted(set(col_labels))
+    unique_row_labels = row_labels
+    unique_col_labels = col_labels
 
     # Create mapping from labels to grid positions
     row_map = {label: idx for idx, label in enumerate(unique_row_labels)}
