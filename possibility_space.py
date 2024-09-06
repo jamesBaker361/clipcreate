@@ -80,12 +80,12 @@ def create_image_grid_with_labels(images, row_labels, col_labels, image_size, la
     # Draw labels for columns
     for label, col_idx in col_map.items():
         x = col_idx * img_width + label_padding + img_width // 2
-        y = 10  # Position for the column label
+        y = 15  # Position for the column label
         draw.text((x, y), str(label), fill='black', font=font, anchor='mm')
 
     # Draw labels for rows
     for label, row_idx in row_map.items():
-        x = 10  # Position for the row label
+        x = 15  # Position for the row label
         y = row_idx * img_height + label_padding + img_height // 2
         draw.text((x, y), str(label), fill='black', font=font, anchor='mm')
 
