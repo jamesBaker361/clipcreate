@@ -415,6 +415,10 @@ def training_loop(args):
         torch.cuda.empty_cache()
     tracker_url=accelerator.get_tracker("wandb").run.get_url()
     accelerator.end_training()
+    checkpoint_dir=f"{args.output_dir}/checkpoint_{args.epochs}"
+    os.makedirs(checkpoint_dir,exist_ok=True)
+    torch.save(gen.state_dict(),f"{checkpoint_dir}/gen-weights.pickle")
+    torch.save(disc.state_dict(),f"{checkpoint_dir}/disc-weights.pickle")
     torch.save(gen.state_dict(),args.output_dir+"/gen-weights.pickle")
     torch.save(disc.state_dict(),args.output_dir+"/disc-weights.pickle")
     
