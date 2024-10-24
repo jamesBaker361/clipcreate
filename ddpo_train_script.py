@@ -197,12 +197,15 @@ if __name__=='__main__':
         reward_accelerator=accelerator
 
     style_list=args.style_list
+    print("style list",style_list)
     if style_list is None or len(style_list)<2:
         dataset=load_dataset(args.dataset,split="train")
         style_set=set()
         for row in dataset:
             style_set.add(row["style"])
         style_list=list(style_set)
+
+    print("style list",style_list)
     if args.reward_function == "clip":
         reward_fn=clip_scorer_ddpo(style_list)
     elif args.reward_function=="kmeans":
