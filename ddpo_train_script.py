@@ -208,7 +208,7 @@ if __name__=='__main__':
     elif args.reward_function=="kmeans":
         reward_fn=k_means_scorer(args.center_list_path)
     elif args.reward_function=="dcgan":
-        reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id)
+        reward_fn=elgammal_dcgan_scorer_ddpo(style_list,args.image_dim, args.resize_dim, args.disc_init_dim, args.disc_final_dim, args.dcgan_repo_id,device=accelerator.device)
     elif args.reward_function=="aesthetic":
         reward_fn=aesthetic_scorer(hf_hub_aesthetic_model_id, hf_hub_aesthetic_model_filename)
     elif args.reward_function=="image_reward":
