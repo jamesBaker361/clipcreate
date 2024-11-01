@@ -24,6 +24,7 @@ parser.add_argument("--output_hf_dataset",type=str,default="evaluation")
 parser.add_argument("--hub_model_id",type=str,default="jlbaker361/vanilla")
 parser.add_argument("--mixed_precision",type=str,default="no")
 parser.add_argument("--prompt_set",type=str,default="all")
+parser.add_argument("--prompt_subjects",action="store_true")
 
 prompt_set_dict={
     "mediums":["painting","art","drawing"],
@@ -31,20 +32,35 @@ prompt_set_dict={
     "all":["painting","art","drawing","person","man","woman"]
 }
 
+prompt_subject_list=[" of a man ", " of a woman "," of nature "," of an animal ", " of a city"," "," of a building "," of a child "]
+
 def main(args):
     accelerator=Accelerator(log_with="wandb",mixed_precision=args.mixed_precision)
     accelerator.init_trackers(project_name=args.project_name,config=vars(args))
-    if args.hub_model_id=="jlbaker361/vanilla":
-        pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
-    else:
-        #pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
-        pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base",use_lora=True)
-        print_trainable_parameters(pipeline.sd_pipeline.unet)
-        weight_path=hf_hub_download(repo_id=args.hub_model_id,filename="pytorch_lora_weights.safetensors", repo_type="model")
-        #load_weights(pipeline,weight_path,args.adapter_name)
-        load_lora_weights(pipeline,weight_path,["weight","default.weight"])
-        #print_trainable_parameters(pipeline.sd_pipeline.unet)
-        pipe=pipeline.sd_pipeline
+    try:
+        if args.hub_model_id=="jlbaker361/vanilla":
+            pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
+        else:
+            #pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
+            pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base",use_lora=True)
+            print_trainable_parameters(pipeline.sd_pipeline.unet)
+            weight_path=hf_hub_download(repo_id=args.hub_model_id,filename="pytorch_lora_weights.safetensors", repo_type="model")
+            #load_weights(pipeline,weight_path,args.adapter_name)
+            load_lora_weights(pipeline,weight_path,["weight","default.weight"])
+            #print_trainable_parameters(pipeline.sd_pipeline.unet)
+            pipe=pipeline.sd_pipeline
+    except:
+        if args.hub_model_id=="jlbaker361/vanilla":
+            pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base",force_download=True)
+        else:
+            #pipe=StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-base")
+            pipeline=BetterDefaultDDPOStableDiffusionPipeline("stabilityai/stable-diffusion-2-base",use_lora=True)
+            print_trainable_parameters(pipeline.sd_pipeline.unet)
+            weight_path=hf_hub_download(repo_id=args.hub_model_id,filename="pytorch_lora_weights.safetensors", repo_type="model")
+            #load_weights(pipeline,weight_path,args.adapter_name)
+            load_lora_weights(pipeline,weight_path,["weight","default.weight"])
+            #print_trainable_parameters(pipeline.sd_pipeline.unet)
+            pipe=pipeline.sd_pipeline
     
     '''try:
         pipe.unet=PeftModel.from_pretrained(pipe.unet,args.hub_model_id)
@@ -78,6 +94,12 @@ def main(args):
     pipe.unet,pipe.text_encoder,pipe.vae=accelerator.prepare(pipe.unet,pipe.text_encoder,pipe.vae)
     
     prompt_set=prompt_set_dict[args.prompt_set]
+    if args.prompt_subjects:
+        _prompt_set=[]
+        for p in prompt_set:
+            for sub in prompt_subject_list:
+                _prompt_set.append(p+sub)
+        prompt_set=_prompt_set
     src_dict={
         "image":[],
         "prompt":[],
