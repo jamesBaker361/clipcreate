@@ -17,7 +17,7 @@ from peft import PeftModel, PeftConfig
 parser=argparse.ArgumentParser()
 
 
-parser.add_argument("--limit",type=int,default=100)
+parser.add_argument("--limit",type=int,default=200)
 parser.add_argument("--num_inference_steps",type=int,default=30)
 parser.add_argument("--project_name",type=str,default="evaluation-creative")
 parser.add_argument("--output_hf_dataset",type=str,default="evaluation")
