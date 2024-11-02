@@ -173,7 +173,8 @@ def main(args):
             "wikiart-subjects": "WikiArt Subjects",
             "everyone":"",
             "shitty":"Models Trained Without Creativity",
-            "only_trained":""
+            "only_trained":"",
+            "november":""
         }[args.name]
         title+={
             IMAGE_REWARD:" Image Reward",

@@ -16,11 +16,12 @@ parser.add_argument("--project_name",type=str,default="evaluation-dcgan")
 parser.add_argument("--output_hf_dataset",type=str,default="evaluation-dcgan")
 parser.add_argument("--hub_model_id",type=str,default="jlbaker361/can-512-0.1-full")
 parser.add_argument("--mixed_precision",type=str,default="no")
+parser.add_argument("--image_dim", type=int,default=512)
 
 
 
 def main(args):
-    gen=Generator(100,512,False)
+    gen=Generator(100,args.image_dim,False)
     gen_weight_path=hf_hub_download(args.hub_model_id, filename="gen-weights.pickle")
     if torch.cuda.is_available():
         gen_state_dict=torch.load(gen_weight_path)
