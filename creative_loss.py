@@ -5,7 +5,6 @@ from huggingface_hub import hf_hub_download
 import torch
 import numpy as np
 import torch
-from scipy.special import softmax
 import random
 import ImageReward as img_reward
 import string
@@ -20,8 +19,6 @@ reward_cache="/scratch/jlb638/reward_symbolic/"+generate_random_string(10)
 from PIL import Image
 
 cache_dir="/scratch/jlb638/trans_cache"
-from bert_score.scorer import BERTScorer
-from bert_score import score
 
 def pt_to_numpy(images: torch.FloatTensor) -> np.ndarray:
     """
@@ -300,48 +297,5 @@ def fuse_rewards(first_fn,second_fn,first_fn_weight,second_fn_weight):
         second_scores=[second_fn_weight * score for score in second_scores]
         final_scores=[f+s for f,s in zip(first_scores,second_scores)]
         return final_scores,{}
-    
-    return _fn
-
-def llava_prompt_alignment(accelerator:Accelerator=None):
-    model = LlavaForConditionalGeneration.from_pretrained("llava-hf/llava-1.5-7b-hf")
-    processor = AutoProcessor.from_pretrained("llava-hf/llava-1.5-7b-hf")
-    if accelerator is not None:
-        model=model.to(accelerator.device)
-        model=accelerator.prepare(model)
-        b_scorer_object=BERTScorer(lang="en",device=accelerator.device)
-    else:
-        b_scorer_object=BERTScorer(lang="en")
-    query_prompt = "USER: <image>\nWhat's the content of the image? ASSISTANT:"
-    
-    @torch.no_grad()
-    def _fn(images, prompts, metadata):
-        if type(images)==torch.Tensor or type(images)==torch.FloatTensor:
-            images=pt_to_numpy(images)
-            images=numpy_to_pil(images)
-        elif type(images)==list:
-            if type(images[0])==torch.Tensor or type(images[0])==torch.FloatTensor:
-                images=[
-                    numpy_to_pil(pt_to_numpy(image)) for image in images
-                ]
-            elif type(images[0])!=Image:
-                print(f"image of type {type(images[0])}")
-        else:
-            print("type(images)",type(images))
-        inputs = processor(text=[query_prompt for _ in images], images=images, return_tensors="pt")
-        generate_ids = model.generate(**inputs, max_new_tokens=15)
-        predicted_prompts=processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        target="ASSISTANT:"
-        def get_response(text):
-            index=text.find(target)+len(target)
-            return text[index:]
-        print(predicted_prompts)
-        cands=[get_response(text) for text in predicted_prompts]
-        print(cands)
-        print(prompts)
-        p,r,f=b_scorer_object.score(cands,list(prompts))
-        rewards=f.cpu().detach().numpy()
-        
-        return rewards,{}
     
     return _fn
