@@ -6,7 +6,6 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import numpy as np
 from torchvision import transforms
-from sentence_transformers import SentenceTransformer
 from datasets import Dataset,load_dataset
 import torchvision.transforms.functional as functional
 

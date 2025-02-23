@@ -88,7 +88,12 @@ def main(args):
         vit_style_list=[]
         vit_content_list=[]
         for x in range(len(args.dataset_list)):
-            image=dataset_grid[x][y]["image"]
+            try:
+                image=dataset_grid[x][y]["image"]
+            except:
+                print(f"x {x} len {len(args.dataset_list)}")
+                print(f"y {y} len {len(dataset_grid[x])}")
+                raise Exception("listt index shit???")
             new_image=Image.new('RGB', image.size)
             new_image.paste(image)
             image=new_image
