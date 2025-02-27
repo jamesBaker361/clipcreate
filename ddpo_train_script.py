@@ -17,7 +17,7 @@ from datasets import load_dataset
 from peft import get_peft_model_state_dict
 import torch
 import time
-from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer,fuse_rewards,clip_prompt_alignment,llava_prompt_alignment
+from creative_loss import clip_scorer_ddpo, elgammal_dcgan_scorer_ddpo, k_means_scorer,image_reward_scorer,fuse_rewards,clip_prompt_alignment
 import random
 import numpy as np
 import wandb
@@ -164,9 +164,6 @@ parser.add_argument("--image_reward_weight",type=float,default=1.0)
 parser.add_argument("--use_clip_prompt_alignment_extra",action="store_true")
 parser.add_argument("--clip_prompt_alignment_weight",type=float,default=0.25)
 
-parser.add_argument("--use_llava_prompt_alignment_extra",action="store_true")
-parser.add_argument("--llava_prompt_alignment_weight",type=float,default=0.5)
-
 parser.add_argument("--use_accelerator_reward_fn",action="store_true")
 parser.add_argument("--n_validation",type=int,default=2)
 parser.add_argument("--prompt_set",type=str,default="all")
@@ -218,8 +215,6 @@ if __name__=='__main__':
         reward_fn =image_reward_scorer(reward_accelerator)
     elif args.reward_function=="clip_prompt":
         reward_fn=clip_prompt_alignment(reward_accelerator)
-    elif args.reward_function=="llava_prompt":
-        reward_fn=llava_prompt_alignment(reward_accelerator)
     else:
         raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
     if args.use_image_reward_extra:
@@ -228,9 +223,6 @@ if __name__=='__main__':
     if args.use_clip_prompt_alignment_extra:
         clip_prompt_alignment_fn=clip_prompt_alignment(reward_accelerator)
         reward_fn=fuse_rewards(reward_fn,clip_prompt_alignment_fn, args.creativity_weight,args.clip_prompt_alignment_weight)
-    if args.use_llava_prompt_alignment_extra:
-        llava_prompt_alignment_fn=llava_prompt_alignment(reward_accelerator)
-        reward_fn=fuse_rewards(reward_fn,llava_prompt_alignment_fn,args.creativity_weight,args.llava_prompt_alignment_weight)
     prompt_set=prompt_set_dict[args.prompt_set]
     print("using prompts ",prompt_set)
     prompt_fn=get_prompt_fn(prompt_set)
