@@ -201,28 +201,7 @@ def training_loop(args):
         _real_images, _real_labels,constant_text_encoding = batch
         constant_noise_list.append(constant_noise)
 
-    for batch in training_dataloader:
-        print(len(batch))
-        print(batch[0].size())
-        break
-
-    classification_loss=torch.nn.CrossEntropyLoss()
-    if args.class_loss=="mse":
-        classification_loss=torch.nn.MSELoss()
-    elif args.class_loss=="mae":
-        classification_loss=torch.nn.L1Loss()
-    elif args.class_loss=="softmax_ce":
-        def _ce(x):
-            x=torch.nn.Softmax(1)(x)
-            return torch.nn.CrossEntropyLoss()(x)
-        classification_loss=_ce
-    binary_cross_entropy = torch.nn.BCELoss()
-    def modified_generator_entropy(predictions,labels):
-        #https://github.com/tensorflow/tensorflow/blob/2007e1ba474030fcce840b0b8a599558e7d5998f/tensorflow/contrib/gan/python/losses/python/losses_impl.py#L563
-        #L = -log(sigmoid(D(G(z))))
-        return
-    real_label_int = 1.
-    fake_label_int = 0.
+    
     print(f"starting at epoch {start_epoch}")
     for e in range(start_epoch,args.epochs):
         D_x_binary_sum=0.0
