@@ -290,77 +290,7 @@ def training_loop(args):
                 "Generator_fake_binary":G_g_binary
             })
             
-            '''for _ in range(args.n_disc_steps):
-                #real loss discirinator
-                real_binary,real_style=disc(real_images,text_encoding)
-                real_labels=real_labels.to(real_style.dtype)
-                
-                if args.use_clip or args.use_kmeans:
-                    style_classification_loss=torch.tensor(0.)
-                else:
-                    style_classification_loss=classification_loss(real_style,real_labels)
-                if args.classifier_only:
-                    accelerator.backward(style_classification_loss)
-                    disc_optimizer.step()
-                    disc_optimizer.zero_grad()
-                    style_classification_loss_sum+=torch.sum(style_classification_loss)
-                    continue
-
-                #fake image loss discrikinator
-                fake_images=gen(noise, text_encoding)
-                fake_binary,fake_style=disc(fake_images.detach(),text_encoding.detach())
-                
-                
-
-                if args.wasserstein:
-                    difference_loss=torch.mean(fake_binary-real_binary)
-                    #https://github.com/tensorflow/gan/blob/656e4332d1e6d7f398f0968966c753e44397fc60/tensorflow_gan/python/losses/losses_impl.py#L111
-                    disc_loss=style_classification_loss+difference_loss
-                    if args.use_gp:
-                        gradients=get_gradients(disc,fake_images,real_images,text_encoding)
-                        gradient_penalty=get_gradient_penalty(gradients,args.gp_weight)
-                        disc_loss+=gradient_penalty
-                else:
-                    fake_binary_loss=binary_cross_entropy(fake_binary, fake_vector)
-                    real_binary_loss=binary_cross_entropy(real_binary,real_vector)
-                    disc_loss=style_classification_loss+fake_binary_loss+real_binary_loss
-                accelerator.backward(disc_loss)
-                disc_optimizer.step()
-                disc_optimizer.zero_grad()
-
-            fake_images=gen(noise, text_encoding)
-            fake_binary,fake_style=disc(fake_images,text_encoding)
             
-            if args.wasserstein:
-                reverse_fake_binary_loss=torch.mean(fake_binary)
-            else:
-                reverse_fake_binary_loss= binary_cross_entropy(fake_binary, real_vector)
-            reverse_fake_binary_loss=args.reverse_fake_binary_loss_weight * reverse_fake_binary_loss
-            if args.use_clip:
-                fake_clip_style=clip_classifier(fake_images)
-                style_ambiguity_loss=torch.tensor(classification_loss(fake_clip_style, uniform).cpu().numpy(),requires_grad=True)
-            elif args.use_kmeans:
-                fake_kmeans_style=kmeans_classifier(fake_images)
-                style_ambiguity_loss=torch.tensor(classification_loss(fake_kmeans_style, uniform).cpu().numpy(),requires_grad=True)
-            else:
-                fake_binary,fake_style=disc(fake_images,text_encoding)
-                style_ambiguity_loss=classification_loss(fake_style, uniform)
-
-            style_ambiguity_loss=args.style_ambiguity_loss_weight * style_ambiguity_loss
-            gen_loss=style_ambiguity_loss+reverse_fake_binary_loss
-            accelerator.backward(gen_loss)
-            gen_optimizer.step()
-            gen_optimizer.zero_grad()
-
-            
-            style_classification_loss_sum+=torch.sum(style_classification_loss)
-            if args.wasserstein:
-                difference_loss_sum+=torch.sum(difference_loss)
-            else:
-                fake_binary_loss_sum+=torch.sum(fake_binary_loss)
-                real_binary_loss_sum+=torch.sum(real_binary_loss)
-            style_ambiguity_loss_sum+=torch.sum(style_ambiguity_loss)
-            reverse_fake_binary_loss_sum+=torch.sum(reverse_fake_binary_loss)'''
         for i in range(args.n_test_images):
             test_image=gen(constant_noise_list[i], constant_text_encoding)
             pil_test_image=ToPILImage()( test_image[0])
