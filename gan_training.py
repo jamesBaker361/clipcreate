@@ -17,7 +17,6 @@ from scipy.special import softmax
 import numpy as np
 import datetime
 import random
-from count_params import print_trainable_parameters
 import torch.nn.functional as F
 
 torch.autograd.set_detect_anomaly(True)
@@ -119,19 +118,8 @@ def training_loop(args):
         print("\t",s)
     gen=Generator(args.gen_z_dim,args.image_dim,args.conditional)
     gen.apply(weights_init)
-    print("gen main:")
-    print(gen.main)
-    print_trainable_parameters(gen.main)
     disc=Discriminator(args.image_dim, args.disc_init_dim,args.disc_final_dim,style_list,args.conditional,args.wasserstein)
-    print("disc main")
-    print(disc.main)
-    print_trainable_parameters(disc.main)
-    print("binary")
-    print(disc.binary_layers)
-    print_trainable_parameters(disc.binary_layers)
-    print("style")
-    print(disc.style_layers)
-    print_trainable_parameters(disc.style_layers)
+    
 
     start_epoch=0
 
