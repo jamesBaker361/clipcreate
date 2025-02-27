@@ -206,7 +206,7 @@ if __name__=='__main__':
     elif args.reward_function=="clip_prompt":
         reward_fn=clip_prompt_alignment(reward_accelerator)
     else:
-        raise Exception("unknown reward function; should be one of clip or resnet or dcgan")
+        raise Exception("unknown reward function; should be one of clip Kmeans dcgan aesthetic image_reward clip_prompt")
     if args.use_image_reward_extra:
         ir_reward_fn=image_reward_scorer(reward_accelerator)
         reward_fn=fuse_rewards(reward_fn,ir_reward_fn, args.creativity_weight,args.image_reward_weight)
