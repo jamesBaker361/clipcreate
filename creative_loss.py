@@ -14,11 +14,9 @@ from accelerate import Accelerator
 from experiment_helpers.measuring import cos_sim
 def generate_random_string(length):
     return ''.join(random.choice(string.ascii_letters) for _ in range(length))
-reward_cache="/scratch/jlb638/reward_symbolic/"+generate_random_string(10)
 
 from PIL import Image
 
-cache_dir="/scratch/jlb638/trans_cache"
 
 def pt_to_numpy(images: torch.FloatTensor) -> np.ndarray:
     """
@@ -211,10 +209,10 @@ def k_means_scorer(center_list_path):
 
 def image_reward_scorer(accelerator:Accelerator=None):
     if accelerator is not None:
-        model=img_reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json",device=accelerator.device)
+        model=img_reward.load("ImageReward-v1.0",device=accelerator.device)
         model=accelerator.prepare(accelerator.device)
     else:
-        model=img_reward.load("/scratch/jlb638/reward-blob",med_config="/scratch/jlb638/ImageReward/med_config.json")
+        model=img_reward.load("ImageReward-v1.0")
 
 
     @torch.no_grad()
