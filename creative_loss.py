@@ -87,8 +87,6 @@ def clip_scorer_ddpo(style_list): #https://github.com/huggingface/trl/blob/main/
                 images=[
                     numpy_to_pil(pt_to_numpy(image)) for image in images
                 ]
-            '''elif type(images[0])!=Image:
-                print(f"image of type {type(images[0])}")'''
         else:
             print("type(images)",type(images))
 
