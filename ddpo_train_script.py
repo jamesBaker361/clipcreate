@@ -97,7 +97,7 @@ parser.add_argument(
     help="Path to pretrained model or model identifier from huggingface.co/models.",
 )
 
-parser.add_argument("--base_model",type=str,default="stabilityai/stable-diffusion-2-base",help="base model")
+parser.add_argument("--base_model",type=str,default="stabilityai/stable-diffusion-2-base",help="base model to train off of")
 
 parser.add_argument(
     "--dataset_name",
@@ -151,10 +151,10 @@ parser.add_argument("--use_image_reward_extra",action="store_true",default="whet
 parser.add_argument("--creativity_weight",type=float,default=1.0)
 parser.add_argument("--image_reward_weight",type=float,default=1.0)
 
-parser.add_argument("--use_clip_prompt_alignment_extra",action="store_true")
+parser.add_argument("--use_clip_prompt_alignment_extra",action="store_true", help="whether to use clip prompt alignment in reward")
 parser.add_argument("--clip_prompt_alignment_weight",type=float,default=0.25)
 
-parser.add_argument("--use_accelerator_reward_fn",action="store_true")
+parser.add_argument("--use_accelerator_reward_fn",action="store_true",help="whether to pass accelerator to the reward function")
 parser.add_argument("--n_validation",type=int,default=2)
 parser.add_argument("--prompt_set",type=str,default="all")
 parser.add_argument("--n_evaluation",type=int,default=128)
