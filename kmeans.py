@@ -60,9 +60,9 @@ def compare_distortion(embeds,n_cluster_list,root_path):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
-    parser.add_argument("--data",type=str,default="text")
-    parser.add_argument("--dataset",type=str, default="jlbaker361/wikiart-balanced500")
-    parser.add_argument("--base_path",type=str,default="centers/")
+    parser.add_argument("--data",type=str,default="text",help="whether to use text or image data")
+    parser.add_argument("--dataset",type=str, default="jlbaker361/wikiart-balanced500",help="dataset to use for image data")
+    parser.add_argument("--base_path",type=str,default="centers/",help="path to save cluster centers")
     
     args=parser.parse_args()
 
