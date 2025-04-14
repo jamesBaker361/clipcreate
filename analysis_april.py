@@ -1,7 +1,6 @@
 import diffusers
 import huggingface_hub
 from PIL import Image
-import pytorch_image_generation_metrics
 import os
 from image_diversity import ClipMetrics
 
